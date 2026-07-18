@@ -1,0 +1,51 @@
+{
+  "expo": {
+    "name": "Counted",
+    "slug": "counted",
+    "version": "0.0.0",
+    "orientation": "default",
+    "userInterfaceStyle": "light",
+    "scheme": "counted",
+    "backgroundColor": "#F7EBE8",
+    "primaryColor": "#E85E5E",
+    "icon": "./assets/icon.png",
+    "plugins": [
+      "expo-router",
+      "expo-secure-store",
+      "expo-sqlite",
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/splash-icon.png",
+          "backgroundColor": "#1E1E24",
+          "resizeMode": "contain"
+        }
+      ],
+      "expo-font",
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Counted uses the camera to scan item barcodes for instant stock lookup and counting."
+        }
+      ]
+    ],
+    "experiments": {
+      "typedRoutes": true
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.counted.app"
+    },
+    "android": {
+      "package": "com.counted.app",
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#1E1E24"
+      }
+    },
+    "web": {
+      "bundler": "metro",
+      "output": "static"
+    }
+  }
+}
