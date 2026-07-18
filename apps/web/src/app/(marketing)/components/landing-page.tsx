@@ -8,7 +8,6 @@ import { Navbar } from './navbar';
 import { Showcase } from './showcase';
 import { ShowcaseLowStockCard } from './showcase-low-stock-card';
 import { ShowcasePhoneMockup } from './showcase-phone-mockup';
-import { Testimonials } from './testimonials';
 import { TrustedBy } from './trusted-by';
 
 export function LandingPage() {
@@ -44,7 +43,11 @@ export function LandingPage() {
         reverse
         visual={<ShowcaseLowStockCard />}
       />
-      <Testimonials />
+      {/*
+        No testimonials section until there are real customers to quote. The
+        component and its styles are removed rather than commented out; social
+        proof under a "Real businesses, real results" heading has to be real.
+      */}
       <FreeBanner />
       <FinalCta />
       <Footer />

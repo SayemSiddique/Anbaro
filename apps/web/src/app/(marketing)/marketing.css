@@ -611,7 +611,6 @@ html {
 .marketing-scope .features,
 .marketing-scope .how-it-works,
 .marketing-scope .showcase,
-.marketing-scope .testimonials,
 .marketing-scope .free-banner,
 .marketing-scope .cta {
   padding: 6rem 2rem;
@@ -1040,105 +1039,6 @@ html {
   color: #b4552e;
 }
 
-/* ===== TESTIMONIALS ===== */
-.marketing-scope .testimonials {
-  background: var(--text);
-  position: relative;
-  overflow: hidden;
-}
-
-.marketing-scope .testimonials::before {
-  content: '';
-  position: absolute;
-  top: -200px;
-  right: -200px;
-  width: 500px;
-  height: 500px;
-  background: var(--primary);
-  border-radius: 50%;
-  opacity: 0.05;
-}
-
-.marketing-scope .testimonials .section-tag {
-  background: rgb(232 94 94 / 15%);
-}
-
-.marketing-scope .testimonials .section-title {
-  color: #fff;
-}
-
-.marketing-scope .testimonials .section-subtitle {
-  color: rgb(255 255 255 / 60%);
-}
-
-.marketing-scope .testimonials-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 1.5rem;
-  max-width: 1200px;
-  margin: 0 auto;
-}
-
-.marketing-scope .testimonial-card {
-  background: rgb(255 255 255 / 5%);
-  border: 1px solid rgb(255 255 255 / 8%);
-  border-radius: 20px;
-  padding: 2rem;
-  transition:
-    background 0.3s,
-    transform 0.3s;
-}
-
-.marketing-scope .testimonial-card:hover {
-  background: rgb(255 255 255 / 8%);
-  transform: translateY(-3px);
-}
-
-.marketing-scope .testimonial-stars {
-  display: flex;
-  gap: 0.15rem;
-  color: var(--accent);
-  margin-bottom: 1rem;
-}
-
-.marketing-scope .testimonial-text {
-  color: rgb(255 255 255 / 80%);
-  font-size: 0.92rem;
-  line-height: 1.7;
-  margin-bottom: 1.5rem;
-}
-
-.marketing-scope .testimonial-author {
-  display: flex;
-  align-items: center;
-  gap: 0.8rem;
-}
-
-.marketing-scope .testimonial-avatar {
-  width: 42px;
-  height: 42px;
-  border-radius: 50%;
-  background: linear-gradient(135deg, var(--primary), var(--accent));
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #fff;
-  font-weight: 700;
-  font-size: 0.85rem;
-  flex-shrink: 0;
-}
-
-.marketing-scope .testimonial-name {
-  font-weight: 600;
-  color: #fff;
-  font-size: 0.9rem;
-}
-
-.marketing-scope .testimonial-role {
-  font-size: 0.78rem;
-  color: rgb(255 255 255 / 40%);
-}
-
 /* ===== FREE BANNER ===== */
 .marketing-scope .free-banner {
   background: linear-gradient(135deg, var(--canvas) 0%, var(--surface) 100%);
@@ -1350,15 +1250,6 @@ html {
     grid-template-columns: repeat(2, 1fr);
   }
 
-  .marketing-scope .testimonials-grid {
-    grid-template-columns: repeat(2, 1fr);
-  }
-
-  .marketing-scope .testimonials-grid .testimonial-card:last-child {
-    grid-column: span 2;
-    max-width: 500px;
-    margin: 0 auto;
-  }
 
   .marketing-scope .footer-grid {
     grid-template-columns: 1fr 1fr;
@@ -1435,14 +1326,6 @@ html {
     order: initial;
   }
 
-  .marketing-scope .testimonials-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .marketing-scope .testimonials-grid .testimonial-card:last-child {
-    grid-column: span 1;
-    max-width: none;
-  }
 
   .marketing-scope .footer-grid {
     grid-template-columns: 1fr;

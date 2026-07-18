@@ -10,7 +10,7 @@ const links = [
   { href: '#features', label: 'Features' },
   { href: '#how-it-works', label: 'How It Works' },
   { href: '#showcase', label: 'App' },
-  { href: '#testimonials', label: 'Reviews' },
+  { href: '#pricing', label: 'Pricing' },
 ];
 
 export function Navbar() {
