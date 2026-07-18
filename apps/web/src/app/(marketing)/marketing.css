@@ -1,0 +1,1479 @@
+/* Anbaro marketing/landing page styles — ported from docs/product/landing.html.
+   Every rule is scoped under .marketing-scope (the landing page's root wrapper)
+   so nothing here can collide with globals.css class names (.btn-primary, .card,
+   .badge, etc. all also exist in the authenticated app's stylesheet) even if this
+   file's code-splitting ever loads it outside this route segment. */
+
+html {
+  scroll-behavior: smooth;
+}
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+}
+
+.marketing-scope {
+  /* Derived tint tokens the app's globals.css doesn't define — layered on top of
+     its --primary/--accent tokens, not a duplicate palette. */
+  --mkt-primary-tint-05: rgb(232 94 94 / 5%);
+  --mkt-primary-tint-10: rgb(232 94 94 / 10%);
+  --mkt-primary-tint-20: rgb(232 94 94 / 20%);
+  --mkt-accent-tint-10: rgb(255 169 135 / 10%);
+  --mkt-accent-tint-15: rgb(255 169 135 / 15%);
+  /* Decorative-only colors outside the app's 5-hue brand palette: confined to the
+     fake macOS window chrome and a "stock level" bar illustration, never used to
+     represent real app data. */
+  --mkt-decorative-green: #28c840;
+  --mkt-decorative-red-dot: #ff5f57;
+  --mkt-decorative-yellow-dot: #febc2e;
+
+  font-family:
+    var(--font-inter), -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  color: var(--text-muted);
+  line-height: 1.6;
+  overflow-x: hidden;
+}
+
+.marketing-scope h1,
+.marketing-scope h2,
+.marketing-scope h3,
+.marketing-scope h4 {
+  font-family: var(--font-plus-jakarta-sans), sans-serif;
+  margin: 0;
+}
+.marketing-scope p {
+  margin: 0;
+}
+.marketing-scope ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.marketing-scope a {
+  color: inherit;
+}
+
+/* ===== NAVBAR ===== */
+.marketing-scope .navbar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 1000;
+  padding: 1rem 2rem;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  background: transparent;
+}
+
+.marketing-scope .navbar.scrolled {
+  background: rgb(255 255 255 / 92%);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  box-shadow: 0 1px 20px rgb(30 30 36 / 6%);
+  padding: 0.7rem 2rem;
+}
+
+.marketing-scope .nav-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.marketing-scope .nav-logo {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  text-decoration: none;
+}
+
+.marketing-scope .nav-links {
+  display: flex;
+  align-items: center;
+  gap: 2rem;
+}
+
+.marketing-scope .nav-links a {
+  text-decoration: none;
+  color: var(--text);
+  font-size: 0.92rem;
+  font-weight: 500;
+  transition: color 0.3s;
+  position: relative;
+}
+
+.marketing-scope .nav-links a::after {
+  content: '';
+  position: absolute;
+  bottom: -4px;
+  left: 0;
+  width: 0;
+  height: 2px;
+  background: var(--primary);
+  transition: width 0.3s;
+  border-radius: 2px;
+}
+
+.marketing-scope .nav-links a:hover::after {
+  width: 100%;
+}
+
+.marketing-scope .nav-links a:hover {
+  color: var(--primary);
+}
+
+.marketing-scope .nav-cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  background: var(--text);
+  color: #fff !important;
+  padding: 0.6rem 1.4rem;
+  border-radius: 50px;
+  font-weight: 600;
+  transition: all 0.3s !important;
+}
+
+.marketing-scope .nav-cta::after {
+  display: none !important;
+}
+
+.marketing-scope .nav-cta:hover {
+  background: var(--primary) !important;
+  color: #fff !important;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 15px var(--mkt-primary-tint-20);
+}
+
+.marketing-scope .mobile-toggle {
+  display: none;
+  background: none;
+  border: none;
+  color: var(--text);
+  cursor: pointer;
+  padding: 0.25rem;
+}
+
+/* ===== MOBILE NAV ===== */
+.marketing-scope .mobile-nav {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgb(30 30 36 / 95%);
+  backdrop-filter: blur(20px);
+  z-index: 999;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2rem;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s;
+}
+
+.marketing-scope .mobile-nav.open {
+  opacity: 1;
+  pointer-events: all;
+}
+
+.marketing-scope .mobile-nav a {
+  color: #fff;
+  text-decoration: none;
+  font-size: 1.3rem;
+  font-weight: 600;
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+
+.marketing-scope .mobile-nav-close {
+  position: absolute;
+  top: 1.5rem;
+  right: 1.5rem;
+  background: none;
+  border: none;
+  color: #fff;
+  cursor: pointer;
+}
+
+/* ===== HERO ===== */
+.marketing-scope .hero {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(165deg, var(--surface) 0%, var(--canvas) 50%, var(--surface) 100%);
+  padding: 8rem 2rem 4rem;
+}
+
+.marketing-scope .hero-bg-shapes {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.marketing-scope .hero-bg-shapes .shape {
+  position: absolute;
+  border-radius: 50%;
+  opacity: 0.15;
+  animation: mkt-float-shape 20s ease-in-out infinite;
+}
+
+.marketing-scope .hero-bg-shapes .shape-1 {
+  width: 500px;
+  height: 500px;
+  background: var(--primary);
+  top: -150px;
+  right: -100px;
+}
+
+.marketing-scope .hero-bg-shapes .shape-2 {
+  width: 300px;
+  height: 300px;
+  background: var(--accent);
+  bottom: -80px;
+  left: -60px;
+  animation-delay: -5s;
+}
+
+.marketing-scope .hero-bg-shapes .shape-3 {
+  width: 200px;
+  height: 200px;
+  background: var(--primary);
+  top: 40%;
+  left: 30%;
+  animation-delay: -10s;
+}
+
+@keyframes mkt-float-shape {
+  0%,
+  100% {
+    transform: translate(0, 0) scale(1);
+  }
+  25% {
+    transform: translate(30px, -30px) scale(1.05);
+  }
+  50% {
+    transform: translate(-20px, 20px) scale(0.95);
+  }
+  75% {
+    transform: translate(15px, 10px) scale(1.02);
+  }
+}
+
+.marketing-scope .mkt-particles-canvas {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.marketing-scope .hero-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4rem;
+  align-items: center;
+  position: relative;
+  z-index: 2;
+  width: 100%;
+}
+
+.marketing-scope .hero-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: var(--mkt-primary-tint-10);
+  color: var(--primary);
+  padding: 0.5rem 1rem;
+  border-radius: 50px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  margin-bottom: 1.5rem;
+  border: 1px solid var(--mkt-primary-tint-20);
+}
+
+.marketing-scope .hero-title {
+  font-size: clamp(2.5rem, 5vw, 3.8rem);
+  font-weight: 800;
+  line-height: 1.1;
+  color: var(--text);
+  margin-bottom: 1.5rem;
+}
+
+.marketing-scope .hero-title .highlight {
+  background: linear-gradient(135deg, var(--primary), var(--accent));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.marketing-scope .hero-subtitle {
+  font-size: 1.15rem;
+  color: var(--text-muted);
+  max-width: 500px;
+  margin-bottom: 2rem;
+  line-height: 1.7;
+}
+
+.marketing-scope .hero-actions {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin-bottom: 2.5rem;
+}
+
+.marketing-scope .btn-primary,
+.marketing-scope .btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.9rem 2rem;
+  border-radius: 50px;
+  font-weight: 700;
+  font-size: 1rem;
+  text-decoration: none;
+  border: none;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.marketing-scope .btn-primary {
+  background: linear-gradient(135deg, var(--primary), var(--primary-hover));
+  color: #fff;
+  box-shadow: 0 4px 20px var(--mkt-primary-tint-20);
+}
+
+.marketing-scope .btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 30px rgb(232 94 94 / 45%);
+}
+
+.marketing-scope .btn-secondary {
+  background: var(--surface);
+  color: var(--text);
+  border: 2px solid rgb(68 65 64 / 15%);
+}
+
+.marketing-scope .btn-secondary:hover {
+  border-color: var(--primary);
+  color: var(--primary);
+  transform: translateY(-2px);
+}
+
+.marketing-scope .hero-stats {
+  display: flex;
+  gap: 2.5rem;
+}
+
+.marketing-scope .hero-stat-number {
+  font-family: var(--font-plus-jakarta-sans), sans-serif;
+  font-size: 1.6rem;
+  font-weight: 800;
+  color: var(--text);
+}
+
+.marketing-scope .hero-stat-label {
+  font-size: 0.82rem;
+  color: var(--text-muted);
+}
+
+.marketing-scope .hero-visual {
+  position: relative;
+}
+
+.marketing-scope .hero-mockup {
+  position: relative;
+  z-index: 2;
+}
+
+.marketing-scope .mockup-main {
+  width: 100%;
+  max-width: 520px;
+  background: var(--surface);
+  border-radius: 20px;
+  box-shadow:
+    0 25px 80px rgb(30 30 36 / 12%),
+    0 4px 20px rgb(30 30 36 / 6%);
+  overflow: hidden;
+  border: 1px solid rgb(68 65 64 / 8%);
+}
+
+.marketing-scope .mockup-header {
+  background: var(--text);
+  padding: 1rem 1.2rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.marketing-scope .mockup-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+}
+
+.marketing-scope .mockup-dot:nth-child(1) {
+  background: var(--mkt-decorative-red-dot);
+}
+.marketing-scope .mockup-dot:nth-child(2) {
+  background: var(--mkt-decorative-yellow-dot);
+}
+.marketing-scope .mockup-dot:nth-child(3) {
+  background: var(--mkt-decorative-green);
+}
+
+.marketing-scope .mockup-body {
+  padding: 1.5rem;
+}
+
+.marketing-scope .mockup-row {
+  display: flex;
+  align-items: center;
+  padding: 0.8rem;
+  border-radius: 12px;
+  margin-bottom: 0.5rem;
+  transition: background 0.3s;
+}
+
+.marketing-scope .mockup-row:hover {
+  background: var(--canvas);
+}
+
+.marketing-scope .mockup-row-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 0.8rem;
+  flex-shrink: 0;
+}
+
+.marketing-scope .mockup-row-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.marketing-scope .mockup-row-name {
+  font-weight: 600;
+  font-size: 0.88rem;
+  color: var(--text);
+}
+
+.marketing-scope .mockup-row-location {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.marketing-scope .mockup-row-qty {
+  text-align: right;
+}
+
+.marketing-scope .mockup-row-qty-num {
+  font-weight: 700;
+  font-size: 0.95rem;
+  color: var(--text);
+}
+
+.marketing-scope .stock-bar {
+  width: 60px;
+  height: 5px;
+  background: rgb(68 65 64 / 10%);
+  border-radius: 10px;
+  margin-top: 4px;
+  overflow: hidden;
+}
+
+.marketing-scope .stock-bar-fill {
+  height: 100%;
+  border-radius: 10px;
+}
+
+.marketing-scope .stock-low {
+  background: var(--primary);
+}
+.marketing-scope .stock-med {
+  background: var(--accent);
+}
+.marketing-scope .stock-high {
+  background: var(--mkt-decorative-green);
+}
+
+.marketing-scope .float-card {
+  position: absolute;
+  background: var(--surface);
+  border-radius: 14px;
+  padding: 0.9rem 1.2rem;
+  box-shadow: 0 10px 40px rgb(30 30 36 / 10%);
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  z-index: 3;
+  animation: mkt-float-card 6s ease-in-out infinite;
+  border: 1px solid rgb(68 65 64 / 5%);
+}
+
+.marketing-scope .float-card-1 {
+  top: 15%;
+  right: -30px;
+}
+
+.marketing-scope .float-card-2 {
+  bottom: 20%;
+  left: -40px;
+  animation-delay: -3s;
+}
+
+.marketing-scope .float-card-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  flex-shrink: 0;
+}
+
+.marketing-scope .float-card-text {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.marketing-scope .float-card-sub {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  font-weight: 400;
+}
+
+@keyframes mkt-float-card {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+/* ===== TRUSTED BY ===== */
+.marketing-scope .trusted {
+  padding: 3rem 2rem;
+  background: var(--surface);
+  border-top: 1px solid rgb(68 65 64 / 6%);
+}
+
+.marketing-scope .trusted-container {
+  max-width: 1000px;
+  margin: 0 auto;
+  text-align: center;
+}
+
+.marketing-scope .trusted-label {
+  font-size: 0.82rem;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  color: var(--text-soft);
+  margin-bottom: 1.5rem;
+  font-weight: 600;
+}
+
+.marketing-scope .trusted-icons {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 3rem;
+  flex-wrap: wrap;
+  opacity: 0.45;
+}
+
+.marketing-scope .trust-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--text-muted);
+}
+
+/* ===== SECTION SHARED ===== */
+.marketing-scope .features,
+.marketing-scope .how-it-works,
+.marketing-scope .showcase,
+.marketing-scope .testimonials,
+.marketing-scope .free-banner,
+.marketing-scope .cta {
+  padding: 6rem 2rem;
+}
+
+.marketing-scope .features {
+  background: var(--surface);
+}
+
+.marketing-scope .section-container {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.marketing-scope .section-header {
+  text-align: center;
+  margin-bottom: 4rem;
+}
+
+.marketing-scope .section-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: var(--mkt-primary-tint-10);
+  color: var(--primary);
+  padding: 0.45rem 1rem;
+  border-radius: 50px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  margin-bottom: 1rem;
+}
+
+.marketing-scope .section-title {
+  font-size: clamp(2rem, 4vw, 2.8rem);
+  font-weight: 800;
+  color: var(--text);
+  margin-bottom: 1rem;
+  line-height: 1.2;
+}
+
+.marketing-scope .section-subtitle {
+  font-size: 1.05rem;
+  color: var(--text-muted);
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+/* ===== FEATURES ===== */
+.marketing-scope .features-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1.5rem;
+}
+
+.marketing-scope .feature-card {
+  background: var(--surface);
+  border: 1px solid rgb(68 65 64 / 8%);
+  border-radius: 20px;
+  padding: 2rem;
+  transition:
+    transform 0.4s cubic-bezier(0.4, 0, 0.2, 1),
+    box-shadow 0.4s cubic-bezier(0.4, 0, 0.2, 1),
+    border-color 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+.marketing-scope .feature-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, var(--primary), var(--accent));
+  opacity: 0;
+  transition: opacity 0.4s;
+}
+
+.marketing-scope .feature-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 20px 60px rgb(30 30 36 / 8%);
+  border-color: transparent;
+}
+
+.marketing-scope .feature-card:hover::before {
+  opacity: 1;
+}
+
+.marketing-scope .feature-icon {
+  width: 52px;
+  height: 52px;
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 1.2rem;
+  transition: transform 0.3s;
+}
+
+.marketing-scope .feature-card:hover .feature-icon {
+  transform: scale(1.1);
+}
+
+.marketing-scope .feature-title {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 0.6rem;
+}
+
+.marketing-scope .feature-desc {
+  font-size: 0.9rem;
+  color: var(--text-muted);
+  line-height: 1.6;
+}
+
+/* ===== HOW IT WORKS ===== */
+.marketing-scope .how-it-works {
+  background: var(--canvas);
+  position: relative;
+  overflow: hidden;
+}
+
+.marketing-scope .steps-container {
+  max-width: 1000px;
+  margin: 0 auto;
+}
+
+.marketing-scope .steps-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 2rem;
+  position: relative;
+}
+
+.marketing-scope .steps-grid::before {
+  content: '';
+  position: absolute;
+  top: 40px;
+  left: 12%;
+  right: 12%;
+  height: 2px;
+  background: linear-gradient(90deg, var(--primary), var(--accent), var(--primary));
+  opacity: 0.3;
+}
+
+.marketing-scope .step-card {
+  text-align: center;
+  position: relative;
+}
+
+.marketing-scope .step-number {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--primary), var(--accent));
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-plus-jakarta-sans), sans-serif;
+  font-weight: 800;
+  font-size: 1.2rem;
+  margin: 0 auto 1.2rem;
+  position: relative;
+  z-index: 2;
+  box-shadow: 0 8px 25px var(--mkt-primary-tint-20);
+}
+
+.marketing-scope .step-icon-wrap {
+  width: 70px;
+  height: 70px;
+  background: var(--surface);
+  border-radius: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 1rem;
+  color: var(--primary);
+  box-shadow: 0 4px 20px rgb(30 30 36 / 6%);
+}
+
+.marketing-scope .step-title {
+  font-weight: 700;
+  font-size: 1rem;
+  color: var(--text);
+  margin-bottom: 0.5rem;
+}
+
+.marketing-scope .step-desc {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  line-height: 1.5;
+}
+
+/* ===== SHOWCASE ===== */
+.marketing-scope .showcase-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4rem;
+  align-items: center;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.marketing-scope .showcase-visual {
+  position: relative;
+}
+
+/* DOM order is always visual-first/text-second; .reverse flips the visual
+   order on desktop only via grid `order`, avoiding the source mockup's
+   direction:rtl trick since we control markup order directly here. */
+.marketing-scope .showcase-grid.reverse .showcase-visual {
+  order: 2;
+}
+.marketing-scope .showcase-grid.reverse .showcase-text {
+  order: 1;
+}
+
+.marketing-scope .showcase-phone {
+  width: 260px;
+  margin: 0 auto;
+  background: var(--text);
+  border-radius: 32px;
+  padding: 12px;
+  box-shadow: 0 30px 80px rgb(30 30 36 / 15%);
+}
+
+.marketing-scope .showcase-phone-screen {
+  background: var(--surface);
+  border-radius: 22px;
+  overflow: hidden;
+  min-height: 420px;
+}
+
+.marketing-scope .phone-status-bar {
+  background: var(--canvas);
+  padding: 0.6rem 1rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.marketing-scope .phone-status-icons {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+.marketing-scope .phone-content {
+  padding: 1rem;
+}
+
+.marketing-scope .phone-search {
+  background: var(--canvas);
+  border-radius: 10px;
+  padding: 0.6rem 0.8rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+  font-size: 0.78rem;
+  color: var(--text-soft);
+}
+
+.marketing-scope .phone-item {
+  display: flex;
+  align-items: center;
+  padding: 0.6rem 0;
+  border-bottom: 1px solid rgb(68 65 64 / 6%);
+  gap: 0.4rem;
+}
+
+.marketing-scope .phone-item-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.marketing-scope .phone-item-name {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--text);
+  flex: 1;
+}
+
+.marketing-scope .phone-item-qty {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--primary);
+}
+
+.marketing-scope .showcase-text h3 {
+  font-size: clamp(1.5rem, 3vw, 2rem);
+  font-weight: 800;
+  color: var(--text);
+  margin-bottom: 1rem;
+  line-height: 1.2;
+}
+
+.marketing-scope .showcase-text p {
+  font-size: 1rem;
+  color: var(--text-muted);
+  margin-bottom: 1.5rem;
+  line-height: 1.7;
+}
+
+.marketing-scope .showcase-features-list li {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.8rem;
+  margin-bottom: 0.8rem;
+  font-size: 0.92rem;
+  color: var(--text-muted);
+}
+
+.marketing-scope .showcase-features-list li svg {
+  color: var(--primary);
+  margin-top: 3px;
+  flex-shrink: 0;
+}
+
+.marketing-scope .low-stock-card {
+  background: var(--surface);
+  border-radius: 20px;
+  padding: 2rem;
+  box-shadow: 0 20px 60px rgb(30 30 36 / 8%);
+  max-width: 450px;
+  margin: 0 auto;
+}
+
+.marketing-scope .low-stock-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1.5rem;
+}
+
+.marketing-scope .low-stock-card-title {
+  font-weight: 700;
+  font-size: 1rem;
+  color: var(--text);
+}
+
+.marketing-scope .low-stock-card-subtitle {
+  font-size: 0.78rem;
+  color: var(--text-soft);
+}
+
+.marketing-scope .low-stock-card-icon {
+  width: 40px;
+  height: 40px;
+  background: var(--mkt-primary-tint-10);
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--primary);
+  flex-shrink: 0;
+}
+
+.marketing-scope .low-stock-row {
+  display: flex;
+  align-items: center;
+  padding: 0.8rem;
+  border-radius: 12px;
+  gap: 0.5rem;
+}
+
+.marketing-scope .low-stock-row + .low-stock-row {
+  margin-top: 0.8rem;
+}
+
+.marketing-scope .low-stock-row-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.marketing-scope .low-stock-row-name {
+  font-weight: 600;
+  font-size: 0.85rem;
+  color: var(--text);
+}
+
+.marketing-scope .low-stock-row-location {
+  font-size: 0.75rem;
+  color: var(--text-soft);
+}
+
+.marketing-scope .low-stock-row-figures {
+  text-align: right;
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+
+.marketing-scope .low-stock-row-reorder {
+  font-size: 0.68rem;
+}
+
+.marketing-scope .low-stock-row.tone-primary {
+  background: var(--mkt-primary-tint-05);
+  border-left: 3px solid var(--primary);
+}
+.marketing-scope .low-stock-row.tone-primary .low-stock-row-figures,
+.marketing-scope .low-stock-row.tone-primary .low-stock-row-reorder {
+  color: var(--primary);
+}
+
+.marketing-scope .low-stock-row.tone-accent {
+  background: var(--mkt-accent-tint-10);
+  border-left: 3px solid var(--accent);
+}
+.marketing-scope .low-stock-row.tone-accent .low-stock-row-figures,
+.marketing-scope .low-stock-row.tone-accent .low-stock-row-reorder {
+  color: #b4552e;
+}
+
+/* ===== TESTIMONIALS ===== */
+.marketing-scope .testimonials {
+  background: var(--text);
+  position: relative;
+  overflow: hidden;
+}
+
+.marketing-scope .testimonials::before {
+  content: '';
+  position: absolute;
+  top: -200px;
+  right: -200px;
+  width: 500px;
+  height: 500px;
+  background: var(--primary);
+  border-radius: 50%;
+  opacity: 0.05;
+}
+
+.marketing-scope .testimonials .section-tag {
+  background: rgb(232 94 94 / 15%);
+}
+
+.marketing-scope .testimonials .section-title {
+  color: #fff;
+}
+
+.marketing-scope .testimonials .section-subtitle {
+  color: rgb(255 255 255 / 60%);
+}
+
+.marketing-scope .testimonials-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1.5rem;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.marketing-scope .testimonial-card {
+  background: rgb(255 255 255 / 5%);
+  border: 1px solid rgb(255 255 255 / 8%);
+  border-radius: 20px;
+  padding: 2rem;
+  transition:
+    background 0.3s,
+    transform 0.3s;
+}
+
+.marketing-scope .testimonial-card:hover {
+  background: rgb(255 255 255 / 8%);
+  transform: translateY(-3px);
+}
+
+.marketing-scope .testimonial-stars {
+  display: flex;
+  gap: 0.15rem;
+  color: var(--accent);
+  margin-bottom: 1rem;
+}
+
+.marketing-scope .testimonial-text {
+  color: rgb(255 255 255 / 80%);
+  font-size: 0.92rem;
+  line-height: 1.7;
+  margin-bottom: 1.5rem;
+}
+
+.marketing-scope .testimonial-author {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+}
+
+.marketing-scope .testimonial-avatar {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--primary), var(--accent));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-weight: 700;
+  font-size: 0.85rem;
+  flex-shrink: 0;
+}
+
+.marketing-scope .testimonial-name {
+  font-weight: 600;
+  color: #fff;
+  font-size: 0.9rem;
+}
+
+.marketing-scope .testimonial-role {
+  font-size: 0.78rem;
+  color: rgb(255 255 255 / 40%);
+}
+
+/* ===== FREE BANNER ===== */
+.marketing-scope .free-banner {
+  background: linear-gradient(135deg, var(--canvas) 0%, var(--surface) 100%);
+  text-align: center;
+}
+
+.marketing-scope .free-banner-container {
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.marketing-scope .free-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: linear-gradient(135deg, var(--primary), var(--accent));
+  color: #fff;
+  padding: 0.6rem 1.5rem;
+  border-radius: 50px;
+  font-weight: 700;
+  font-size: 1rem;
+  margin-bottom: 1.5rem;
+  box-shadow: 0 4px 20px var(--mkt-primary-tint-20);
+}
+
+.marketing-scope .free-banner h2 {
+  font-size: clamp(2rem, 4vw, 2.8rem);
+  font-weight: 800;
+  color: var(--text);
+  margin-bottom: 1rem;
+  line-height: 1.2;
+}
+
+.marketing-scope .free-banner > p {
+  font-size: 1.1rem;
+  color: var(--text-muted);
+  max-width: 600px;
+  margin: 0 auto 2rem;
+  line-height: 1.7;
+}
+
+.marketing-scope .free-features-row {
+  display: flex;
+  justify-content: center;
+  gap: 2rem;
+  flex-wrap: wrap;
+  margin-bottom: 2.5rem;
+}
+
+.marketing-scope .free-feature-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.9rem;
+  color: var(--text-muted);
+  font-weight: 500;
+}
+
+.marketing-scope .free-feature-item svg {
+  color: var(--primary);
+}
+
+/* ===== CTA ===== */
+.marketing-scope .cta {
+  background: var(--text);
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+
+.marketing-scope .cta::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse at center, var(--mkt-primary-tint-10) 0%, transparent 70%);
+}
+
+.marketing-scope .cta-container {
+  max-width: 700px;
+  margin: 0 auto;
+  position: relative;
+  z-index: 2;
+}
+
+.marketing-scope .cta h2 {
+  font-size: clamp(2rem, 4vw, 2.8rem);
+  font-weight: 800;
+  color: #fff;
+  margin-bottom: 1rem;
+  line-height: 1.2;
+}
+
+.marketing-scope .cta p {
+  font-size: 1.1rem;
+  color: rgb(255 255 255 / 60%);
+  margin-bottom: 2rem;
+}
+
+.marketing-scope .cta .btn-primary {
+  font-size: 1.1rem;
+  padding: 1rem 2.5rem;
+}
+
+/* ===== FOOTER ===== */
+.marketing-scope .footer {
+  padding: 4rem 2rem 2rem;
+  background: var(--text);
+  border-top: 1px solid rgb(255 255 255 / 6%);
+}
+
+.marketing-scope .footer-container {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.marketing-scope .footer-grid {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr 1fr;
+  gap: 3rem;
+  margin-bottom: 3rem;
+}
+
+.marketing-scope .footer-brand .nav-logo {
+  color: #fff;
+  margin-bottom: 1rem;
+}
+
+.marketing-scope .footer-brand p {
+  color: rgb(255 255 255 / 50%);
+  font-size: 0.88rem;
+  line-height: 1.6;
+  max-width: 280px;
+}
+
+.marketing-scope .footer-col h4 {
+  color: #fff;
+  font-size: 0.9rem;
+  font-weight: 700;
+  margin-bottom: 1rem;
+}
+
+.marketing-scope .footer-col ul li {
+  margin-bottom: 0.6rem;
+}
+
+.marketing-scope .footer-col ul li a {
+  color: rgb(255 255 255 / 50%);
+  text-decoration: none;
+  font-size: 0.85rem;
+  transition: color 0.3s;
+}
+
+.marketing-scope .footer-col ul li a:hover {
+  color: var(--accent);
+}
+
+.marketing-scope .footer-col ul li .footer-link-inert {
+  color: rgb(255 255 255 / 25%);
+  font-size: 0.85rem;
+  cursor: default;
+}
+
+.marketing-scope .footer-bottom {
+  border-top: 1px solid rgb(255 255 255 / 6%);
+  padding-top: 2rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.marketing-scope .footer-bottom p {
+  color: rgb(255 255 255 / 35%);
+  font-size: 0.82rem;
+}
+
+.marketing-scope .footer-socials {
+  display: flex;
+  gap: 1rem;
+}
+
+.marketing-scope .footer-social-item {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: rgb(255 255 255 / 6%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: rgb(255 255 255 / 50%);
+  text-decoration: none;
+  transition: all 0.3s;
+}
+
+.marketing-scope a.footer-social-item:hover {
+  background: var(--primary);
+  color: #fff;
+}
+
+/* ===== COUNTER ===== */
+.marketing-scope .counter {
+  display: inline-block;
+}
+
+/* ===== RESPONSIVE ===== */
+@media (max-width: 1024px) {
+  .marketing-scope .features-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .marketing-scope .testimonials-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .marketing-scope .testimonials-grid .testimonial-card:last-child {
+    grid-column: span 2;
+    max-width: 500px;
+    margin: 0 auto;
+  }
+
+  .marketing-scope .footer-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media (max-width: 768px) {
+  .marketing-scope .nav-links {
+    display: none;
+  }
+
+  .marketing-scope .mobile-toggle {
+    display: block;
+  }
+
+  .marketing-scope .mobile-nav {
+    display: flex;
+  }
+
+  .marketing-scope .hero-container {
+    grid-template-columns: 1fr;
+    text-align: center;
+    gap: 3rem;
+  }
+
+  .marketing-scope .hero-subtitle {
+    margin: 0 auto 2rem;
+  }
+
+  .marketing-scope .hero-actions {
+    justify-content: center;
+  }
+
+  .marketing-scope .hero-stats {
+    justify-content: center;
+  }
+
+  .marketing-scope .hero-visual {
+    max-width: 400px;
+    margin: 0 auto;
+  }
+
+  .marketing-scope .float-card-1 {
+    right: -10px;
+    top: 5%;
+  }
+
+  .marketing-scope .float-card-2 {
+    left: -10px;
+    bottom: 10%;
+  }
+
+  .marketing-scope .features-grid {
+    grid-template-columns: 1fr;
+    max-width: 500px;
+    margin: 0 auto;
+  }
+
+  .marketing-scope .steps-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .marketing-scope .steps-grid::before {
+    display: none;
+  }
+
+  .marketing-scope .showcase-grid {
+    grid-template-columns: 1fr;
+    gap: 2rem;
+  }
+
+  .marketing-scope .showcase-grid.reverse .showcase-visual,
+  .marketing-scope .showcase-grid.reverse .showcase-text {
+    order: initial;
+  }
+
+  .marketing-scope .testimonials-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .marketing-scope .testimonials-grid .testimonial-card:last-child {
+    grid-column: span 1;
+    max-width: none;
+  }
+
+  .marketing-scope .footer-grid {
+    grid-template-columns: 1fr;
+    gap: 2rem;
+  }
+
+  .marketing-scope .footer-bottom {
+    flex-direction: column;
+    text-align: center;
+  }
+}
+
+@media (max-width: 480px) {
+  .marketing-scope .hero {
+    padding: 7rem 1rem 3rem;
+  }
+
+  .marketing-scope .steps-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .marketing-scope .hero-stats {
+    gap: 1.5rem;
+  }
+
+  .marketing-scope .free-features-row {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .marketing-scope .float-card {
+    display: none;
+  }
+}

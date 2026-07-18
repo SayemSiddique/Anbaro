@@ -1,17 +1,28 @@
 'use client';
 
 import { BarChart3, CheckCircle2, ClipboardCheck, ShieldCheck } from 'lucide-react';
-import { useRouter } from 'next/navigation';
-import { useMemo, useState, type FormEvent } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { Suspense, useMemo, useState, type FormEvent } from 'react';
 
-import { CountedWordmark } from '../../components/brand';
+import { AnbaroWordmark } from '../../components/brand';
 import { Button, Card, Field, Input } from '../../components/ui';
 import { apiErrorMessage, createSessionApi } from '../../lib/session';
 
 export default function LoginPage() {
+  return (
+    <Suspense fallback={null}>
+      <LoginForm />
+    </Suspense>
+  );
+}
+
+function LoginForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const api = useMemo(() => createSessionApi(), []);
-  const [mode, setMode] = useState<'sign-in' | 'sign-up'>('sign-in');
+  const [mode, setMode] = useState<'sign-in' | 'sign-up'>(
+    searchParams.get('mode') === 'sign-up' ? 'sign-up' : 'sign-in',
+  );
   const [error, setError] = useState('');
   const [working, setWorking] = useState(false);
 
@@ -36,7 +47,7 @@ export default function LoginPage() {
   return (
     <div className="auth-frame">
       <aside aria-hidden="true" className="auth-hero">
-        <CountedWordmark dark size={34} />
+        <AnbaroWordmark dark size={34} />
         <div>
           <p className="auth-hero-title">Inventory that adds up — across every location.</p>
           <ul className="auth-points">
@@ -62,19 +73,19 @@ export default function LoginPage() {
             </li>
           </ul>
         </div>
-        <small style={{ color: '#9b918d' }}>Counted · stock management for operators</small>
+        <small style={{ color: '#9b918d' }}>Anbaro · stock management for operators</small>
       </aside>
       <main className="auth-panel">
         <div className="auth-card">
           <Card>
             <div style={{ display: 'grid', gap: 6, marginBottom: 18 }}>
               <h1 id="access-title">
-                {mode === 'sign-up' ? 'Start your free trial' : 'Welcome back'}
+                {mode === 'sign-up' ? 'Create your free account' : 'Welcome back'}
               </h1>
               <p style={{ color: 'var(--text-muted)' }}>
                 {mode === 'sign-up'
                   ? 'No card required. Create your organization and first location next.'
-                  : 'Sign in to your Counted workspace.'}
+                  : 'Sign in to your Anbaro workspace.'}
               </p>
             </div>
             <form className="form-grid" onSubmit={submit} style={{ maxWidth: 'none' }}>
@@ -115,7 +126,7 @@ export default function LoginPage() {
               >
                 {mode === 'sign-up'
                   ? 'Already have an account? Sign in'
-                  : 'New to Counted? Start a free trial'}
+                  : 'New to Anbaro? Create a free account'}
               </button>
             </p>
           </Card>
