@@ -1,0 +1,1 @@
+-- Function definitions are restored by rolling back Session 12 as a whole.

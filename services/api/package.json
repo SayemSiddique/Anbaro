@@ -1,0 +1,41 @@
+{
+  "name": "@stock/api",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch --env-file=.env src/server.ts",
+    "build": "tsc -p tsconfig.json",
+    "start": "node dist/server.js",
+    "lint": "eslint src test --max-warnings=0",
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "test": "vitest run",
+    "db:migrate": "tsx src/db/migrate.ts",
+    "db:rollback": "tsx src/db/rollback.ts",
+    "db:seed": "tsx src/db/seed.ts",
+    "db:verify": "tsx test/database.verify.ts",
+    "billing:expire-trials": "tsx src/billing/run-trial-expiry.ts"
+  },
+  "dependencies": {
+    "@fastify/cookie": "^11.1.1",
+    "@fastify/cors": "^11.1.0",
+    "@fastify/helmet": "^13.1.0",
+    "@fastify/jwt": "^9.1.0",
+    "@fastify/rate-limit": "^10.3.0",
+    "argon2": "^0.44.0",
+    "fastify": "^5.6.1",
+    "ioredis": "^5.11.1",
+    "pg": "^8.16.3",
+    "zod": "^4.1.5"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.35.0",
+    "@types/node": "^22.18.0",
+    "@types/pg": "^8.15.5",
+    "eslint": "^9.35.0",
+    "tsx": "^4.20.5",
+    "typescript": "^5.9.2",
+    "typescript-eslint": "^8.42.0",
+    "vitest": "^3.2.4"
+  }
+}

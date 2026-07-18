@@ -1,0 +1,10 @@
+DROP TRIGGER IF EXISTS stock_events_low_stock_transition ON stock_events;
+DROP FUNCTION IF EXISTS app.create_low_stock_notifications();
+DROP FUNCTION IF EXISTS app.update_location_stock_levels(uuid, uuid, numeric, numeric);
+DROP INDEX IF EXISTS notifications_user_unread_idx;
+DROP INDEX IF EXISTS reorder_suggestions_one_pending_per_item_location;
+DROP INDEX IF EXISTS item_supplier_mappings_one_primary_per_item;
+DROP INDEX IF EXISTS notification_delivery_logs_payload_ref_unique;
+ALTER TABLE notification_delivery_logs DROP CONSTRAINT IF EXISTS notification_delivery_logs_notification_fk;
+ALTER TABLE notification_delivery_logs DROP COLUMN IF EXISTS notification_id;
+DROP TABLE IF EXISTS notifications;

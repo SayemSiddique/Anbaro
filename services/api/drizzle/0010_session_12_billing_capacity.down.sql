@@ -1,0 +1,14 @@
+REVOKE EXECUTE ON FUNCTION app.expire_trials() FROM stock_app;
+REVOKE EXECUTE ON FUNCTION app.reconcile_stripe_event(text, text, timestamptz, text, uuid, text, text, text, text, text, boolean) FROM stock_app;
+REVOKE EXECUTE ON FUNCTION app.attach_capacity_checkout_session(uuid, text) FROM stock_app;
+REVOKE EXECUTE ON FUNCTION app.create_capacity_purchase_intent(uuid, integer) FROM stock_app;
+DROP FUNCTION IF EXISTS app.expire_trials();
+DROP FUNCTION IF EXISTS app.reconcile_stripe_event(text, text, timestamptz, text, uuid, text, text, text, text, text, boolean);
+DROP FUNCTION IF EXISTS app.attach_capacity_checkout_session(uuid, text);
+DROP FUNCTION IF EXISTS app.create_capacity_purchase_intent(uuid, integer);
+DELETE FROM permission_grant_items WHERE organization_id IS NULL AND grant_set_id = '20000000-0000-4000-8000-000000000001' AND resource = 'billing' AND action = 'manage';
+DROP INDEX IF EXISTS capacity_purchase_intents_checkout_session_idx;
+DROP INDEX IF EXISTS subscriptions_external_checkout_session_unique;
+ALTER TABLE subscriptions DROP COLUMN IF EXISTS billing_effective_at, DROP COLUMN IF EXISTS external_checkout_session_id;
+DELETE FROM plans WHERE id = '21000000-0000-4000-8000-000000000002';
+GRANT INSERT, UPDATE, DELETE ON subscriptions, entitlements, capacity_purchase_intents TO stock_app;
