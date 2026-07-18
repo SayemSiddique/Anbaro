@@ -1,11 +1,11 @@
 import type { CSSProperties } from 'react';
 
 /**
- * The Counted mark: four tally strokes and the diagonal fifth — a completed
+ * The Anbaro mark: four tally strokes and the diagonal fifth — a completed
  * count. The splash screen animates the strokes in sequence via the
  * .tally-stroke / .tally-slash classes.
  */
-export function CountedMark({
+export function AnbaroMark({
   size = 32,
   animated = false,
   style,
@@ -43,10 +43,10 @@ export function CountedMark({
   );
 }
 
-export function CountedWordmark({ size = 28, dark = false }: { size?: number; dark?: boolean }) {
+export function AnbaroWordmark({ size = 28, dark = false }: { size?: number; dark?: boolean }) {
   return (
     <span style={{ alignItems: 'center', display: 'inline-flex', gap: 10 }}>
-      <CountedMark size={size} />
+      <AnbaroMark size={size} />
       <span
         style={{
           color: dark ? '#FFFFFF' : 'var(--text)',
@@ -55,7 +55,7 @@ export function CountedWordmark({ size = 28, dark = false }: { size?: number; da
           letterSpacing: '-0.02em',
         }}
       >
-        Counted
+        Anbaro
       </span>
     </span>
   );
@@ -64,9 +64,9 @@ export function CountedWordmark({ size = 28, dark = false }: { size?: number; da
 /** Full-viewport branded load screen used during session bootstrap. */
 export function SplashScreen({ hint = 'Getting your workspace ready…' }: { hint?: string }) {
   return (
-    <div aria-label="Loading Counted" className="splash" role="status">
-      <CountedMark animated size={64} />
-      <span className="splash-name">Counted</span>
+    <div aria-label="Loading Anbaro" className="splash" role="status">
+      <AnbaroMark animated size={64} />
+      <span className="splash-name">Anbaro</span>
       <span className="splash-hint">{hint}</span>
     </div>
   );

@@ -5,10 +5,10 @@ RUN corepack enable
 WORKDIR /workspace
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml tsconfig.base.json ./
 COPY services/api/package.json services/api/package.json
-RUN pnpm install --frozen-lockfile --filter @stock/api
+RUN pnpm install --frozen-lockfile --filter @anbaro/api
 COPY services/api services/api
-RUN pnpm --filter @stock/api build \
-  && pnpm --filter @stock/api --legacy deploy --prod /out
+RUN pnpm --filter @anbaro/api build \
+  && pnpm --filter @anbaro/api --legacy deploy --prod /out
 
 FROM node:22-bookworm-slim AS runtime
 ENV NODE_ENV=production
