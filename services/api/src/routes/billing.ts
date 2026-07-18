@@ -6,6 +6,7 @@ import { z } from 'zod';
 import { ApiError } from '../errors.js';
 import { assertOrganizationWritable, getLocationCapacity } from '../onboarding/service.js';
 import { withAuthorizedTenant } from '../tenant/access.js';
+import { BILLING_ENABLED } from '../billing/config.js';
 import {
   createStripeGateway,
   verifyStripeSignature,
@@ -91,6 +92,12 @@ export async function registerBillingRoutes(
   app: FastifyInstance,
   options: { gateway?: StripeGateway } = {},
 ): Promise<void> {
+  // Anbaro is free for now. Leaving these routes unregistered means checkout,
+  // portal, and webhook endpoints do not exist rather than merely being hidden,
+  // so nothing can be reached by crafting a request. Flip BILLING_ENABLED to
+  // restore the whole surface unchanged.
+  if (!BILLING_ENABLED) return;
+
   const gateway = options.gateway ?? createStripeGateway();
   app.get('/api/v1/billing', { config: { authenticated: true, rateLimit } }, async (request) =>
     withAuthorizedTenant(request, { resource: 'billing', action: 'manage' }, async (client) => {

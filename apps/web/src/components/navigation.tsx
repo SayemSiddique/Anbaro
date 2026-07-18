@@ -1,11 +1,12 @@
 'use client';
 
-import type { CurrentUser } from '@stock/contracts';
+import type { CurrentUser } from '@anbaro/contracts';
 import {
   Bell,
   ClipboardCheck,
   CreditCard,
   FileSpreadsheet,
+  Heart,
   LayoutDashboard,
   LogOut,
   MapPin,
@@ -20,7 +21,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import type { ReactNode } from 'react';
 
-import { CountedWordmark } from './brand';
+import { AnbaroWordmark } from './brand';
 
 export type ShellRole = 'owner' | 'manager' | 'server' | 'custom';
 export type ShellPermission =
@@ -55,6 +56,7 @@ const icons: Record<string, LucideIcon> = {
   notifications: Bell,
   team: Users,
   billing: CreditCard,
+  support: Heart,
   settings: Settings,
 };
 
@@ -124,12 +126,12 @@ const primaryNavigation: Array<
     permission: 'user:manage',
     section: 'Workspace',
   },
+  // Billing is intentionally absent while Anbaro is free. The route, feature, and
+  // permission all still exist; only the way in is gone. See DONATION_URL.
   {
-    id: 'billing',
-    label: 'Billing',
-    href: '/billing',
-    permission: 'billing:manage',
-    ownerOnly: true,
+    id: 'support',
+    label: 'Support Anbaro',
+    href: '/support',
     section: 'Workspace',
   },
   {
@@ -210,7 +212,7 @@ export function WebApplicationShell({
       </a>
       <aside className="sidebar">
         <Link className="sidebar-brand" href="/dashboard">
-          <CountedWordmark dark size={30} />
+          <AnbaroWordmark dark size={30} />
         </Link>
         <nav aria-label="Primary navigation" style={{ display: 'contents' }}>
           <ul className="sidebar-nav" style={{ listStyle: 'none', margin: 0, padding: 0 }}>

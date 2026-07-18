@@ -1,11 +1,16 @@
 import type { PoolClient } from 'pg';
 
+import { BILLING_ENABLED } from '../billing/config.js';
 import { ApiError } from '../errors.js';
 
 type SubscriptionRow = { status: string; trial_end: Date | null };
 type EntitlementRow = { capacity: number };
 
 export async function assertOrganizationWritable(client: PoolClient): Promise<void> {
+  // Free tier: no subscription state may ever block a write, since there is no
+  // way for a user to pay their way out of a read-only lockout.
+  if (!BILLING_ENABLED) return;
+
   const subscription = await client.query<SubscriptionRow>(
     'SELECT status, trial_end FROM subscriptions ORDER BY created_at DESC LIMIT 1',
   );
@@ -33,9 +38,17 @@ export async function assertOrganizationWritable(client: PoolClient): Promise<vo
   }
 }
 
+/** `capacity: null` means unlimited, which is always the case while billing is off. */
 export async function getLocationCapacity(
   client: PoolClient,
-): Promise<{ used: number; capacity: number }> {
+): Promise<{ used: number; capacity: number | null }> {
+  if (!BILLING_ENABLED) {
+    const locations = await client.query<{ used: string }>(
+      "SELECT count(*)::text AS used FROM locations WHERE status = 'active'",
+    );
+    return { used: Number(locations.rows[0]?.used ?? 0), capacity: null };
+  }
+
   const [locations, entitlement] = await Promise.all([
     client.query<{ used: string }>(
       "SELECT count(*)::text AS used FROM locations WHERE status = 'active'",
@@ -51,11 +64,13 @@ export async function getLocationCapacity(
 }
 
 export async function assertLocationCapacity(client: PoolClient): Promise<void> {
+  if (!BILLING_ENABLED) return;
+
   // Serialize capacity checks per verified tenant so concurrent fifth-location
   // requests cannot both pass the pre-insert check.
   await client.query('SELECT pg_advisory_xact_lock(hashtext(app.current_organization_id()::text))');
   const { used, capacity } = await getLocationCapacity(client);
-  if (used >= capacity) {
+  if (capacity !== null && used >= capacity) {
     throw new ApiError(
       409,
       'LOCATION_CAPACITY_REACHED',

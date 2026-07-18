@@ -8,14 +8,24 @@ vi.mock('next/navigation', () => ({
 }));
 
 describe('web navigation shell', () => {
-  it('hides billing and team navigation from a Server role', () => {
+  // Support carries no permission: Anbaro is free and anyone may support it.
+  it('hides team navigation from a Server role', () => {
     const navigation = getWebNavigation({ role: 'server', permissions: new Set() });
     expect(navigation.map((item) => item.label)).toEqual([
       'Items',
       'Counts',
       'Notifications',
+      'Support Anbaro',
       'Settings',
     ]);
+  });
+
+  it('offers no route into billing while Anbaro is free', () => {
+    const navigation = getWebNavigation({
+      role: 'owner',
+      permissions: new Set(['billing:manage'] as const),
+    });
+    expect(navigation.map((item) => item.href)).not.toContain('/billing');
   });
 
   it('gives navigation items real routes instead of query parameters', () => {

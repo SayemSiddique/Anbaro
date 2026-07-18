@@ -1,6 +1,6 @@
 'use client';
 
-import { ApiClientError, type BillingOverview, type Location } from '@stock/contracts';
+import { ApiClientError, type BillingOverview, type Location } from '@anbaro/contracts';
 import { MapPin, Pencil, Plus } from 'lucide-react';
 import { useSearchParams } from 'next/navigation';
 import { useCallback, useEffect, useState, type FormEvent } from 'react';
@@ -21,7 +21,11 @@ export function LocationsFeature() {
   const { api, reload } = useSession();
   const confirmationPending = useSearchParams().get('billing') === 'confirming';
   const [locations, setLocations] = useState<Location[]>([]);
-  const [capacity, setCapacity] = useState({ used: 0, capacity: 4 });
+  // capacity === null means unlimited, which is always the case while Anbaro is free.
+  const [capacity, setCapacity] = useState<{ used: number; capacity: number | null }>({
+    used: 0,
+    capacity: null,
+  });
   const [draft, setDraft] = useState({ name: '', address: '' });
   const [editing, setEditing] = useState<Location | null>(null);
   const [error, setError] = useState('');
@@ -132,8 +136,16 @@ export function LocationsFeature() {
       <Card labelledBy="locations-title">
         <CardTitle
           action={
-            <Badge tone={capacity.used >= capacity.capacity ? 'warning' : 'neutral'}>
-              {capacity.used} of {capacity.capacity} used
+            <Badge
+              tone={
+                capacity.capacity !== null && capacity.used >= capacity.capacity
+                  ? 'warning'
+                  : 'neutral'
+              }
+            >
+              {capacity.capacity === null
+                ? `${capacity.used} active`
+                : `${capacity.used} of ${capacity.capacity} used`}
             </Badge>
           }
           id="locations-title"

@@ -80,9 +80,27 @@ export type Location = {
   address: string | null;
   status: 'active' | 'archived';
 };
+/** `capacity: null` means unlimited, which is the case while billing is disabled. */
 export type LocationListResponse = ApiSuccess<Location[]> & {
-  meta: { nextCursor: null; used: number; capacity: number };
+  meta: { nextCursor: null; used: number; capacity: number | null };
 };
+export type DeleteAccountRequest = { email: string; password: string };
+
+/**
+ * Anbaro is free. Support is voluntary and buys nothing — no feature, tier, or
+ * content is gated behind it, which is what keeps the link outside the scope of
+ * Apple's and Google's in-app purchase rules.
+ *
+ * This is the only place it is defined; web and Android both read it from here.
+ */
+export const DONATION_URL = 'https://buymeacoffee.com/samsid';
+
+/**
+ * iOS deliberately omits the support link. Apple treats donations to a developer
+ * (as opposed to a registered nonprofit) as needing In-App Purchase, and a first
+ * submission is the worst time to argue the point. Web and Android show it.
+ */
+export const DONATION_ENABLED_PLATFORMS = ['web', 'android'] as const;
 export type CreateLocationRequest = { name: string; address?: string | null };
 export type UpdateLocationRequest = Partial<CreateLocationRequest>;
 
@@ -94,7 +112,7 @@ export type BillingOverview = {
   planName: string;
   priceDescription: string;
   locationAddonPriceDescription: string;
-  locations: { used: number; capacity: number };
+  locations: { used: number; capacity: number | null };
 };
 export type BillingPlan = {
   id: string;
@@ -527,6 +545,24 @@ export class SessionApiClient {
 
   getCurrentUser(): Promise<MeResponse> {
     return this.request<MeResponse>('/me', { method: 'GET' }, true);
+  }
+
+  /**
+   * Irreversible. Deletes the account, and every workspace the user owns along
+   * with it. Local credentials are cleared even if the request fails, so a
+   * partially-deleted session cannot keep making authenticated calls.
+   */
+  async deleteAccount(input: DeleteAccountRequest): Promise<void> {
+    try {
+      await this.request<void>(
+        '/me',
+        { method: 'DELETE', body: JSON.stringify({ ...input, confirm: 'DELETE' }) },
+        true,
+      );
+    } finally {
+      this.options.setAccessToken(null);
+      await this.options.setRefreshToken?.(null);
+    }
   }
 
   async selectActiveOrganization(
