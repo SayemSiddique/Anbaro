@@ -6,6 +6,7 @@ import { listMemberships } from '../auth/repository.js';
 import {
   authenticateLogin,
   createLoginSession,
+  deleteOwnAccount,
   getAuthenticatedProfile,
   invalidateLoginSession,
   registerCredential,
@@ -29,6 +30,13 @@ const credentialSchema = z
 const loginSchema = credentialSchema.omit({ name: true });
 const refreshSchema = z.object({ refreshToken: z.string().min(32).max(512).optional() }).strict();
 const organizationSchema = z.object({ organizationId: z.string().uuid() }).strict();
+const deleteAccountSchema = z
+  .object({
+    email: z.string().trim().email().max(320),
+    password: z.string().min(8).max(256),
+    confirm: z.literal('DELETE'),
+  })
+  .strict();
 
 function parse<T>(schema: z.ZodType<T>, value: unknown): T {
   const result = schema.safeParse(value);
@@ -167,6 +175,33 @@ export async function registerAuthRoutes(app: FastifyInstance): Promise<void> {
           memberships,
         },
       };
+    },
+  );
+
+  // App Store guideline 5.1.1(v) requires account deletion to be reachable in-app.
+  app.delete(
+    '/api/v1/me',
+    { config: { authenticated: true, rateLimit: { max: 5, timeWindow: '1 hour' } } },
+    async (request, reply) => {
+      const auth = request.auth;
+      if (!auth) throw sessionInvalid();
+      const input = parse(deleteAccountSchema, request.body);
+      const outcome = await deleteOwnAccount({
+        userId: auth.userId,
+        email: input.email,
+        password: input.password,
+      });
+      clearRefreshCookie(reply);
+      request.log.info(
+        {
+          userId: auth.userId,
+          event: 'auth.account_deleted',
+          purgedOrganizations: outcome.purgedOrganizations,
+          anonymized: outcome.anonymized,
+        },
+        'Authentication event',
+      );
+      return reply.code(204).send();
     },
   );
 

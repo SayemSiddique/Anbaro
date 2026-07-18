@@ -1,5 +1,9 @@
-import { ApiClientError, type BillingOverview, type NotificationPreference } from '@stock/contracts';
-import { tokens } from '@stock/design-tokens';
+import {
+  ApiClientError,
+  DONATION_URL,
+  type NotificationPreference,
+} from '@anbaro/contracts';
+import { tokens } from '@anbaro/design-tokens';
 import { Link, type Href } from 'expo-router';
 import {
   ChevronRight,
@@ -10,7 +14,16 @@ import {
   type LucideIcon,
 } from 'lucide-react-native';
 import { useCallback, useEffect, useState } from 'react';
-import { Linking, Pressable, ScrollView, StyleSheet, Switch, Text, View } from 'react-native';
+import {
+  Linking,
+  Platform,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Switch,
+  Text,
+  View,
+} from 'react-native';
 
 import { useMobileSession } from '../../../src/components/app-shell';
 import { PrimaryButton, SecondaryButton, StatePanel } from '../../../src/components/ui';
@@ -50,7 +63,6 @@ const operationsLinks: { href: Href; icon: LucideIcon; title: string; detail: st
 
 export default function MoreScreen() {
   const { state, controller, reload } = useMobileSession();
-  const [billing, setBilling] = useState<BillingOverview | null>(null);
   const [preferences, setPreferences] = useState<NotificationPreference[]>([]);
   const [error, setError] = useState('');
   const [signingOut, setSigningOut] = useState(false);
@@ -59,11 +71,7 @@ export default function MoreScreen() {
     if (state.kind !== 'ready' || !state.user.activeOrganizationId) return;
     setError('');
     try {
-      const [billingResponse, preferenceResponse] = await Promise.all([
-        controller.getBilling(),
-        controller.getNotificationPreferences(),
-      ]);
-      setBilling(billingResponse.data);
+      const preferenceResponse = await controller.getNotificationPreferences();
       setPreferences(preferenceResponse.data);
     } catch (caught) {
       setError(caught instanceof ApiClientError ? caught.message : 'Could not load settings.');
@@ -102,7 +110,6 @@ export default function MoreScreen() {
   const membership = state.user.memberships.find(
     (candidate) => candidate.organizationId === state.user.activeOrganizationId,
   );
-  const webAppUrl = process.env.EXPO_PUBLIC_WEB_APP_URL ?? 'http://localhost:3000';
   return (
     <ScrollView contentContainerStyle={styles.content}>
       <View style={styles.panel}>
@@ -163,29 +170,25 @@ export default function MoreScreen() {
         ))}
       </View>
 
-      <View style={styles.panel}>
-        <Text accessibilityRole="header" style={styles.section}>
-          Plan &amp; billing
-        </Text>
-        {billing ? (
-          <>
-            <Text style={styles.detail}>
-              {billing.planName} · {billing.status.replace(/_/g, ' ')} · {billing.locations.used} of{' '}
-              {billing.locations.capacity} locations used.
-            </Text>
-            {billing.status === 'expired_readonly' ? (
-              <Text style={styles.detail}>
-                Your workspace is read-only until a plan is chosen.
-              </Text>
-            ) : null}
-            <PrimaryButton onPress={() => void Linking.openURL(`${webAppUrl}/billing`)}>
-              Manage plan on the web
-            </PrimaryButton>
-          </>
-        ) : (
-          <Text style={styles.detail}>Loading billing status…</Text>
-        )}
-      </View>
+      {/*
+        Support is deliberately hidden on iOS. Apple treats a donation to a developer
+        as needing In-App Purchase, and Anbaro takes no payments at all. Android and
+        web show it; iOS users can find it on the website.
+      */}
+      {Platform.OS !== 'ios' ? (
+        <View style={styles.panel}>
+          <Text accessibilityRole="header" style={styles.section}>
+            Support Anbaro
+          </Text>
+          <Text style={styles.detail}>
+            Anbaro is free, with every feature included. If it saves you time, you can leave a
+            tip. It unlocks nothing.
+          </Text>
+          <SecondaryButton onPress={() => void Linking.openURL(DONATION_URL)}>
+            Buy me a coffee
+          </SecondaryButton>
+        </View>
+      ) : null}
 
       <View style={styles.panel}>
         <Text accessibilityRole="header" style={styles.section}>
@@ -194,6 +197,20 @@ export default function MoreScreen() {
         <SecondaryButton disabled={signingOut} onPress={() => void signOut()}>
           {signingOut ? 'Signing out…' : 'Sign out'}
         </SecondaryButton>
+        <Link asChild href="/more/delete-account">
+          <Pressable
+            accessibilityRole="button"
+            style={({ pressed }) => [styles.linkRow, pressed && styles.linkRowPressed]}
+          >
+            <View style={styles.linkCopy}>
+              <Text style={styles.destructiveTitle}>Delete account</Text>
+              <Text style={styles.linkDetail}>
+                Permanently deletes your account and any workspace you own.
+              </Text>
+            </View>
+            <ChevronRight color={tokens.color.textMuted} size={18} strokeWidth={2} />
+          </Pressable>
+        </Link>
       </View>
 
       {error ? (
@@ -228,6 +245,7 @@ const styles = StyleSheet.create({
     minHeight: tokens.touchTarget.minimum + 4,
     paddingVertical: 6,
   },
+  destructiveTitle: { color: tokens.color.danger, fontSize: 16, fontWeight: '600' },
   linkRowPressed: { opacity: 0.6 },
   linkTitle: { color: tokens.color.text, fontSize: 16, fontWeight: '600' },
   panel: {

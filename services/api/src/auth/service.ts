@@ -13,6 +13,7 @@ import {
   revokeSession,
   rotateSession,
 } from './repository.js';
+import { withAccountDeletion } from '../db/client.js';
 import { invalidCredentials, sessionInvalid } from '../errors.js';
 
 export const ACCESS_TOKEN_TTL_SECONDS = 15 * 60;
@@ -92,6 +93,38 @@ export async function authenticateLogin(input: { email: string; password: string
 
 export async function registerCredential(input: { email: string; password: string; name: string }) {
   return registerUser(input.email, await hashPassword(input.password), input.name);
+}
+
+/**
+ * Irreversibly deletes the signed-in account. Re-entering the password is required
+ * because the action cannot be undone and destroys every workspace the user owns.
+ */
+export async function deleteOwnAccount(input: {
+  userId: string;
+  email: string;
+  password: string;
+}): Promise<{ purgedOrganizations: number; anonymized: boolean }> {
+  const user = await findUserByEmail(input.email);
+  if (
+    !user ||
+    user.id !== input.userId ||
+    user.status !== 'active' ||
+    !(await verifyPassword(user.password_hash, input.password))
+  ) {
+    throw invalidCredentials();
+  }
+
+  return withAccountDeletion(async (client) => {
+    const result = await client.query<{ purged_organizations: number; anonymized: boolean }>(
+      'SELECT * FROM app.delete_user_account($1)',
+      [input.userId],
+    );
+    const row = result.rows[0];
+    return {
+      purgedOrganizations: row?.purged_organizations ?? 0,
+      anonymized: row?.anonymized ?? false,
+    };
+  });
 }
 
 export async function rotateLoginSession(

@@ -10,7 +10,7 @@ import {
   type CreateStockEventRequest,
   type LoginRequest,
   type RegisterRequest,
-} from '@stock/contracts';
+} from '@anbaro/contracts';
 
 import {
   getCountQueueSnapshot,
@@ -93,6 +93,11 @@ export class MobileSessionController {
 
   async logout(): Promise<void> {
     await this.api.logout();
+  }
+
+  /** Irreversible. Deletes the account and every workspace the user owns. */
+  async deleteAccount(email: string, password: string): Promise<void> {
+    await this.api.deleteAccount({ email, password });
   }
 
   async createOrganization(name: string): Promise<void> {

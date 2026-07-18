@@ -95,6 +95,11 @@ export function buildApp(
     origin: (origin, callback) => {
       callback(null, !origin || webOrigins.has(origin));
     },
+    // @fastify/cors v11 defaults to GET,HEAD,POST only. The API also serves PUT,
+    // PATCH, and DELETE routes, and the web app is always a different origin than
+    // the API in production, so those methods must be listed explicitly or their
+    // preflight fails and the browser blocks the request.
+    methods: ['GET', 'HEAD', 'POST', 'PUT', 'PATCH', 'DELETE'],
     credentials: true,
   });
   void app.register(cookie);

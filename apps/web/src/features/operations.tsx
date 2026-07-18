@@ -6,7 +6,7 @@ import type {
   MembershipInvitation,
   PermissionGrantSet,
   TeamMembership,
-} from '@stock/contracts';
+} from '@anbaro/contracts';
 import { BarChart3, UserPlus, Users } from 'lucide-react';
 import { useCallback, useEffect, useState, type FormEvent } from 'react';
 
@@ -425,6 +425,86 @@ export function SettingsFeature() {
         <CardTitle id="account-settings" title="Signed-in account" />
         <p>{state.kind === 'ready' ? state.user.name : ''}</p>
       </Card>
+      <DeleteAccountCard />
     </div>
+  );
+}
+
+/**
+ * Account deletion must be reachable in-app to satisfy App Store guideline
+ * 5.1.1(v), and the same path serves GDPR erasure on web. Deleting an owner
+ * deletes their workspaces outright, so the confirmation is deliberately heavy:
+ * password re-entry plus typing DELETE.
+ */
+function DeleteAccountCard() {
+  const { api, signOut, state } = useSession();
+  const [open, setOpen] = useState(false);
+  const [password, setPassword] = useState('');
+  const [confirmation, setConfirmation] = useState('');
+  const [error, setError] = useState('');
+  const [busy, setBusy] = useState(false);
+
+  const email = state.kind === 'ready' ? state.user.email : '';
+
+  async function remove(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setError('');
+    setBusy(true);
+    try {
+      await api.deleteAccount({ email, password });
+      // The account is gone; clear local session state and return to the login screen.
+      await signOut();
+    } catch (caught) {
+      setError(apiErrorMessage(caught));
+      setBusy(false);
+    }
+  }
+
+  return (
+    <Card labelledBy="delete-account">
+      <CardTitle
+        id="delete-account"
+        subtitle="Permanently deletes your account. Every workspace you own is deleted with it, including all items, counts, and history. This cannot be undone."
+        title="Delete account"
+      />
+      {open ? (
+        <form className="form-grid" onSubmit={remove}>
+          <Field label="Confirm your password">
+            <Input
+              autoComplete="current-password"
+              onChange={(event) => setPassword(event.target.value)}
+              required
+              type="password"
+              value={password}
+            />
+          </Field>
+          <Field label="Type DELETE to confirm">
+            <Input
+              onChange={(event) => setConfirmation(event.target.value)}
+              required
+              value={confirmation}
+            />
+          </Field>
+          {error ? <p role="alert">{error}</p> : null}
+          <div className="row" style={{ display: 'flex', gap: 8 }}>
+            <Button
+              disabled={confirmation !== 'DELETE' || !password}
+              loading={busy}
+              tone="danger"
+              type="submit"
+            >
+              Permanently delete my account
+            </Button>
+            <Button onClick={() => setOpen(false)} tone="secondary" type="button">
+              Cancel
+            </Button>
+          </div>
+        </form>
+      ) : (
+        <Button onClick={() => setOpen(true)} tone="secondary" type="button">
+          Delete account
+        </Button>
+      )}
+    </Card>
   );
 }

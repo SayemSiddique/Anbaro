@@ -24,6 +24,26 @@ describe('Session 13 HTTP hardening', () => {
     expect(response.headers['referrer-policy']).toBe('strict-origin-when-cross-origin');
   });
 
+  // @fastify/cors v11 defaults to GET,HEAD,POST. The web app is a different origin
+  // than the API in production, so omitting the rest silently breaks every PUT,
+  // PATCH, and DELETE route in the browser — including account deletion.
+  it('allows the mutating methods the API actually serves through CORS preflight', async () => {
+    const origin = process.env.WEB_ORIGIN ?? 'http://localhost:3000';
+    const response = await app.inject({
+      method: 'OPTIONS',
+      url: '/api/v1/me',
+      headers: {
+        origin,
+        'access-control-request-method': 'DELETE',
+      },
+    });
+
+    const allowed = String(response.headers['access-control-allow-methods'] ?? '');
+    for (const method of ['GET', 'POST', 'PUT', 'PATCH', 'DELETE']) {
+      expect(allowed).toContain(method);
+    }
+  });
+
   it('rejects malformed JSON without exposing a stack trace', async () => {
     const response = await app.inject({
       method: 'POST',
