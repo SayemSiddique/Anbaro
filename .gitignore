@@ -1,0 +1,39 @@
+# Dependencies and build output
+node_modules/
+.pnpm-store/
+.next/
+dist/
+coverage/
+.expo/
+.expo-shared/
+web-build/
+*.tsbuildinfo
+
+# Logs and OS noise
+*.log
+.DS_Store
+Thumbs.db
+
+# Secrets — .env.example holds local placeholders only and stays tracked
+.env
+.env.local
+.env.*.local
+!.env.example
+*.pem
+*.key
+*.p12
+*.pfx
+secrets/
+
+# Local data volumes
+postgres-data/
+
+# Editor and local tooling
+.idea/
+.vscode/
+.claude/
+
+# Internal planning / setup notes — not for public repo
+SETUP_REQUIRED.md
+docs/product/
+

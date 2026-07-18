@@ -1,0 +1,26 @@
+{
+  "name": "stock-management-saas",
+  "private": true,
+  "version": "0.0.0",
+  "packageManager": "pnpm@10.14.0",
+  "engines": {
+    "node": ">=22 <25",
+    "pnpm": ">=10"
+  },
+  "scripts": {
+    "dev": "pnpm --parallel --filter @stock/web --filter @stock/mobile --filter @stock/api dev",
+    "dev:web": "pnpm --filter @stock/web dev",
+    "dev:mobile": "pnpm --filter @stock/mobile dev",
+    "dev:api": "pnpm --filter @stock/api dev",
+    "lint": "pnpm -r --if-present lint",
+    "typecheck": "pnpm -r --if-present typecheck",
+    "test": "pnpm -r --if-present test",
+    "build": "pnpm --filter @stock/contracts build && pnpm --filter @stock/design-tokens build && pnpm --filter @stock/api build && pnpm --filter @stock/web build && pnpm --filter @stock/mobile build",
+    "format:check": "prettier --check .",
+    "format": "prettier --write ."
+  },
+  "devDependencies": {
+    "prettier": "^3.6.2",
+    "typescript": "^5.9.2"
+  }
+}
