@@ -1,6 +1,6 @@
-import type { CountSession, CountSessionSummary, Location } from '@stock/contracts';
-import { ApiClientError, fitsStockQuantity } from '@stock/contracts';
-import { tokens } from '@stock/design-tokens';
+import type { CountSession, CountSessionSummary, Location } from '@anbaro/contracts';
+import { ApiClientError, fitsStockQuantity } from '@anbaro/contracts';
+import { tokens } from '@anbaro/design-tokens';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 

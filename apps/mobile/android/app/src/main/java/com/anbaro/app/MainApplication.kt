@@ -1,4 +1,4 @@
-package com.counted.app
+package com.anbaro.app
 
 import android.app.Application
 import android.content.res.Configuration

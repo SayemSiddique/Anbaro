@@ -4,7 +4,7 @@ import {
   ApiClientError,
   type CreateCountSubmissionRequest,
   type SessionApiClient,
-} from '@stock/contracts';
+} from '@anbaro/contracts';
 
 export type QueuedCountSubmission = CreateCountSubmissionRequest & {
   sessionId: string;

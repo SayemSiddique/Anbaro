@@ -1,6 +1,6 @@
-import type { Notification, NotificationPreference, ReorderSuggestion } from '@stock/contracts';
-import { ApiClientError } from '@stock/contracts';
-import { tokens } from '@stock/design-tokens';
+import type { Notification, NotificationPreference, ReorderSuggestion } from '@anbaro/contracts';
+import { ApiClientError } from '@anbaro/contracts';
+import { tokens } from '@anbaro/design-tokens';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 

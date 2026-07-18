@@ -1,6 +1,6 @@
 'use client';
 
-import type { Notification, NotificationPreference } from '@stock/contracts';
+import type { Notification, NotificationPreference } from '@anbaro/contracts';
 import { Bell, BellOff, Check } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
 

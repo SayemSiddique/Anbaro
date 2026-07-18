@@ -1,4 +1,4 @@
-import { ApiClientError } from '@stock/contracts';
+import { ApiClientError } from '@anbaro/contracts';
 
 import {
   syncPendingCountSubmissions,

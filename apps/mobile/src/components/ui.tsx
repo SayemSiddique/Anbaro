@@ -10,9 +10,9 @@ import {
   tokens,
   unitsByKind,
   type StockCondition,
-} from '@stock/design-tokens';
+} from '@anbaro/design-tokens';
 
-import { CountedMark } from './brand';
+import { AnbaroMark } from './brand';
 
 export function PrimaryButton({
   children,
@@ -197,12 +197,12 @@ export function UnitPicker({
 export function LoadingPanel() {
   return (
     <View
-      accessibilityLabel="Loading your Counted workspace"
+      accessibilityLabel="Loading your Anbaro workspace"
       accessibilityRole="progressbar"
       style={styles.loading}
     >
-      <CountedMark size={64} />
-      <Text style={styles.loadingName}>Counted</Text>
+      <AnbaroMark size={64} />
+      <Text style={styles.loadingName}>Anbaro</Text>
       <ActivityIndicator color={tokens.color.primary} />
       <Text style={styles.panelDetail}>Loading your workspace…</Text>
     </View>

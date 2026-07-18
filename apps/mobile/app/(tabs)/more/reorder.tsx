@@ -1,5 +1,5 @@
-import { ApiClientError, type ReorderSuggestion } from '@stock/contracts';
-import { formatQuantity, tokens, unitShortLabel } from '@stock/design-tokens';
+import { ApiClientError, type ReorderSuggestion } from '@anbaro/contracts';
+import { formatQuantity, tokens, unitShortLabel } from '@anbaro/design-tokens';
 import { ClipboardCheck, Truck } from 'lucide-react-native';
 import { useCallback, useEffect, useState } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';

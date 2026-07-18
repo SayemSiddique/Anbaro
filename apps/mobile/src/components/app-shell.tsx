@@ -1,5 +1,5 @@
-import type { CurrentUser } from '@stock/contracts';
-import { ApiClientError } from '@stock/contracts';
+import type { CurrentUser } from '@anbaro/contracts';
+import { ApiClientError } from '@anbaro/contracts';
 import {
   createContext,
   useCallback,
@@ -11,10 +11,10 @@ import {
 } from 'react';
 import { AppState, StyleSheet, Text, TextInput, View } from 'react-native';
 
-import { tokens } from '@stock/design-tokens';
+import { tokens } from '@anbaro/design-tokens';
 
 import { MobileSessionController } from '../lib/session';
-import { CountedWordmark } from './brand';
+import { AnbaroWordmark } from './brand';
 import { LoadingPanel, PrimaryButton, SecondaryButton, StatePanel } from './ui';
 
 type MobileSessionState =
@@ -107,16 +107,16 @@ function MobileAccessForm({
   return (
     <View style={styles.form}>
       <View style={styles.brand}>
-        <CountedWordmark size={44} />
+        <AnbaroWordmark size={44} />
         <Text style={styles.tagline}>Inventory that adds up.</Text>
       </View>
       <Text accessibilityRole="header" style={styles.title}>
-        {mode === 'sign-up' ? 'Start your free trial' : 'Welcome back'}
+        {mode === 'sign-up' ? 'Create your free account' : 'Welcome back'}
       </Text>
       <Text style={styles.detail}>
         {mode === 'sign-up'
           ? 'No card is required. Create your organization and first location next.'
-          : 'Sign in to your Counted workspace.'}
+          : 'Sign in to your Anbaro workspace.'}
       </Text>
       {mode === 'sign-up' ? (
         <TextInput
@@ -156,7 +156,7 @@ function MobileAccessForm({
         {working ? 'Working…' : mode === 'sign-up' ? 'Create account' : 'Sign in'}
       </PrimaryButton>
       <SecondaryButton onPress={() => setMode(mode === 'sign-up' ? 'sign-in' : 'sign-up')}>
-        {mode === 'sign-up' ? 'I already have an account' : 'New to Counted? Start a free trial'}
+        {mode === 'sign-up' ? 'I already have an account' : 'New to Anbaro? Create a free account'}
       </SecondaryButton>
     </View>
   );

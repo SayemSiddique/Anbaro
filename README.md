@@ -1,10 +1,10 @@
-# Counted
+# Anbaro
 
 **Know what you have, where it is, and what's running low — without the spreadsheet chaos.**
 
-Counted is inventory management built for small businesses that have outgrown a spreadsheet but don't need — or want to pay for — enterprise software. Retail shops, restaurants and cafes, warehouses, salons, offices: if you keep physical stock, Counted keeps track of it.
+Anbaro is inventory management built for small businesses that have outgrown a spreadsheet but don't need — or want to pay for — enterprise software. Retail shops, restaurants and cafes, warehouses, salons, offices: if you keep physical stock, Anbaro keeps track of it.
 
-## Why teams switch to Counted
+## Why teams switch to Anbaro
 
 - **A generous free tier, honest pricing after that.** No bait-and-switch upgrade walls hiding basic features behind an enterprise quote.
 - **Counts that survive a bad WiFi day.** Start a stock count on your phone, lose signal in the back room, keep going — it syncs the moment you're back online.
@@ -16,7 +16,7 @@ Counted is inventory management built for small businesses that have outgrown a 
 
 ## Who it's for
 
-Counted is deliberately general-purpose. Whether you're managing a stockroom, a walk-in cooler, a supply closet, or a warehouse floor, the same simple workflow applies: count what's there, know where it lives, get told when it's low. Guided templates tailor the setup for common trades (retail, food service, and more) without locking you into one industry's assumptions.
+Anbaro is deliberately general-purpose. Whether you're managing a stockroom, a walk-in cooler, a supply closet, or a warehouse floor, the same simple workflow applies: count what's there, know where it lives, get told when it's low. Guided templates tailor the setup for common trades (retail, food service, and more) without locking you into one industry's assumptions.
 
 ## What's included
 
@@ -34,8 +34,13 @@ Counted is deliberately general-purpose. Whether you're managing a stockroom, a 
 
 ## Where you can use it
 
-Counted runs as a web app for the office desk and a native mobile app for the stockroom floor, sharing the same data in real time — count on your phone, review on your laptop.
+Anbaro runs as a web app for the office desk and a native mobile app for the stockroom floor, sharing the same data in real time — count on your phone, review on your laptop.
 
 ---
 
-Interested in trying Counted or want to learn more? Reach out — details coming soon.
+Interested in trying Anbaro or want to learn more? Reach out — details coming soon.
+
+## Launching Anbaro
+
+The production hosting, domain, billing, and store-release checklist lives in
+[the Anbaro launch guide](docs/operations/launch-anbaro.md).

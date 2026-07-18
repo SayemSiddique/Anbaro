@@ -1,6 +1,6 @@
 'use client';
 
-import type { ItemWithStock, Supplier, SupplierMapping } from '@stock/contracts';
+import type { ItemWithStock, Supplier, SupplierMapping } from '@anbaro/contracts';
 import { Plus, Trash2, Truck } from 'lucide-react';
 import { useCallback, useEffect, useState, type FormEvent } from 'react';
 
@@ -107,7 +107,7 @@ export function SuppliersFeature() {
       <Card labelledBy="suppliers-title">
         <CardTitle
           id="suppliers-title"
-          subtitle="Reference data for reorder recommendations. Counted never places orders for you."
+          subtitle="Reference data for reorder recommendations. Anbaro never places orders for you."
           title="Suppliers"
         />
         {!suppliers.length ? (

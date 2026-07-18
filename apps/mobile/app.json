@@ -1,11 +1,11 @@
 {
   "expo": {
-    "name": "Counted",
-    "slug": "counted",
-    "version": "0.0.0",
+    "name": "Anbaro",
+    "slug": "anbaro",
+    "version": "1.0.0",
     "orientation": "default",
     "userInterfaceStyle": "light",
-    "scheme": "counted",
+    "scheme": "anbaro",
     "backgroundColor": "#F7EBE8",
     "primaryColor": "#E85E5E",
     "icon": "./assets/icon.png",
@@ -25,7 +25,7 @@
       [
         "expo-camera",
         {
-          "cameraPermission": "Counted uses the camera to scan item barcodes for instant stock lookup and counting."
+          "cameraPermission": "Anbaro uses the camera to scan item barcodes for instant stock lookup and counting."
         }
       ]
     ],
@@ -34,10 +34,12 @@
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.counted.app"
+      "bundleIdentifier": "com.anbaro.app",
+      "buildNumber": "1"
     },
     "android": {
-      "package": "com.counted.app",
+      "package": "com.anbaro.app",
+      "versionCode": 1,
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#1E1E24"

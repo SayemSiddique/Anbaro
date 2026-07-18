@@ -1,5 +1,5 @@
 {
-  "name": "@stock/web",
+  "name": "@anbaro/web",
   "private": true,
   "version": "0.0.0",
   "scripts": {
@@ -11,8 +11,8 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@stock/contracts": "workspace:*",
-    "@stock/design-tokens": "workspace:*",
+    "@anbaro/contracts": "workspace:*",
+    "@anbaro/design-tokens": "workspace:*",
     "framer-motion": "^12.42.2",
     "lucide-react": "^1.24.0",
     "next": "15.5.2",

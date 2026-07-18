@@ -5,12 +5,12 @@ import './globals.css';
 
 export const metadata: Metadata = {
   title: {
-    default: 'Counted — Inventory that adds up',
-    template: '%s · Counted',
+    default: 'Anbaro — Inventory that adds up',
+    template: '%s · Anbaro',
   },
   description:
-    'Counted is simple multi-location inventory for any business: know what you have, where it is, and what is running low — with guided counts, barcode scanning, and low-stock alerts.',
-  applicationName: 'Counted',
+    'Anbaro is simple multi-location inventory for any business: know what you have, where it is, and what is running low — with guided counts, barcode scanning, and low-stock alerts.',
+  applicationName: 'Anbaro',
 };
 
 export const viewport: Viewport = {

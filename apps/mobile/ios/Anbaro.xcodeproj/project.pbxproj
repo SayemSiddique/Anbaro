@@ -9,7 +9,7 @@
 /* Begin PBXBuildFile section */
 		13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 13B07FB51A68108700A75B9A /* Images.xcassets */; };
 		3E461D99554A48A4959DE609 /* SplashScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = AA286B85B6C04FC6940260E9 /* SplashScreen.storyboard */; };
-		8546622B9B9E8B31BC28EB43 /* libPods-Counted.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 2F8A4CBFFC6FB32B8A9F95E4 /* libPods-Counted.a */; };
+		8546622B9B9E8B31BC28EB43 /* libPods-Anbaro.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 2F8A4CBFFC6FB32B8A9F95E4 /* libPods-Anbaro.a */; };
 		BB2F792D24A3F905000567C9 /* Expo.plist in Resources */ = {isa = PBXBuildFile; fileRef = BB2F792C24A3F905000567C9 /* Expo.plist */; };
 		CD0EE2D7A86E10D4FF0059C8 /* ExpoModulesProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = C81870E1B7188643610C4765 /* ExpoModulesProvider.swift */; };
 		F11748422D0307B40044C1D9 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = F11748412D0307B40044C1D9 /* AppDelegate.swift */; };
@@ -17,19 +17,19 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
-		13B07F961A680F5B00A75B9A /* Counted.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Counted.app; sourceTree = BUILT_PRODUCTS_DIR; };
-		13B07FB51A68108700A75B9A /* Images.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; name = Images.xcassets; path = Counted/Images.xcassets; sourceTree = "<group>"; };
-		13B07FB61A68108700A75B9A /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = Info.plist; path = Counted/Info.plist; sourceTree = "<group>"; };
-		1CD84196C80E47EB04E7F947 /* Pods-Counted.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Counted.release.xcconfig"; path = "Target Support Files/Pods-Counted/Pods-Counted.release.xcconfig"; sourceTree = "<group>"; };
-		2F8A4CBFFC6FB32B8A9F95E4 /* libPods-Counted.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-Counted.a"; sourceTree = BUILT_PRODUCTS_DIR; };
-		316025AEA5DCB0F193BAE19B /* Pods-Counted.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Counted.debug.xcconfig"; path = "Target Support Files/Pods-Counted/Pods-Counted.debug.xcconfig"; sourceTree = "<group>"; };
-		6182731DBF14F55CE4D70FE2 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; includeInIndex = 1; name = PrivacyInfo.xcprivacy; path = Counted/PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
-		AA286B85B6C04FC6940260E9 /* SplashScreen.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; name = SplashScreen.storyboard; path = Counted/SplashScreen.storyboard; sourceTree = "<group>"; };
+		13B07F961A680F5B00A75B9A /* Anbaro.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Anbaro.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		13B07FB51A68108700A75B9A /* Images.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; name = Images.xcassets; path = Anbaro/Images.xcassets; sourceTree = "<group>"; };
+		13B07FB61A68108700A75B9A /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = Info.plist; path = Anbaro/Info.plist; sourceTree = "<group>"; };
+		1CD84196C80E47EB04E7F947 /* Pods-Anbaro.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Anbaro.release.xcconfig"; path = "Target Support Files/Pods-Anbaro/Pods-Anbaro.release.xcconfig"; sourceTree = "<group>"; };
+		2F8A4CBFFC6FB32B8A9F95E4 /* libPods-Anbaro.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-Anbaro.a"; sourceTree = BUILT_PRODUCTS_DIR; };
+		316025AEA5DCB0F193BAE19B /* Pods-Anbaro.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Anbaro.debug.xcconfig"; path = "Target Support Files/Pods-Anbaro/Pods-Anbaro.debug.xcconfig"; sourceTree = "<group>"; };
+		6182731DBF14F55CE4D70FE2 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; includeInIndex = 1; name = PrivacyInfo.xcprivacy; path = Anbaro/PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
+		AA286B85B6C04FC6940260E9 /* SplashScreen.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; name = SplashScreen.storyboard; path = Anbaro/SplashScreen.storyboard; sourceTree = "<group>"; };
 		BB2F792C24A3F905000567C9 /* Expo.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = Expo.plist; sourceTree = "<group>"; };
-		C81870E1B7188643610C4765 /* ExpoModulesProvider.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = ExpoModulesProvider.swift; path = "Pods/Target Support Files/Pods-Counted/ExpoModulesProvider.swift"; sourceTree = "<group>"; };
+		C81870E1B7188643610C4765 /* ExpoModulesProvider.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = ExpoModulesProvider.swift; path = "Pods/Target Support Files/Pods-Anbaro/ExpoModulesProvider.swift"; sourceTree = "<group>"; };
 		ED297162215061F000B7C4FE /* JavaScriptCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = JavaScriptCore.framework; path = System/Library/Frameworks/JavaScriptCore.framework; sourceTree = SDKROOT; };
-		F11748412D0307B40044C1D9 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = AppDelegate.swift; path = Counted/AppDelegate.swift; sourceTree = "<group>"; };
-		F11748442D0722820044C1D9 /* Counted-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "Counted-Bridging-Header.h"; path = "Counted/Counted-Bridging-Header.h"; sourceTree = "<group>"; };
+		F11748412D0307B40044C1D9 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = AppDelegate.swift; path = Anbaro/AppDelegate.swift; sourceTree = "<group>"; };
+		F11748442D0722820044C1D9 /* Anbaro-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "Anbaro-Bridging-Header.h"; path = "Anbaro/Anbaro-Bridging-Header.h"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -37,32 +37,32 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				8546622B9B9E8B31BC28EB43 /* libPods-Counted.a in Frameworks */,
+				8546622B9B9E8B31BC28EB43 /* libPods-Anbaro.a in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
-		13B07FAE1A68108700A75B9A /* Counted */ = {
+		13B07FAE1A68108700A75B9A /* Anbaro */ = {
 			isa = PBXGroup;
 			children = (
 				F11748412D0307B40044C1D9 /* AppDelegate.swift */,
-				F11748442D0722820044C1D9 /* Counted-Bridging-Header.h */,
+				F11748442D0722820044C1D9 /* Anbaro-Bridging-Header.h */,
 				BB2F792B24A3F905000567C9 /* Supporting */,
 				13B07FB51A68108700A75B9A /* Images.xcassets */,
 				13B07FB61A68108700A75B9A /* Info.plist */,
 				AA286B85B6C04FC6940260E9 /* SplashScreen.storyboard */,
 				6182731DBF14F55CE4D70FE2 /* PrivacyInfo.xcprivacy */,
 			);
-			name = Counted;
+			name = Anbaro;
 			sourceTree = "<group>";
 		};
 		2D16E6871FA4F8E400B85C8A /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
 				ED297162215061F000B7C4FE /* JavaScriptCore.framework */,
-				2F8A4CBFFC6FB32B8A9F95E4 /* libPods-Counted.a */,
+				2F8A4CBFFC6FB32B8A9F95E4 /* libPods-Anbaro.a */,
 			);
 			name = Frameworks;
 			sourceTree = "<group>";
@@ -70,19 +70,19 @@
 		3C9907110F927780D1772A07 /* Pods */ = {
 			isa = PBXGroup;
 			children = (
-				316025AEA5DCB0F193BAE19B /* Pods-Counted.debug.xcconfig */,
-				1CD84196C80E47EB04E7F947 /* Pods-Counted.release.xcconfig */,
+				316025AEA5DCB0F193BAE19B /* Pods-Anbaro.debug.xcconfig */,
+				1CD84196C80E47EB04E7F947 /* Pods-Anbaro.release.xcconfig */,
 			);
 			name = Pods;
 			path = Pods;
 			sourceTree = "<group>";
 		};
-		485FF5212E55DFD6E748A9C3 /* Counted */ = {
+		485FF5212E55DFD6E748A9C3 /* Anbaro */ = {
 			isa = PBXGroup;
 			children = (
 				C81870E1B7188643610C4765 /* ExpoModulesProvider.swift */,
 			);
-			name = Counted;
+			name = Anbaro;
 			sourceTree = "<group>";
 		};
 		832341AE1AAA6A7D00B99B32 /* Libraries */ = {
@@ -95,7 +95,7 @@
 		83CBB9F61A601CBA00E9B192 = {
 			isa = PBXGroup;
 			children = (
-				13B07FAE1A68108700A75B9A /* Counted */,
+				13B07FAE1A68108700A75B9A /* Anbaro */,
 				832341AE1AAA6A7D00B99B32 /* Libraries */,
 				83CBBA001A601CBA00E9B192 /* Products */,
 				2D16E6871FA4F8E400B85C8A /* Frameworks */,
@@ -110,7 +110,7 @@
 		83CBBA001A601CBA00E9B192 /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				13B07F961A680F5B00A75B9A /* Counted.app */,
+				13B07F961A680F5B00A75B9A /* Anbaro.app */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -118,7 +118,7 @@
 		B4CAEA632CA8985648CFD8E3 /* ExpoModulesProviders */ = {
 			isa = PBXGroup;
 			children = (
-				485FF5212E55DFD6E748A9C3 /* Counted */,
+				485FF5212E55DFD6E748A9C3 /* Anbaro */,
 			);
 			name = ExpoModulesProviders;
 			sourceTree = "<group>";
@@ -129,15 +129,15 @@
 				BB2F792C24A3F905000567C9 /* Expo.plist */,
 			);
 			name = Supporting;
-			path = Counted/Supporting;
+			path = Anbaro/Supporting;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
-		13B07F861A680F5B00A75B9A /* Counted */ = {
+		13B07F861A680F5B00A75B9A /* Anbaro */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 13B07F931A680F5B00A75B9A /* Build configuration list for PBXNativeTarget "Counted" */;
+			buildConfigurationList = 13B07F931A680F5B00A75B9A /* Build configuration list for PBXNativeTarget "Anbaro" */;
 			buildPhases = (
 				08A4A3CD28434E44B6B9DE2E /* [CP] Check Pods Manifest.lock */,
 				765884A2CD92432E6D0B3E66 /* [Expo] Configure project */,
@@ -152,9 +152,9 @@
 			);
 			dependencies = (
 			);
-			name = Counted;
-			productName = Counted;
-			productReference = 13B07F961A680F5B00A75B9A /* Counted.app */;
+			name = Anbaro;
+			productName = Anbaro;
+			productReference = 13B07F961A680F5B00A75B9A /* Anbaro.app */;
 			productType = "com.apple.product-type.application";
 		};
 /* End PBXNativeTarget section */
@@ -170,7 +170,7 @@
 					};
 				};
 			};
-			buildConfigurationList = 83CBB9FA1A601CBA00E9B192 /* Build configuration list for PBXProject "Counted" */;
+			buildConfigurationList = 83CBB9FA1A601CBA00E9B192 /* Build configuration list for PBXProject "Anbaro" */;
 			compatibilityVersion = "Xcode 3.2";
 			developmentRegion = en;
 			hasScannedForEncodings = 0;
@@ -183,7 +183,7 @@
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
-				13B07F861A680F5B00A75B9A /* Counted */,
+				13B07F861A680F5B00A75B9A /* Anbaro */,
 			);
 		};
 /* End PBXProject section */
@@ -235,7 +235,7 @@
 			outputFileListPaths = (
 			);
 			outputPaths = (
-				"$(DERIVED_FILE_DIR)/Pods-Counted-checkManifestLockResult.txt",
+				"$(DERIVED_FILE_DIR)/Pods-Anbaro-checkManifestLockResult.txt",
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
@@ -248,7 +248,7 @@
 			files = (
 			);
 			inputPaths = (
-				"${PODS_ROOT}/Target Support Files/Pods-Counted/Pods-Counted-frameworks.sh",
+				"${PODS_ROOT}/Target Support Files/Pods-Anbaro/Pods-Anbaro-frameworks.sh",
 				"${PODS_XCFRAMEWORKS_BUILD_DIR}/React-Core-prebuilt/React.framework/React",
 				"${PODS_XCFRAMEWORKS_BUILD_DIR}/ReactNativeDependencies/ReactNativeDependencies.framework/ReactNativeDependencies",
 				"${PODS_XCFRAMEWORKS_BUILD_DIR}/hermes-engine/Pre-built/hermes.framework/hermes",
@@ -261,7 +261,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-Counted/Pods-Counted-frameworks.sh\"\n";
+			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-Anbaro/Pods-Anbaro-frameworks.sh\"\n";
 			showEnvVarsInLog = 0;
 		};
 		765884A2CD92432E6D0B3E66 /* [Expo] Configure project */ = {
@@ -275,18 +275,18 @@
 			inputPaths = (
 				"$(SRCROOT)/.xcode.env",
 				"$(SRCROOT)/.xcode.env.local",
-				"$(SRCROOT)/Counted/Counted.entitlements",
-				"$(SRCROOT)/Pods/Target Support Files/Pods-Counted/expo-configure-project.sh",
+				"$(SRCROOT)/Anbaro/Anbaro.entitlements",
+				"$(SRCROOT)/Pods/Target Support Files/Pods-Anbaro/expo-configure-project.sh",
 			);
 			name = "[Expo] Configure project";
 			outputFileListPaths = (
 			);
 			outputPaths = (
-				"$(SRCROOT)/Pods/Target Support Files/Pods-Counted/ExpoModulesProvider.swift",
+				"$(SRCROOT)/Pods/Target Support Files/Pods-Anbaro/ExpoModulesProvider.swift",
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "# This script configures Expo modules and generates the modules provider file.\nbash -l -c \"./Pods/Target\\ Support\\ Files/Pods-Counted/expo-configure-project.sh\"\n";
+			shellScript = "# This script configures Expo modules and generates the modules provider file.\nbash -l -c \"./Pods/Target\\ Support\\ Files/Pods-Anbaro/expo-configure-project.sh\"\n";
 		};
 		800E24972A6A228C8D4807E9 /* [CP] Copy Pods Resources */ = {
 			isa = PBXShellScriptBuildPhase;
@@ -294,10 +294,11 @@
 			files = (
 			);
 			inputPaths = (
-				"${PODS_ROOT}/Target Support Files/Pods-Counted/Pods-Counted-resources.sh",
+				"${PODS_ROOT}/Target Support Files/Pods-Anbaro/Pods-Anbaro-resources.sh",
 				"${PODS_CONFIGURATION_BUILD_DIR}/EXConstants/EXConstants.bundle",
 				"${PODS_CONFIGURATION_BUILD_DIR}/EXConstants/ExpoConstants_privacy.bundle",
 				"${PODS_CONFIGURATION_BUILD_DIR}/ExpoFileSystem/ExpoFileSystem_privacy.bundle",
+				"${PODS_CONFIGURATION_BUILD_DIR}/RNSVG/RNSVGFilters.bundle",
 				"${PODS_CONFIGURATION_BUILD_DIR}/React-Core/React-Core_privacy.bundle",
 				"${PODS_CONFIGURATION_BUILD_DIR}/React-cxxreact/React-cxxreact_privacy.bundle",
 			);
@@ -306,12 +307,13 @@
 				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/EXConstants.bundle",
 				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/ExpoConstants_privacy.bundle",
 				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/ExpoFileSystem_privacy.bundle",
+				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/RNSVGFilters.bundle",
 				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/React-Core_privacy.bundle",
 				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/React-cxxreact_privacy.bundle",
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-Counted/Pods-Counted-resources.sh\"\n";
+			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-Anbaro/Pods-Anbaro-resources.sh\"\n";
 			showEnvVarsInLog = 0;
 		};
 /* End PBXShellScriptBuildPhase section */
@@ -331,18 +333,18 @@
 /* Begin XCBuildConfiguration section */
 		13B07F941A680F5B00A75B9A /* Debug */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = 316025AEA5DCB0F193BAE19B /* Pods-Counted.debug.xcconfig */;
+			baseConfigurationReference = 316025AEA5DCB0F193BAE19B /* Pods-Anbaro.debug.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;
-				CODE_SIGN_ENTITLEMENTS = Counted/Counted.entitlements;
+				CODE_SIGN_ENTITLEMENTS = Anbaro/Anbaro.entitlements;
 				CURRENT_PROJECT_VERSION = 1;
 				ENABLE_BITCODE = NO;
 				GCC_PREPROCESSOR_DEFINITIONS = (
 					"$(inherited)",
 					"FB_SONARKIT_ENABLED=1",
 				);
-				INFOPLIST_FILE = Counted/Info.plist;
+				INFOPLIST_FILE = Anbaro/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 15.1;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -355,9 +357,9 @@
 					"-lc++",
 				);
 				OTHER_SWIFT_FLAGS = "$(inherited) -D EXPO_CONFIGURATION_DEBUG";
-				PRODUCT_BUNDLE_IDENTIFIER = com.counted.app;
-				PRODUCT_NAME = Counted;
-				SWIFT_OBJC_BRIDGING_HEADER = "Counted/Counted-Bridging-Header.h";
+				PRODUCT_BUNDLE_IDENTIFIER = com.anbaro.app;
+				PRODUCT_NAME = Anbaro;
+				SWIFT_OBJC_BRIDGING_HEADER = "Anbaro/Anbaro-Bridging-Header.h";
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
@@ -367,13 +369,13 @@
 		};
 		13B07F951A680F5B00A75B9A /* Release */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = 1CD84196C80E47EB04E7F947 /* Pods-Counted.release.xcconfig */;
+			baseConfigurationReference = 1CD84196C80E47EB04E7F947 /* Pods-Anbaro.release.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;
-				CODE_SIGN_ENTITLEMENTS = Counted/Counted.entitlements;
+				CODE_SIGN_ENTITLEMENTS = Anbaro/Anbaro.entitlements;
 				CURRENT_PROJECT_VERSION = 1;
-				INFOPLIST_FILE = Counted/Info.plist;
+				INFOPLIST_FILE = Anbaro/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 15.1;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -386,9 +388,9 @@
 					"-lc++",
 				);
 				OTHER_SWIFT_FLAGS = "$(inherited) -D EXPO_CONFIGURATION_RELEASE";
-				PRODUCT_BUNDLE_IDENTIFIER = com.counted.app;
-				PRODUCT_NAME = Counted;
-				SWIFT_OBJC_BRIDGING_HEADER = "Counted/Counted-Bridging-Header.h";
+				PRODUCT_BUNDLE_IDENTIFIER = com.anbaro.app;
+				PRODUCT_NAME = Anbaro;
+				SWIFT_OBJC_BRIDGING_HEADER = "Anbaro/Anbaro-Bridging-Header.h";
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
 				VERSIONING_SYSTEM = "apple-generic";
@@ -516,7 +518,7 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		13B07F931A680F5B00A75B9A /* Build configuration list for PBXNativeTarget "Counted" */ = {
+		13B07F931A680F5B00A75B9A /* Build configuration list for PBXNativeTarget "Anbaro" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				13B07F941A680F5B00A75B9A /* Debug */,
@@ -525,7 +527,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		83CBB9FA1A601CBA00E9B192 /* Build configuration list for PBXProject "Counted" */ = {
+		83CBB9FA1A601CBA00E9B192 /* Build configuration list for PBXProject "Anbaro" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				83CBBA201A601CBA00E9B192 /* Debug */,

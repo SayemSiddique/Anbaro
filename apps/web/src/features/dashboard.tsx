@@ -1,6 +1,6 @@
 'use client';
 
-import type { DashboardReport } from '@stock/contracts';
+import type { DashboardReport } from '@anbaro/contracts';
 import { AlertTriangle, ClipboardCheck, MapPin, PackageSearch } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
 

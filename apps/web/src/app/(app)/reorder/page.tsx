@@ -7,7 +7,7 @@ export default function ReorderPage() {
   return (
     <>
       <PageHeader
-        subtitle="Suggestions based on your target stock levels. Counted never places orders."
+        subtitle="Suggestions based on your target stock levels. Anbaro never places orders."
         title="Reorder suggestions"
       />
       <ReorderFeature />

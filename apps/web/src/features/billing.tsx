@@ -1,6 +1,6 @@
 'use client';
 
-import type { BillingOverview, BillingPlan } from '@stock/contracts';
+import type { BillingOverview, BillingPlan } from '@anbaro/contracts';
 import { Check, CreditCard, RefreshCw } from 'lucide-react';
 import { useSearchParams } from 'next/navigation';
 import { useCallback, useEffect, useState } from 'react';

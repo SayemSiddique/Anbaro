@@ -1,5 +1,5 @@
-import { ApiClientError, type LossByReason } from '@stock/contracts';
-import { tokens } from '@stock/design-tokens';
+import { ApiClientError, type LossByReason } from '@anbaro/contracts';
+import { tokens } from '@anbaro/design-tokens';
 import {
   Calculator,
   CircleAlert,

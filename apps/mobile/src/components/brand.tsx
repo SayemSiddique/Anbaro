@@ -1,10 +1,10 @@
 import { StyleSheet, Text, View } from 'react-native';
 
 /**
- * The Counted tally mark rendered with plain Views so no SVG dependency is
+ * The Anbaro tally mark rendered with plain Views so no SVG dependency is
  * needed: four strokes and the diagonal fifth — a completed count.
  */
-export function CountedMark({ size = 48 }: { size?: number }) {
+export function AnbaroMark({ size = 48 }: { size?: number }) {
   const stroke = Math.max(2, size * 0.07);
   const barHeight = size * 0.42;
   return (
@@ -42,10 +42,10 @@ export function CountedMark({ size = 48 }: { size?: number }) {
   );
 }
 
-export function CountedWordmark({ size = 40, dark = false }: { size?: number; dark?: boolean }) {
+export function AnbaroWordmark({ size = 40, dark = false }: { size?: number; dark?: boolean }) {
   return (
     <View style={styles.wordmark}>
-      <CountedMark size={size} />
+      <AnbaroMark size={size} />
       <Text
         style={{
           color: dark ? '#FFFFFF' : '#1E1E24',
@@ -54,7 +54,7 @@ export function CountedWordmark({ size = 40, dark = false }: { size?: number; da
           letterSpacing: -0.5,
         }}
       >
-        Counted
+        Anbaro
       </Text>
     </View>
   );

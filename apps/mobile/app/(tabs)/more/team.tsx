@@ -1,5 +1,5 @@
-import { ApiClientError, type TeamMembership } from '@stock/contracts';
-import { tokens } from '@stock/design-tokens';
+import { ApiClientError, type TeamMembership } from '@anbaro/contracts';
+import { tokens } from '@anbaro/design-tokens';
 import { Users } from 'lucide-react-native';
 import { useCallback, useEffect, useState } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';

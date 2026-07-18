@@ -6,11 +6,11 @@ import {
   type ItemWithStock,
   type Location,
   SessionApiClient,
-} from '@stock/contracts';
+} from '@anbaro/contracts';
 import { Archive, History, Package, Plus, Search } from 'lucide-react';
 import { useCallback, useEffect, useState, type FormEvent } from 'react';
 
-import { formatQuantity, packDescription, unitShortLabel } from '@stock/design-tokens';
+import { formatQuantity, packDescription, unitShortLabel } from '@anbaro/design-tokens';
 
 import {
   Button,

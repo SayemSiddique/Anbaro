@@ -1,5 +1,5 @@
-import { ApiClientError, type Supplier } from '@stock/contracts';
-import { tokens } from '@stock/design-tokens';
+import { ApiClientError, type Supplier } from '@anbaro/contracts';
+import { tokens } from '@anbaro/design-tokens';
 import { Mail, Phone, Truck } from 'lucide-react-native';
 import { useCallback, useEffect, useState } from 'react';
 import { ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';

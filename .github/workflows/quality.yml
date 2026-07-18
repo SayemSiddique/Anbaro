@@ -47,9 +47,9 @@ jobs:
           node-version-file: .nvmrc
           cache: pnpm
       - run: pnpm install --frozen-lockfile
-      - run: pnpm --filter @stock/contracts build && pnpm --filter @stock/design-tokens build
+      - run: pnpm --filter @anbaro/contracts build && pnpm --filter @anbaro/design-tokens build
       - run: psql -h localhost -U stock_dev -d stock_management -f infra/postgres/init/001-create-app-role.sql
-      - run: pnpm --filter @stock/api db:migrate
+      - run: pnpm --filter @anbaro/api db:migrate
       - run: pnpm lint
       - run: pnpm typecheck
       - run: pnpm test

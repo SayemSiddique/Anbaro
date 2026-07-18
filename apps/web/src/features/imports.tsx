@@ -1,6 +1,6 @@
 'use client';
 
-import type { ImportBatch } from '@stock/contracts';
+import type { ImportBatch } from '@anbaro/contracts';
 import { Download, FileSpreadsheet, Upload } from 'lucide-react';
 import { useState, type FormEvent } from 'react';
 

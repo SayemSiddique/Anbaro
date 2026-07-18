@@ -25,7 +25,7 @@ VALUES
     'monthly',
     4,
     true,
-    '{"displayPrice":"$12/month","tagline":"For growing teams","features":["4 locations included","Unlimited items","10 team members","CSV import/export","Reorder suggestions"],"limits":{"maxMembers":10},"stripeLookupKey":"counted_standard_monthly","locationAddonDisplayPrice":"Configured in Stripe"}'::jsonb
+    '{"displayPrice":"$12/month","tagline":"For growing teams","features":["4 locations included","Unlimited items","10 team members","CSV import/export","Reorder suggestions"],"limits":{"maxMembers":10},"stripeLookupKey":"anbaro_standard_monthly","locationAddonDisplayPrice":"Configured in Stripe"}'::jsonb
   ),
   (
     '21000000-0000-4000-8000-000000000004',
@@ -35,7 +35,7 @@ VALUES
     'monthly',
     10,
     true,
-    '{"displayPrice":"$29/month","tagline":"For multi-site operations","features":["10 locations included","Unlimited items and team members","Full audit history","Priority support"],"limits":{},"stripeLookupKey":"counted_advanced_monthly","locationAddonDisplayPrice":"Configured in Stripe"}'::jsonb
+    '{"displayPrice":"$29/month","tagline":"For multi-site operations","features":["10 locations included","Unlimited items and team members","Full audit history","Priority support"],"limits":{},"stripeLookupKey":"anbaro_advanced_monthly","locationAddonDisplayPrice":"Configured in Stripe"}'::jsonb
   )
 ON CONFLICT (id) DO NOTHING;
 
@@ -45,5 +45,5 @@ GRANT SELECT ON plans TO stock_app;
 
 -- Refresh the annual plan's presentation to match the public catalog.
 UPDATE plans
-SET config = config || '{"tagline":"For growing teams — two months free","features":["4 locations included","Unlimited items","10 team members","CSV import/export","Reorder suggestions"],"stripeLookupKey":"counted_standard_annual"}'::jsonb
+SET config = config || '{"tagline":"For growing teams — two months free","features":["4 locations included","Unlimited items","10 team members","CSV import/export","Reorder suggestions"],"stripeLookupKey":"anbaro_standard_annual"}'::jsonb
 WHERE id = '21000000-0000-4000-8000-000000000002';

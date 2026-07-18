@@ -1,6 +1,6 @@
 import { Stack } from 'expo-router';
 
-import { tokens } from '@stock/design-tokens';
+import { tokens } from '@anbaro/design-tokens';
 
 export default function MoreLayout() {
   return (
@@ -18,6 +18,7 @@ export default function MoreLayout() {
       <Stack.Screen name="reorder" options={{ title: 'Reorder review' }} />
       <Stack.Screen name="reports" options={{ title: 'Loss reports' }} />
       <Stack.Screen name="team" options={{ title: 'Team' }} />
+      <Stack.Screen name="delete-account" options={{ title: 'Delete account' }} />
     </Stack>
   );
 }

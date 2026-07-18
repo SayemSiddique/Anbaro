@@ -1,5 +1,5 @@
 {
-  "name": "stock-management-saas",
+  "name": "anbaro",
   "private": true,
   "version": "0.0.0",
   "packageManager": "pnpm@10.14.0",
@@ -8,14 +8,14 @@
     "pnpm": ">=10"
   },
   "scripts": {
-    "dev": "pnpm --parallel --filter @stock/web --filter @stock/mobile --filter @stock/api dev",
-    "dev:web": "pnpm --filter @stock/web dev",
-    "dev:mobile": "pnpm --filter @stock/mobile dev",
-    "dev:api": "pnpm --filter @stock/api dev",
+    "dev": "pnpm --parallel --filter @anbaro/web --filter @anbaro/mobile --filter @anbaro/api dev",
+    "dev:web": "pnpm --filter @anbaro/web dev",
+    "dev:mobile": "pnpm --filter @anbaro/mobile dev",
+    "dev:api": "pnpm --filter @anbaro/api dev",
     "lint": "pnpm -r --if-present lint",
     "typecheck": "pnpm -r --if-present typecheck",
     "test": "pnpm -r --if-present test",
-    "build": "pnpm --filter @stock/contracts build && pnpm --filter @stock/design-tokens build && pnpm --filter @stock/api build && pnpm --filter @stock/web build && pnpm --filter @stock/mobile build",
+    "build": "pnpm --filter @anbaro/contracts build && pnpm --filter @anbaro/design-tokens build && pnpm --filter @anbaro/api build && pnpm --filter @anbaro/web build && pnpm --filter @anbaro/mobile build",
     "format:check": "prettier --check .",
     "format": "prettier --write ."
   },

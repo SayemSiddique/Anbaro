@@ -2,7 +2,7 @@ import { Tabs } from 'expo-router';
 import { Bell, ClipboardList, House, Package, Menu, type LucideIcon } from 'lucide-react-native';
 import type { ColorValue } from 'react-native';
 
-import { tokens } from '@stock/design-tokens';
+import { tokens } from '@anbaro/design-tokens';
 import { MobileShell } from '../../src/components/app-shell';
 
 function tabIcon(Icon: LucideIcon) {
@@ -42,7 +42,7 @@ export default function TabLayout() {
           name="home"
           options={{
             title: 'Home',
-            headerTitle: 'Counted',
+            headerTitle: 'Anbaro',
             tabBarIcon: tabIcon(House),
           }}
         />

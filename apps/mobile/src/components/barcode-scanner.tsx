@@ -3,7 +3,7 @@ import type { ComponentType } from 'react';
 import { useRef, useState } from 'react';
 import { Modal, Platform, StyleSheet, Text, View, type StyleProp, type ViewStyle } from 'react-native';
 
-import { tokens } from '@stock/design-tokens';
+import { tokens } from '@anbaro/design-tokens';
 
 import { PrimaryButton, SecondaryButton } from './ui';
 
@@ -44,12 +44,12 @@ export function BarcodeScannerModal({
           <View style={styles.permission}>
             <Text style={styles.title}>Camera access needed</Text>
             <Text style={styles.detail}>
-              Counted scans item barcodes for instant lookup. Your camera is never used for
+              Anbaro scans item barcodes for instant lookup. Your camera is never used for
               anything else.
             </Text>
             {permission?.canAskAgain === false ? (
               <Text style={styles.detail}>
-                Enable camera access for Counted in your device settings, then try again.
+                Enable camera access for Anbaro in your device settings, then try again.
               </Text>
             ) : (
               <PrimaryButton onPress={() => void requestPermission()}>Allow camera</PrimaryButton>

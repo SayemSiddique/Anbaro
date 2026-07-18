@@ -1,4 +1,4 @@
-package com.counted.app
+package com.anbaro.app
 import expo.modules.splashscreen.SplashScreenManager
 
 import android.os.Build

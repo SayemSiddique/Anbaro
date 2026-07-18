@@ -1,4 +1,4 @@
-import { categoryVisual, unitsByKind } from '@stock/design-tokens';
+import { categoryVisual, unitsByKind } from '@anbaro/design-tokens';
 import { icons, Package } from 'lucide-react';
 import type {
   ButtonHTMLAttributes,

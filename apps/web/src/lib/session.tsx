@@ -5,7 +5,7 @@ import {
   SessionApiClient,
   type CurrentUser,
   type MembershipSummary,
-} from '@stock/contracts';
+} from '@anbaro/contracts';
 import {
   createContext,
   useCallback,

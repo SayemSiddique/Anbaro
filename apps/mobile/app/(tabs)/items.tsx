@@ -1,6 +1,6 @@
-import type { Category, ItemWithStock, Location, StockEvent } from '@stock/contracts';
-import { ApiClientError, fitsStockQuantity } from '@stock/contracts';
-import { formatQuantity, packDescription, tokens, unitShortLabel } from '@stock/design-tokens';
+import type { Category, ItemWithStock, Location, StockEvent } from '@anbaro/contracts';
+import { ApiClientError, fitsStockQuantity } from '@anbaro/contracts';
+import { formatQuantity, packDescription, tokens, unitShortLabel } from '@anbaro/design-tokens';
 import { useCallback, useEffect, useState } from 'react';
 import { Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 

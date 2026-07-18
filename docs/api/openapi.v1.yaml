@@ -1,6 +1,6 @@
 openapi: 3.1.0
 info:
-  title: Counted API
+  title: Anbaro API
   version: 1.0.0
   description: |
     Contract for onboarding, catalog, immutable stock movements,

@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 
-import { categoryIconNames } from '@stock/design-tokens';
+import { categoryIconNames } from '@anbaro/design-tokens';
 
 /**
  * The jest environment intentionally avoids loading the React Native runtime

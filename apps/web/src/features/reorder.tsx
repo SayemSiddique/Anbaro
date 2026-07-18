@@ -1,7 +1,7 @@
 'use client';
 
-import { fitsStockQuantity } from '@stock/contracts';
-import type { ItemWithStock, Location, ReorderSuggestion } from '@stock/contracts';
+import { fitsStockQuantity } from '@anbaro/contracts';
+import type { ItemWithStock, Location, ReorderSuggestion } from '@anbaro/contracts';
 import { Check, ShoppingCart, X } from 'lucide-react';
 import { useCallback, useEffect, useState, type FormEvent } from 'react';
 

@@ -1,6 +1,6 @@
 'use client';
 
-import { ApiClientError, type CountSession, type Location } from '@stock/contracts';
+import { ApiClientError, type CountSession, type Location } from '@anbaro/contracts';
 import { ClipboardCheck, Play, RotateCcw } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
 

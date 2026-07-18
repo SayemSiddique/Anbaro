@@ -1,5 +1,5 @@
-import { ApiClientError, type Location } from '@stock/contracts';
-import { tokens } from '@stock/design-tokens';
+import { ApiClientError, type Location } from '@anbaro/contracts';
+import { tokens } from '@anbaro/design-tokens';
 import * as SecureStore from 'expo-secure-store';
 import { useCallback, useEffect, useState } from 'react';
 import { Alert, Linking, StyleSheet, Text, TextInput, View } from 'react-native';
@@ -10,7 +10,11 @@ import { PrimaryButton, StatePanel } from '../../src/components/ui';
 export default function HomeScreen() {
   const { state, controller, reload } = useMobileSession();
   const [locations, setLocations] = useState<Location[]>([]);
-  const [capacity, setCapacity] = useState({ used: 0, capacity: 4 });
+  // capacity === null means unlimited, which is always the case while Anbaro is free.
+  const [capacity, setCapacity] = useState<{ used: number; capacity: number | null }>({
+    used: 0,
+    capacity: null,
+  });
   const [name, setName] = useState('');
   const [address, setAddress] = useState('');
   const [error, setError] = useState('');
@@ -120,7 +124,7 @@ export default function HomeScreen() {
           Create your organization
         </Text>
         <Text style={styles.detail}>
-          You’ll be the Owner. Your 30-day trial includes up to four locations.
+          You’ll be the Owner. Anbaro is free, with unlimited locations and items.
         </Text>
         <TextInput
           accessibilityLabel="Organization name"
@@ -161,7 +165,9 @@ export default function HomeScreen() {
         </View>
       ) : null}
       <Text style={styles.detail}>
-        {capacity.used} of {capacity.capacity} locations used on your trial.
+        {capacity.capacity === null
+          ? `${capacity.used} ${capacity.used === 1 ? 'location' : 'locations'}.`
+          : `${capacity.used} of ${capacity.capacity} locations used.`}
       </Text>
       {locations.map((location) => (
         <View key={location.id} style={styles.location}>
