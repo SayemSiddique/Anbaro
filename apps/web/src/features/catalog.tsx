@@ -166,6 +166,7 @@ export function CatalogFeature() {
         locationId,
         eventType,
         quantityDelta: eventType === 'loss' ? -Math.abs(enteredQuantity) : enteredQuantity,
+        idempotencyKey: crypto.randomUUID(),
         ...(eventType === 'loss' ? { reasonCode: String(form.get('reasonCode')) } : {}),
       });
       formElement.reset();
@@ -386,9 +387,7 @@ export function CatalogFeature() {
               </table>
             </div>
           ) : (
-            <p style={{ color: 'var(--text-muted)' }}>
-              No movements recorded at this location.
-            </p>
+            <p style={{ color: 'var(--text-muted)' }}>No movements recorded at this location.</p>
           )}
         </Card>
       ) : null}
@@ -400,7 +399,13 @@ export function CatalogFeature() {
             subtitle="Categories organize the catalog; items carry a unit and optional barcode."
             title="Catalog setup"
           />
-          <div style={{ display: 'grid', gap: 24, gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))' }}>
+          <div
+            style={{
+              display: 'grid',
+              gap: 24,
+              gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))',
+            }}
+          >
             <form className="form-grid" onSubmit={addCategory} style={{ alignContent: 'start' }}>
               <h3>Add category</h3>
               <Field label="Category name">

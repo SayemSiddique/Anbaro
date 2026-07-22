@@ -160,7 +160,15 @@ export function ImportsFeature() {
                         <td>{row.category ?? '—'}</td>
                         <td>{row.barcodeIdentifier ?? '—'}</td>
                         <td>
-                          <Badge tone={row.status === 'valid' ? 'success' : row.errors.length ? 'danger' : 'neutral'}>
+                          <Badge
+                            tone={
+                              row.status === 'valid'
+                                ? 'success'
+                                : row.errors.length
+                                  ? 'danger'
+                                  : 'neutral'
+                            }
+                          >
                             {row.status}
                           </Badge>
                         </td>

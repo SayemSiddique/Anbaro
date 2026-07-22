@@ -4,6 +4,7 @@ import type { ColorValue } from 'react-native';
 
 import { tokens } from '@anbaro/design-tokens';
 import { MobileShell } from '../../src/components/app-shell';
+import { font } from '../../src/lib/fonts';
 
 function tabIcon(Icon: LucideIcon) {
   function TabIcon({
@@ -26,11 +27,11 @@ export default function TabLayout() {
       <Tabs
         screenOptions={{
           headerStyle: { backgroundColor: tokens.color.surface },
-          headerTitleStyle: { color: tokens.color.text, fontWeight: '700' },
+          headerTitleStyle: { color: tokens.color.text, fontFamily: font.bold },
           headerShadowVisible: false,
           tabBarActiveTintColor: tokens.color.primary,
           tabBarInactiveTintColor: tokens.color.textMuted,
-          tabBarLabelStyle: { fontSize: 11, fontWeight: '600' },
+          tabBarLabelStyle: { fontSize: 11, fontFamily: font.semibold },
           tabBarStyle: {
             backgroundColor: tokens.color.surface,
             borderTopColor: tokens.color.border,
@@ -46,18 +47,12 @@ export default function TabLayout() {
             tabBarIcon: tabIcon(House),
           }}
         />
-        <Tabs.Screen
-          name="items"
-          options={{ title: 'Items', tabBarIcon: tabIcon(Package) }}
-        />
+        <Tabs.Screen name="items" options={{ title: 'Items', tabBarIcon: tabIcon(Package) }} />
         <Tabs.Screen
           name="counts"
           options={{ title: 'Counts', tabBarIcon: tabIcon(ClipboardList) }}
         />
-        <Tabs.Screen
-          name="alerts"
-          options={{ title: 'Alerts', tabBarIcon: tabIcon(Bell) }}
-        />
+        <Tabs.Screen name="alerts" options={{ title: 'Alerts', tabBarIcon: tabIcon(Bell) }} />
         <Tabs.Screen
           name="more"
           options={{ title: 'More', headerShown: false, tabBarIcon: tabIcon(Menu) }}

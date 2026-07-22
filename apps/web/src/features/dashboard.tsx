@@ -4,15 +4,7 @@ import type { DashboardReport } from '@anbaro/contracts';
 import { AlertTriangle, ClipboardCheck, MapPin, PackageSearch } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
 
-import {
-  Badge,
-  Button,
-  Card,
-  CardTitle,
-  EmptyState,
-  StatePanel,
-  StatTile,
-} from '../components/ui';
+import { Badge, Button, Card, CardTitle, EmptyState, StatePanel, StatTile } from '../components/ui';
 import { apiErrorMessage, useSession } from '../lib/session';
 
 export function DashboardFeature() {

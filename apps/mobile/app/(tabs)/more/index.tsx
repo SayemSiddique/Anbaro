@@ -1,32 +1,21 @@
-import {
-  ApiClientError,
-  DONATION_URL,
-  type NotificationPreference,
-} from '@anbaro/contracts';
+import { ApiClientError, type NotificationPreference } from '@anbaro/contracts';
 import { tokens } from '@anbaro/design-tokens';
 import { Link, type Href } from 'expo-router';
 import {
   ChevronRight,
   ClipboardCheck,
+  Sparkles,
   TrendingDown,
   Truck,
   Users,
   type LucideIcon,
 } from 'lucide-react-native';
 import { useCallback, useEffect, useState } from 'react';
-import {
-  Linking,
-  Platform,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Switch,
-  Text,
-  View,
-} from 'react-native';
+import { Pressable, ScrollView, StyleSheet, Switch, Text, View } from 'react-native';
 
 import { useMobileSession } from '../../../src/components/app-shell';
 import { PrimaryButton, SecondaryButton, StatePanel } from '../../../src/components/ui';
+import { font } from '../../../src/lib/fonts';
 
 const channelLabels: Record<'in_app' | 'email' | 'push', string> = {
   in_app: 'In-app alerts',
@@ -34,7 +23,20 @@ const channelLabels: Record<'in_app' | 'email' | 'push', string> = {
   push: 'Push notifications',
 };
 
-const operationsLinks: { href: Href; icon: LucideIcon; title: string; detail: string }[] = [
+const operationsLinks: {
+  href: Href;
+  icon: LucideIcon;
+  title: string;
+  detail: string;
+  permission?: string;
+}[] = [
+  {
+    href: '/more/assistant',
+    icon: Sparkles,
+    title: 'Assistant',
+    detail: 'Turn a plain-language update into stock movements.',
+    permission: 'assistant:use',
+  },
   {
     href: '/more/reorder',
     icon: ClipboardCheck,
@@ -110,13 +112,17 @@ export default function MoreScreen() {
   const membership = state.user.memberships.find(
     (candidate) => candidate.organizationId === state.user.activeOrganizationId,
   );
+  const permissions = new Set(membership?.permissions ?? []);
+  const visibleOperationsLinks = operationsLinks.filter(
+    (link) => !link.permission || permissions.has(link.permission),
+  );
   return (
     <ScrollView contentContainerStyle={styles.content}>
       <View style={styles.panel}>
         <Text accessibilityRole="header" style={styles.section}>
           Operations
         </Text>
-        {operationsLinks.map(({ href, icon: Icon, title, detail }) => (
+        {visibleOperationsLinks.map(({ href, icon: Icon, title, detail }) => (
           <Link asChild href={href} key={title}>
             <Pressable
               accessibilityRole="button"
@@ -170,26 +176,6 @@ export default function MoreScreen() {
         ))}
       </View>
 
-      {/*
-        Support is deliberately hidden on iOS. Apple treats a donation to a developer
-        as needing In-App Purchase, and Anbaro takes no payments at all. Android and
-        web show it; iOS users can find it on the website.
-      */}
-      {Platform.OS !== 'ios' ? (
-        <View style={styles.panel}>
-          <Text accessibilityRole="header" style={styles.section}>
-            Support Anbaro
-          </Text>
-          <Text style={styles.detail}>
-            Anbaro is free, with every feature included. If it saves you time, you can leave a
-            tip. It unlocks nothing.
-          </Text>
-          <SecondaryButton onPress={() => void Linking.openURL(DONATION_URL)}>
-            Buy me a coffee
-          </SecondaryButton>
-        </View>
-      ) : null}
-
       <View style={styles.panel}>
         <Text accessibilityRole="header" style={styles.section}>
           Account
@@ -227,9 +213,14 @@ export default function MoreScreen() {
 
 const styles = StyleSheet.create({
   content: { gap: 12, marginHorizontal: 'auto', maxWidth: 640, padding: 16, width: '100%' },
-  detail: { color: tokens.color.textMuted, fontSize: 16, lineHeight: 23 },
+  detail: { fontFamily: font.regular, color: tokens.color.textMuted, fontSize: 16, lineHeight: 23 },
   linkCopy: { flex: 1, gap: 2 },
-  linkDetail: { color: tokens.color.textMuted, fontSize: 13, lineHeight: 18 },
+  linkDetail: {
+    fontFamily: font.regular,
+    color: tokens.color.textMuted,
+    fontSize: 13,
+    lineHeight: 18,
+  },
   linkIcon: {
     alignItems: 'center',
     backgroundColor: tokens.color.surfaceSubtle,
@@ -245,9 +236,9 @@ const styles = StyleSheet.create({
     minHeight: tokens.touchTarget.minimum + 4,
     paddingVertical: 6,
   },
-  destructiveTitle: { color: tokens.color.danger, fontSize: 16, fontWeight: '600' },
+  destructiveTitle: { color: tokens.color.danger, fontSize: 16, fontFamily: font.semibold },
   linkRowPressed: { opacity: 0.6 },
-  linkTitle: { color: tokens.color.text, fontSize: 16, fontWeight: '600' },
+  linkTitle: { color: tokens.color.text, fontSize: 16, fontFamily: font.semibold },
   panel: {
     backgroundColor: tokens.color.surface,
     borderColor: tokens.color.border,
@@ -256,12 +247,12 @@ const styles = StyleSheet.create({
     gap: 10,
     padding: 16,
   },
-  preferenceLabel: { color: tokens.color.text, fontSize: 16, fontWeight: '600' },
+  preferenceLabel: { color: tokens.color.text, fontSize: 16, fontFamily: font.semibold },
   preferenceRow: {
     alignItems: 'center',
     flexDirection: 'row',
     justifyContent: 'space-between',
     minHeight: 44,
   },
-  section: { color: tokens.color.text, fontSize: 20, fontWeight: '700' },
+  section: { color: tokens.color.text, fontSize: 20, fontFamily: font.bold },
 });

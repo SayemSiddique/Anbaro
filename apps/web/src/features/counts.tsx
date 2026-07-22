@@ -292,9 +292,9 @@ function CountSummary({
 
 function CountHistory({ onOpened }: { onOpened: (session: CountSession) => void }) {
   const { api } = useSession();
-  const [history, setHistory] = useState<
-    Awaited<ReturnType<typeof api.getCountSessions>>['data']
-  >([]);
+  const [history, setHistory] = useState<Awaited<ReturnType<typeof api.getCountSessions>>['data']>(
+    [],
+  );
   useEffect(() => {
     void api
       .getCountSessions({ status: 'finalized' })

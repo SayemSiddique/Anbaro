@@ -7,6 +7,7 @@ import { ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useMobileSession } from '../../src/components/app-shell';
 import { PrimaryButton, StatePanel } from '../../src/components/ui';
 import type { CountQueueSnapshot } from '../../src/lib/count-offline-queue';
+import { font } from '../../src/lib/fonts';
 
 const emptyQueue: CountQueueSnapshot = { pending: [], conflicts: [] };
 
@@ -486,7 +487,7 @@ const styles = StyleSheet.create({
   cardTitle: {
     color: tokens.color.text,
     fontSize: tokens.typography.fontSize.lg,
-    fontWeight: '700',
+    fontFamily: font.bold,
   },
   conflictCard: {
     backgroundColor: tokens.color.warningSurface,
@@ -498,11 +499,16 @@ const styles = StyleSheet.create({
   },
   container: { gap: tokens.spacing[4], paddingBottom: tokens.spacing[8] },
   detail: {
+    fontFamily: font.regular,
     color: tokens.color.textMuted,
     fontSize: tokens.typography.fontSize.md,
     lineHeight: 24,
   },
-  error: { color: tokens.color.danger, fontSize: tokens.typography.fontSize.sm },
+  error: {
+    fontFamily: font.regular,
+    color: tokens.color.danger,
+    fontSize: tokens.typography.fontSize.sm,
+  },
   focusCard: {
     backgroundColor: tokens.color.surface,
     borderColor: tokens.color.border,
@@ -514,11 +520,15 @@ const styles = StyleSheet.create({
   focusTitle: {
     color: tokens.color.text,
     fontSize: tokens.typography.fontSize['2xl'],
-    fontWeight: '700',
+    fontFamily: font.bold,
   },
   header: { alignItems: 'flex-start', gap: tokens.spacing[3] },
   headerCopy: { gap: tokens.spacing[1] },
-  notice: { color: tokens.color.success, fontSize: tokens.typography.fontSize.sm },
+  notice: {
+    fontFamily: font.regular,
+    color: tokens.color.success,
+    fontSize: tokens.typography.fontSize.sm,
+  },
   progressFill: { backgroundColor: tokens.color.primary, height: 8 },
   progressTrack: {
     backgroundColor: tokens.color.surfaceSubtle,
@@ -531,7 +541,7 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     color: tokens.color.text,
     fontSize: 40,
-    fontWeight: '700',
+    fontFamily: font.bold,
     minHeight: 96,
     paddingHorizontal: tokens.spacing[4],
     textAlign: 'center',
@@ -539,7 +549,7 @@ const styles = StyleSheet.create({
   sectionTitle: {
     color: tokens.color.text,
     fontSize: tokens.typography.fontSize.xl,
-    fontWeight: '700',
+    fontFamily: font.bold,
   },
   submission: {
     borderColor: tokens.color.border,
@@ -550,6 +560,6 @@ const styles = StyleSheet.create({
   title: {
     color: tokens.color.text,
     fontSize: tokens.typography.fontSize['2xl'],
-    fontWeight: '700',
+    fontFamily: font.bold,
   },
 });

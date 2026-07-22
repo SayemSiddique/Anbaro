@@ -16,6 +16,7 @@ import { tokens } from '@anbaro/design-tokens';
 import { MobileSessionController } from '../lib/session';
 import { AnbaroWordmark } from './brand';
 import { LoadingPanel, PrimaryButton, SecondaryButton, StatePanel } from './ui';
+import { font } from '../lib/fonts';
 
 type MobileSessionState =
   | { kind: 'loading' }
@@ -170,11 +171,12 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     padding: 16,
   },
-  detail: { color: tokens.color.textMuted, fontSize: 16, lineHeight: 24 },
+  detail: { fontFamily: font.regular, color: tokens.color.textMuted, fontSize: 16, lineHeight: 24 },
   error: { color: tokens.color.danger },
   form: { gap: 12, marginHorizontal: 'auto', maxWidth: 480, width: '100%' },
-  tagline: { color: tokens.color.textMuted, fontSize: 15 },
+  tagline: { fontFamily: font.regular, color: tokens.color.textMuted, fontSize: 15 },
   input: {
+    fontFamily: font.regular,
     backgroundColor: tokens.color.surface,
     borderColor: tokens.color.borderStrong,
     borderRadius: 6,
@@ -184,5 +186,5 @@ const styles = StyleSheet.create({
     minHeight: 48,
     paddingHorizontal: 12,
   },
-  title: { color: tokens.color.text, fontSize: 28, fontWeight: '700' },
+  title: { color: tokens.color.text, fontSize: 28, fontFamily: font.bold },
 });

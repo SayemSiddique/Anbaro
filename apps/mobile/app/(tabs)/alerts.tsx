@@ -6,6 +6,7 @@ import { ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { useMobileSession } from '../../src/components/app-shell';
 import { PrimaryButton, StatePanel } from '../../src/components/ui';
+import { font } from '../../src/lib/fonts';
 
 export default function AlertsScreen() {
   const { controller, state } = useMobileSession();
@@ -169,8 +170,8 @@ export default function AlertsScreen() {
 
 const styles = StyleSheet.create({
   content: { gap: 12, padding: 16 },
-  detail: { color: tokens.color.textMuted, fontSize: 15, lineHeight: 22 },
-  muted: { color: tokens.color.textMuted, fontSize: 13, lineHeight: 18 },
+  detail: { fontFamily: font.regular, color: tokens.color.textMuted, fontSize: 15, lineHeight: 22 },
+  muted: { fontFamily: font.regular, color: tokens.color.textMuted, fontSize: 13, lineHeight: 18 },
   panel: {
     backgroundColor: tokens.color.surface,
     borderColor: tokens.color.border,
@@ -188,7 +189,7 @@ const styles = StyleSheet.create({
     paddingTop: 10,
   },
   row: { borderTopColor: tokens.color.border, borderTopWidth: 1, gap: 6, paddingTop: 10 },
-  rowTitle: { color: tokens.color.text, fontSize: 16, fontWeight: '700' },
-  section: { color: tokens.color.text, fontSize: 20, fontWeight: '700' },
-  title: { color: tokens.color.text, fontSize: 28, fontWeight: '700' },
+  rowTitle: { color: tokens.color.text, fontSize: 16, fontFamily: font.bold },
+  section: { color: tokens.color.text, fontSize: 20, fontFamily: font.bold },
+  title: { color: tokens.color.text, fontSize: 28, fontFamily: font.bold },
 });

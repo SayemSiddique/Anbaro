@@ -30,8 +30,8 @@ export function OrganizationSetup() {
         <AnbaroMark size={44} />
         <h1 id="organization-title">Create your organization</h1>
         <p style={{ color: 'var(--text-muted)', maxWidth: 400 }}>
-          You’ll be the Owner. Anbaro is free, with unlimited locations and items — invite your
-          team once the first location is set up.
+          You’ll be the Owner. Anbaro is free, with unlimited locations and items — invite your team
+          once the first location is set up.
         </p>
       </div>
       <form className="form-row" onSubmit={submit} style={{ marginTop: 20 }}>

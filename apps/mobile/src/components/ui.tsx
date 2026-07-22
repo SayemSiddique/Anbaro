@@ -1,6 +1,6 @@
 import { CircleAlert, Info, Package } from 'lucide-react-native';
 import type { PropsWithChildren, ReactNode } from 'react';
-import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { categoryIcons } from './category-icons';
 
@@ -12,7 +12,8 @@ import {
   type StockCondition,
 } from '@anbaro/design-tokens';
 
-import { AnbaroMark } from './brand';
+import { AnbaroSplash } from './brand';
+import { font } from '../lib/fonts';
 
 export function PrimaryButton({
   children,
@@ -201,10 +202,7 @@ export function LoadingPanel() {
       accessibilityRole="progressbar"
       style={styles.loading}
     >
-      <AnbaroMark size={64} />
-      <Text style={styles.loadingName}>Anbaro</Text>
-      <ActivityIndicator color={tokens.color.primary} />
-      <Text style={styles.panelDetail}>Loading your workspace…</Text>
+      <AnbaroSplash />
     </View>
   );
 }
@@ -222,7 +220,7 @@ const styles = StyleSheet.create({
   badgeDot: { borderRadius: tokens.radius.full, height: 7, width: 7 },
   badgeLabel: {
     fontSize: tokens.typography.fontSize.sm,
-    fontWeight: '600',
+    fontFamily: font.semibold,
   },
   button: {
     alignItems: 'center',
@@ -238,7 +236,7 @@ const styles = StyleSheet.create({
   buttonText: {
     color: tokens.color.primaryText,
     fontSize: tokens.typography.fontSize.md,
-    fontWeight: '600',
+    fontFamily: font.semibold,
   },
   chip: {
     backgroundColor: tokens.color.surface,
@@ -250,14 +248,18 @@ const styles = StyleSheet.create({
     paddingHorizontal: tokens.spacing[3],
     paddingVertical: tokens.spacing[1],
   },
-  chipLabel: { color: tokens.color.text, fontSize: tokens.typography.fontSize.sm },
-  chipLabelSelected: { color: tokens.color.primaryText, fontWeight: '600' },
+  chipLabel: {
+    fontFamily: font.regular,
+    color: tokens.color.text,
+    fontSize: tokens.typography.fontSize.sm,
+  },
+  chipLabelSelected: { color: tokens.color.primaryText, fontFamily: font.semibold },
   chipRow: { flexDirection: 'row', flexWrap: 'wrap', gap: tokens.spacing[2] },
   chipSelected: { backgroundColor: tokens.color.primary, borderColor: tokens.color.primary },
   unitKind: {
     color: tokens.color.textMuted,
     fontSize: tokens.typography.fontSize.xs,
-    fontWeight: '700',
+    fontFamily: font.bold,
     letterSpacing: 0.4,
     textTransform: 'uppercase',
   },
@@ -269,12 +271,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     padding: tokens.spacing[6],
   },
-  loadingName: {
-    color: tokens.color.text,
-    fontSize: tokens.typography.fontSize.xl,
-    fontWeight: '700',
-    letterSpacing: -0.5,
-  },
   panel: {
     alignItems: 'flex-start',
     backgroundColor: tokens.color.infoSurface,
@@ -285,6 +281,7 @@ const styles = StyleSheet.create({
   },
   panelCopy: { flex: 1 },
   panelDetail: {
+    fontFamily: font.regular,
     color: tokens.color.textMuted,
     fontSize: tokens.typography.fontSize.md,
     lineHeight: 24,
@@ -293,7 +290,7 @@ const styles = StyleSheet.create({
   panelTitle: {
     color: tokens.color.text,
     fontSize: tokens.typography.fontSize.lg,
-    fontWeight: '700',
+    fontFamily: font.bold,
   },
   secondaryButton: {
     alignItems: 'center',
@@ -310,6 +307,6 @@ const styles = StyleSheet.create({
   secondaryButtonText: {
     color: tokens.color.text,
     fontSize: tokens.typography.fontSize.md,
-    fontWeight: '600',
+    fontFamily: font.semibold,
   },
 });

@@ -15,8 +15,16 @@ import {
   StockConditionBadge,
   UnitPicker,
 } from '../../src/components/ui';
+import { font } from '../../src/lib/fonts';
 
 type ScanTarget = 'lookup' | 'new-item';
+
+function uuid() {
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (character) => {
+    const value = Math.floor(Math.random() * 16);
+    return (character === 'x' ? value : (value & 0x3) | 0x8).toString(16);
+  });
+}
 
 export default function ItemsScreen() {
   const { state, controller } = useMobileSession();
@@ -173,6 +181,7 @@ export default function ItemsScreen() {
         locationId: selectedLocationId,
         eventType: movementType,
         quantityDelta: movementType === 'loss' ? -Math.abs(entered) : entered,
+        idempotencyKey: uuid(),
         ...(movementType === 'loss' ? { reasonCode: lossReason } : {}),
       });
       setQuantity('');
@@ -210,7 +219,11 @@ export default function ItemsScreen() {
       </View>
       <Text style={styles.label}>Category</Text>
       <View style={styles.chipRow}>
-        <Chip label="All" onPress={() => setSelectedCategoryId('')} selected={!selectedCategoryId} />
+        <Chip
+          label="All"
+          onPress={() => setSelectedCategoryId('')}
+          selected={!selectedCategoryId}
+        />
         {categories.map((category) => (
           <Chip
             key={category.id}
@@ -302,10 +315,13 @@ export default function ItemsScreen() {
             value={newItem}
           />
           <Text style={styles.label}>Unit</Text>
-          <UnitPicker onSelect={(code) => {
-            setUnit(code);
-            setCustomUnit('');
-          }} selected={customUnit ? '' : unit} />
+          <UnitPicker
+            onSelect={(code) => {
+              setUnit(code);
+              setCustomUnit('');
+            }}
+            selected={customUnit ? '' : unit}
+          />
           <TextInput
             accessibilityLabel="Custom unit"
             autoCapitalize="none"
@@ -439,10 +455,11 @@ export default function ItemsScreen() {
 const styles = StyleSheet.create({
   chipRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   content: { gap: 12, padding: 16 },
-  detail: { color: tokens.color.textMuted, fontSize: 16, lineHeight: 23 },
+  detail: { fontFamily: font.regular, color: tokens.color.textMuted, fontSize: 16, lineHeight: 23 },
   detailHeader: { alignItems: 'center', flexDirection: 'row', gap: 10 },
-  history: { color: tokens.color.text, lineHeight: 22 },
+  history: { fontFamily: font.regular, color: tokens.color.text, lineHeight: 22 },
   input: {
+    fontFamily: font.regular,
     backgroundColor: tokens.color.surface,
     borderColor: tokens.color.borderStrong,
     borderRadius: 6,
@@ -463,12 +480,12 @@ const styles = StyleSheet.create({
     padding: 12,
   },
   itemCardPressed: { backgroundColor: tokens.color.surfaceSubtle },
-  itemMeta: { color: tokens.color.textMuted, fontSize: 13 },
-  itemName: { color: tokens.color.text, fontSize: 16, fontWeight: '600' },
-  itemQuantity: { color: tokens.color.text, fontSize: 16, fontWeight: '700' },
+  itemMeta: { fontFamily: font.regular, color: tokens.color.textMuted, fontSize: 13 },
+  itemName: { color: tokens.color.text, fontSize: 16, fontFamily: font.semibold },
+  itemQuantity: { color: tokens.color.text, fontSize: 16, fontFamily: font.bold },
   itemRight: { alignItems: 'flex-end', gap: 6 },
-  itemUnit: { color: tokens.color.textMuted, fontSize: 13, fontWeight: '400' },
-  label: { color: tokens.color.text, fontWeight: '700' },
+  itemUnit: { color: tokens.color.textMuted, fontSize: 13, fontFamily: font.regular },
+  label: { color: tokens.color.text, fontFamily: font.bold },
   packInput: { flex: 1 },
   packRow: { alignItems: 'center', flexDirection: 'row', gap: 8 },
   panel: {
@@ -478,6 +495,6 @@ const styles = StyleSheet.create({
     gap: 10,
     padding: 12,
   },
-  section: { color: tokens.color.text, fontSize: 20, fontWeight: '700' },
-  title: { color: tokens.color.text, fontSize: 28, fontWeight: '700' },
+  section: { color: tokens.color.text, fontSize: 20, fontFamily: font.bold },
+  title: { color: tokens.color.text, fontSize: 28, fontFamily: font.bold },
 });

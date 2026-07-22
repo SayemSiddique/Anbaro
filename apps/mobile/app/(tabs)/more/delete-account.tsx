@@ -6,6 +6,7 @@ import { ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 
 import { useMobileSession } from '../../../src/components/app-shell';
 import { PrimaryButton, SecondaryButton, StatePanel } from '../../../src/components/ui';
+import { font } from '../../../src/lib/fonts';
 
 /**
  * Required by App Store guideline 5.1.1(v): an account created in the app must be
@@ -34,9 +35,7 @@ export default function DeleteAccountScreen() {
       // The account no longer exists; reload drops the session and returns to sign-in.
       await reload();
     } catch (caught) {
-      setError(
-        caught instanceof ApiClientError ? caught.message : 'Could not delete the account.',
-      );
+      setError(caught instanceof ApiClientError ? caught.message : 'Could not delete the account.');
       setBusy(false);
     }
   }
@@ -106,9 +105,10 @@ export default function DeleteAccountScreen() {
 
 const styles = StyleSheet.create({
   content: { gap: 12, marginHorizontal: 'auto', maxWidth: 640, padding: 16, width: '100%' },
-  detail: { color: tokens.color.textMuted, fontSize: 16, lineHeight: 23 },
-  error: { color: tokens.color.danger, fontSize: 15, lineHeight: 21 },
+  detail: { fontFamily: font.regular, color: tokens.color.textMuted, fontSize: 16, lineHeight: 23 },
+  error: { fontFamily: font.regular, color: tokens.color.danger, fontSize: 15, lineHeight: 21 },
   input: {
+    fontFamily: font.regular,
     backgroundColor: tokens.color.canvas,
     borderColor: tokens.color.border,
     borderRadius: 10,
@@ -118,7 +118,7 @@ const styles = StyleSheet.create({
     minHeight: tokens.touchTarget.minimum,
     paddingHorizontal: 12,
   },
-  label: { color: tokens.color.text, fontSize: 15, fontWeight: '600' },
+  label: { color: tokens.color.text, fontSize: 15, fontFamily: font.semibold },
   panel: {
     backgroundColor: tokens.color.surface,
     borderColor: tokens.color.border,
@@ -127,5 +127,5 @@ const styles = StyleSheet.create({
     gap: 10,
     padding: 16,
   },
-  title: { color: tokens.color.danger, fontSize: 20, fontWeight: '700' },
+  title: { color: tokens.color.danger, fontSize: 20, fontFamily: font.bold },
 });

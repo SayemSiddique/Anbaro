@@ -6,6 +6,7 @@ import { ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 
 import { useMobileSession } from '../../../src/components/app-shell';
 import { PrimaryButton, StatePanel } from '../../../src/components/ui';
+import { font } from '../../../src/lib/fonts';
 
 export default function SuppliersScreen() {
   const { controller, state } = useMobileSession();
@@ -60,9 +61,7 @@ export default function SuppliersScreen() {
         />
       ) : null}
 
-      {suppliers === null && !error ? (
-        <Text style={styles.detail}>Loading suppliers…</Text>
-      ) : null}
+      {suppliers === null && !error ? <Text style={styles.detail}>Loading suppliers…</Text> : null}
 
       {suppliers?.length === 0 ? (
         <View style={styles.empty}>
@@ -139,10 +138,11 @@ export default function SuppliersScreen() {
 const styles = StyleSheet.create({
   contactRow: { alignItems: 'center', flexDirection: 'row', gap: 6 },
   content: { gap: 12, marginHorizontal: 'auto', maxWidth: 640, padding: 16, width: '100%' },
-  detail: { color: tokens.color.textMuted, fontSize: 15, lineHeight: 22 },
+  detail: { fontFamily: font.regular, color: tokens.color.textMuted, fontSize: 15, lineHeight: 22 },
   empty: { alignItems: 'center', gap: 8, padding: 32 },
-  emptyTitle: { color: tokens.color.text, fontSize: 17, fontWeight: '700' },
+  emptyTitle: { color: tokens.color.text, fontSize: 17, fontFamily: font.bold },
   input: {
+    fontFamily: font.regular,
     backgroundColor: tokens.color.surface,
     borderColor: tokens.color.borderStrong,
     borderRadius: 6,
@@ -152,7 +152,7 @@ const styles = StyleSheet.create({
     minHeight: 48,
     paddingHorizontal: 12,
   },
-  muted: { color: tokens.color.textMuted, fontSize: 13 },
+  muted: { fontFamily: font.regular, color: tokens.color.textMuted, fontSize: 13 },
   panel: {
     backgroundColor: tokens.color.surface,
     borderColor: tokens.color.border,
@@ -161,6 +161,6 @@ const styles = StyleSheet.create({
     gap: 8,
     padding: 16,
   },
-  rowTitle: { color: tokens.color.text, fontSize: 16, fontWeight: '700' },
-  section: { color: tokens.color.text, fontSize: 20, fontWeight: '700' },
+  rowTitle: { color: tokens.color.text, fontSize: 16, fontFamily: font.bold },
+  section: { color: tokens.color.text, fontSize: 20, fontFamily: font.bold },
 });

@@ -1,6 +1,13 @@
 import { describe, expect, it } from 'vitest';
 
-import { findUnit, packDescription, unitIsWhole, unitShortLabel, units, unitsByKind } from './units.js';
+import {
+  findUnit,
+  packDescription,
+  unitIsWhole,
+  unitShortLabel,
+  units,
+  unitsByKind,
+} from './units.js';
 
 describe('unit catalog', () => {
   it('keeps codes unique, lowercase, and within the 32-char storage limit', () => {

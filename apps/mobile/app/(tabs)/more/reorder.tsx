@@ -6,6 +6,7 @@ import { ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { useMobileSession } from '../../../src/components/app-shell';
 import { PrimaryButton, SecondaryButton, StatePanel } from '../../../src/components/ui';
+import { font } from '../../../src/lib/fonts';
 
 export default function ReorderScreen() {
   const { controller, state } = useMobileSession();
@@ -112,10 +113,10 @@ const styles = StyleSheet.create({
   actionButton: { flex: 1 },
   actions: { flexDirection: 'row', gap: 10, marginTop: 4 },
   content: { gap: 12, marginHorizontal: 'auto', maxWidth: 640, padding: 16, width: '100%' },
-  detail: { color: tokens.color.textMuted, fontSize: 15, lineHeight: 22 },
+  detail: { fontFamily: font.regular, color: tokens.color.textMuted, fontSize: 15, lineHeight: 22 },
   empty: { alignItems: 'center', gap: 8, padding: 32 },
-  emptyTitle: { color: tokens.color.text, fontSize: 17, fontWeight: '700' },
-  lede: { color: tokens.color.textMuted, fontSize: 15, lineHeight: 22 },
+  emptyTitle: { color: tokens.color.text, fontSize: 17, fontFamily: font.bold },
+  lede: { fontFamily: font.regular, color: tokens.color.textMuted, fontSize: 15, lineHeight: 22 },
   panel: {
     backgroundColor: tokens.color.surface,
     borderColor: tokens.color.border,
@@ -124,6 +125,6 @@ const styles = StyleSheet.create({
     gap: 6,
     padding: 16,
   },
-  rowTitle: { color: tokens.color.text, fontSize: 16, fontWeight: '700' },
+  rowTitle: { color: tokens.color.text, fontSize: 16, fontFamily: font.bold },
   supplierRow: { alignItems: 'center', flexDirection: 'row', gap: 6 },
 });

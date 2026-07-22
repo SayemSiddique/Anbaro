@@ -14,6 +14,7 @@ import { ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { useMobileSession } from '../../../src/components/app-shell';
 import { PrimaryButton, StatePanel } from '../../../src/components/ui';
+import { font } from '../../../src/lib/fonts';
 
 const reasonVisuals: Record<string, { icon: LucideIcon; label: string }> = {
   spoilage: { icon: Leaf, label: 'Spoilage' },
@@ -93,10 +94,10 @@ export default function ReportsScreen() {
 const styles = StyleSheet.create({
   content: { gap: 12, marginHorizontal: 'auto', maxWidth: 640, padding: 16, width: '100%' },
   copy: { flex: 1, gap: 2 },
-  detail: { color: tokens.color.textMuted, fontSize: 14, lineHeight: 20 },
+  detail: { fontFamily: font.regular, color: tokens.color.textMuted, fontSize: 14, lineHeight: 20 },
   empty: { alignItems: 'center', gap: 8, padding: 32 },
-  emptyTitle: { color: tokens.color.text, fontSize: 17, fontWeight: '700' },
-  lede: { color: tokens.color.textMuted, fontSize: 15, lineHeight: 22 },
+  emptyTitle: { color: tokens.color.text, fontSize: 17, fontFamily: font.bold },
+  lede: { fontFamily: font.regular, color: tokens.color.textMuted, fontSize: 15, lineHeight: 22 },
   panel: {
     alignItems: 'center',
     backgroundColor: tokens.color.surface,
@@ -107,7 +108,7 @@ const styles = StyleSheet.create({
     gap: 12,
     padding: 16,
   },
-  quantity: { color: tokens.color.text, fontSize: 20, fontWeight: '700' },
+  quantity: { color: tokens.color.text, fontSize: 20, fontFamily: font.bold },
   reasonIcon: {
     alignItems: 'center',
     backgroundColor: tokens.color.warningSurface,
@@ -116,5 +117,5 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     width: 38,
   },
-  rowTitle: { color: tokens.color.text, fontSize: 16, fontWeight: '700' },
+  rowTitle: { color: tokens.color.text, fontSize: 16, fontFamily: font.bold },
 });

@@ -1,4 +1,4 @@
-import { ApiClientError, type TeamMembership } from '@anbaro/contracts';
+import { ApiClientError, type Location, type TeamMembership } from '@anbaro/contracts';
 import { tokens } from '@anbaro/design-tokens';
 import { Users } from 'lucide-react-native';
 import { useCallback, useEffect, useState } from 'react';
@@ -6,17 +6,32 @@ import { ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { useMobileSession } from '../../../src/components/app-shell';
 import { PrimaryButton, StatePanel } from '../../../src/components/ui';
+import { font } from '../../../src/lib/fonts';
+
+function scopeLabel(member: TeamMembership, locations: Location[]): string {
+  if (member.allLocations) return 'All locations';
+  const names = member.locationIds.map(
+    (id) => locations.find((location) => location.id === id)?.name ?? 'Unknown location',
+  );
+  return names.length > 0 ? names.join(', ') : 'No locations';
+}
 
 export default function TeamScreen() {
   const { controller, state } = useMobileSession();
   const [members, setMembers] = useState<TeamMembership[] | null>(null);
+  const [locations, setLocations] = useState<Location[]>([]);
   const [error, setError] = useState('');
 
   const load = useCallback(async () => {
     if (state.kind !== 'ready' || !state.user.activeOrganizationId) return;
     setError('');
     try {
-      setMembers((await controller.getMemberships()).data);
+      const [memberResponse, locationResponse] = await Promise.all([
+        controller.getMemberships(),
+        controller.getLocations(),
+      ]);
+      setMembers(memberResponse.data);
+      setLocations(locationResponse.data);
     } catch (caught) {
       setError(caught instanceof ApiClientError ? caught.message : 'Could not load the team.');
     }
@@ -55,18 +70,11 @@ export default function TeamScreen() {
           <View style={styles.copy}>
             <Text style={styles.rowTitle}>{member.name}</Text>
             <Text style={styles.detail}>{member.email}</Text>
+            <Text style={styles.scope}>{scopeLabel(member, locations)}</Text>
           </View>
-          <View
-            style={[
-              styles.roleBadge,
-              member.status === 'revoked' && styles.roleBadgeRevoked,
-            ]}
-          >
+          <View style={[styles.roleBadge, member.status === 'revoked' && styles.roleBadgeRevoked]}>
             <Text
-              style={[
-                styles.roleLabel,
-                member.status === 'revoked' && styles.roleLabelRevoked,
-              ]}
+              style={[styles.roleLabel, member.status === 'revoked' && styles.roleLabelRevoked]}
             >
               {member.status === 'revoked' ? 'Revoked' : member.grantSetName}
             </Text>
@@ -80,10 +88,10 @@ export default function TeamScreen() {
 const styles = StyleSheet.create({
   content: { gap: 12, marginHorizontal: 'auto', maxWidth: 640, padding: 16, width: '100%' },
   copy: { flex: 1, gap: 2 },
-  detail: { color: tokens.color.textMuted, fontSize: 14, lineHeight: 20 },
+  detail: { fontFamily: font.regular, color: tokens.color.textMuted, fontSize: 14, lineHeight: 20 },
   empty: { alignItems: 'center', gap: 8, padding: 32 },
-  emptyTitle: { color: tokens.color.text, fontSize: 17, fontWeight: '700' },
-  lede: { color: tokens.color.textMuted, fontSize: 15, lineHeight: 22 },
+  emptyTitle: { color: tokens.color.text, fontSize: 17, fontFamily: font.bold },
+  lede: { fontFamily: font.regular, color: tokens.color.textMuted, fontSize: 15, lineHeight: 22 },
   panel: {
     alignItems: 'center',
     backgroundColor: tokens.color.surface,
@@ -101,7 +109,8 @@ const styles = StyleSheet.create({
     paddingVertical: 4,
   },
   roleBadgeRevoked: { backgroundColor: tokens.color.dangerSurface },
-  roleLabel: { color: tokens.color.success, fontSize: 13, fontWeight: '600' },
+  roleLabel: { color: tokens.color.success, fontSize: 13, fontFamily: font.semibold },
   roleLabelRevoked: { color: tokens.color.danger },
-  rowTitle: { color: tokens.color.text, fontSize: 16, fontWeight: '700' },
+  rowTitle: { color: tokens.color.text, fontSize: 16, fontFamily: font.bold },
+  scope: { fontFamily: font.regular, color: tokens.color.textMuted, fontSize: 13, lineHeight: 18 },
 });

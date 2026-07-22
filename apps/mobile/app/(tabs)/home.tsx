@@ -2,10 +2,11 @@ import { ApiClientError, type Location } from '@anbaro/contracts';
 import { tokens } from '@anbaro/design-tokens';
 import * as SecureStore from 'expo-secure-store';
 import { useCallback, useEffect, useState } from 'react';
-import { Alert, Linking, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Alert, StyleSheet, Text, TextInput, View } from 'react-native';
 
 import { useMobileSession } from '../../src/components/app-shell';
 import { PrimaryButton, StatePanel } from '../../src/components/ui';
+import { font } from '../../src/lib/fonts';
 
 export default function HomeScreen() {
   const { state, controller, reload } = useMobileSession();
@@ -20,7 +21,6 @@ export default function HomeScreen() {
   const [error, setError] = useState('');
   const [editing, setEditing] = useState<Location | null>(null);
   const [capacityPrompt, setCapacityPrompt] = useState(false);
-  const [openingCheckout, setOpeningCheckout] = useState(false);
   const [draftRestored, setDraftRestored] = useState(false);
   const load = useCallback(async () => {
     if (state.kind !== 'ready' || !state.user.activeOrganizationId) return;
@@ -85,22 +85,6 @@ export default function HomeScreen() {
       if (caught instanceof ApiClientError && caught.code === 'LOCATION_CAPACITY_REACHED')
         setCapacityPrompt(true);
       else setError(caught instanceof ApiClientError ? caught.message : 'Could not save location.');
-    }
-  }
-  async function openCapacityCheckout() {
-    setOpeningCheckout(true);
-    setError('');
-    try {
-      const result = await controller.createCapacityCheckout({
-        idempotencyKey: crypto.randomUUID(),
-        quantity: 1,
-      });
-      if (result.data.checkoutUrl) await Linking.openURL(result.data.checkoutUrl);
-      else setCapacityPrompt(true);
-    } catch (caught) {
-      setError(caught instanceof ApiClientError ? caught.message : 'Could not open checkout.');
-    } finally {
-      setOpeningCheckout(false);
     }
   }
   async function archiveLocation(location: Location) {
@@ -231,14 +215,11 @@ export default function HomeScreen() {
         <StatePanel
           action={
             <View style={styles.actions}>
-              <PrimaryButton disabled={openingCheckout} onPress={() => void openCapacityCheckout()}>
-                {openingCheckout ? 'Opening checkout…' : 'Add a location'}
-              </PrimaryButton>
-              <PrimaryButton onPress={() => setCapacityPrompt(false)}>Not now</PrimaryButton>
+              <PrimaryButton onPress={() => setCapacityPrompt(false)}>Got it</PrimaryButton>
             </View>
           }
-          detail={`You’ve used all ${capacity.capacity} locations. Your entered details are preserved while Stripe confirms the upgrade. This location is created only after a signed webhook grants capacity.`}
-          title="Add another location"
+          detail={`The Free plan includes ${capacity.capacity} locations. Upgrade to Pro at anbaro.com for unlimited locations — your entered details are saved here.`}
+          title="You’ve reached your location limit"
         />
       ) : null}
     </View>
@@ -247,10 +228,11 @@ export default function HomeScreen() {
 
 const styles = StyleSheet.create({
   actions: { flexDirection: 'row', gap: 8, marginTop: 8 },
-  detail: { color: tokens.color.textMuted, fontSize: 16, lineHeight: 24 },
+  detail: { fontFamily: font.regular, color: tokens.color.textMuted, fontSize: 16, lineHeight: 24 },
   error: { color: tokens.color.danger },
   form: { gap: 12 },
   input: {
+    fontFamily: font.regular,
     backgroundColor: tokens.color.surface,
     borderColor: tokens.color.borderStrong,
     borderRadius: 6,
@@ -266,8 +248,8 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     padding: 12,
   },
-  locationTitle: { color: tokens.color.text, fontSize: 18, fontWeight: '700' },
-  section: { color: tokens.color.text, fontSize: 20, fontWeight: '700', marginTop: 12 },
+  locationTitle: { color: tokens.color.text, fontSize: 18, fontFamily: font.bold },
+  section: { color: tokens.color.text, fontSize: 20, fontFamily: font.bold, marginTop: 12 },
   switcher: { gap: 8 },
-  title: { color: tokens.color.text, fontSize: 28, fontWeight: '700' },
+  title: { color: tokens.color.text, fontSize: 28, fontFamily: font.bold },
 });

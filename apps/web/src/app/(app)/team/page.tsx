@@ -6,10 +6,7 @@ import { TeamFeature } from '../../../features/operations';
 export default function TeamPage() {
   return (
     <>
-      <PageHeader
-        subtitle="Invite helpers and manage permission sets."
-        title="Team"
-      />
+      <PageHeader subtitle="Invite helpers and manage permission sets." title="Team" />
       <TeamFeature />
     </>
   );

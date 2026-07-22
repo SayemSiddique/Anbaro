@@ -1,11 +1,20 @@
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import type { ComponentType } from 'react';
 import { useRef, useState } from 'react';
-import { Modal, Platform, StyleSheet, Text, View, type StyleProp, type ViewStyle } from 'react-native';
+import {
+  Modal,
+  Platform,
+  StyleSheet,
+  Text,
+  View,
+  type StyleProp,
+  type ViewStyle,
+} from 'react-native';
 
 import { tokens } from '@anbaro/design-tokens';
 
 import { PrimaryButton, SecondaryButton } from './ui';
+import { font } from '../lib/fonts';
 
 // pnpm resolves a second @types/react for expo-camera, which breaks class-component
 // JSX checking. Re-typing the view with the props we use keeps checking sound here.
@@ -44,8 +53,8 @@ export function BarcodeScannerModal({
           <View style={styles.permission}>
             <Text style={styles.title}>Camera access needed</Text>
             <Text style={styles.detail}>
-              Anbaro scans item barcodes for instant lookup. Your camera is never used for
-              anything else.
+              Anbaro scans item barcodes for instant lookup. Your camera is never used for anything
+              else.
             </Text>
             {permission?.canAskAgain === false ? (
               <Text style={styles.detail}>
@@ -110,6 +119,7 @@ const styles = StyleSheet.create({
   },
   container: { backgroundColor: '#1E1E24', flex: 1 },
   detail: {
+    fontFamily: font.regular,
     color: tokens.color.textMuted,
     fontSize: tokens.typography.fontSize.md,
     lineHeight: 24,
@@ -123,7 +133,7 @@ const styles = StyleSheet.create({
     width: 280,
   },
   frameWrap: { alignItems: 'center', flex: 1, gap: tokens.spacing[4], justifyContent: 'center' },
-  hint: { color: '#FFFFFF', fontSize: tokens.typography.fontSize.md, fontWeight: '600' },
+  hint: { color: '#FFFFFF', fontSize: tokens.typography.fontSize.md, fontFamily: font.semibold },
   permission: {
     alignItems: 'stretch',
     backgroundColor: tokens.color.canvas,
@@ -135,7 +145,7 @@ const styles = StyleSheet.create({
   title: {
     color: tokens.color.text,
     fontSize: tokens.typography.fontSize.xl,
-    fontWeight: '700',
+    fontFamily: font.bold,
     textAlign: 'center',
   },
 });

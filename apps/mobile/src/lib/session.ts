@@ -8,6 +8,7 @@ import {
   type CurrentUser,
   type CreateCountSubmissionRequest,
   type CreateStockEventRequest,
+  type CreateStockProposalRequest,
   type LoginRequest,
   type RegisterRequest,
 } from '@anbaro/contracts';
@@ -128,10 +129,6 @@ export class MobileSessionController {
     return this.api.getBilling();
   }
 
-  createCapacityCheckout(input: { idempotencyKey: string; quantity?: number }) {
-    return this.api.createCapacityCheckout(input);
-  }
-
   getCategories() {
     return this.api.getCategories();
   }
@@ -171,11 +168,19 @@ export class MobileSessionController {
     return this.api.createStockEvent(input);
   }
 
+  createStockProposal(input: CreateStockProposalRequest) {
+    return this.api.createStockProposal(input);
+  }
+
   getSuppliers() {
     return this.api.getSuppliers();
   }
 
-  createSupplier(input: { name: string; contactEmail?: string | null; contactPhone?: string | null }) {
+  createSupplier(input: {
+    name: string;
+    contactEmail?: string | null;
+    contactPhone?: string | null;
+  }) {
     return this.api.createSupplier(input);
   }
 
