@@ -10,13 +10,7 @@ const links = [
   { href: '#cta', label: 'Try Free' },
 ];
 
-export function MobileNav({
-  open,
-  onClose,
-}: {
-  open: boolean;
-  onClose: () => void;
-}) {
+export function MobileNav({ open, onClose }: { open: boolean; onClose: () => void }) {
   return (
     <div className={`mobile-nav${open ? ' open' : ''}`}>
       <button aria-label="Close menu" className="mobile-nav-close" onClick={onClose} type="button">

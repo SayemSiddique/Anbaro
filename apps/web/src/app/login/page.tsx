@@ -97,7 +97,10 @@ function LoginForm() {
               <Field label="Email">
                 <Input autoComplete="email" name="email" required type="email" />
               </Field>
-              <Field label="Password" hint={mode === 'sign-up' ? 'At least 8 characters.' : undefined}>
+              <Field
+                label="Password"
+                hint={mode === 'sign-up' ? 'At least 8 characters.' : undefined}
+              >
                 <Input
                   autoComplete={mode === 'sign-up' ? 'new-password' : 'current-password'}
                   minLength={8}
@@ -115,6 +118,13 @@ function LoginForm() {
                 {mode === 'sign-up' ? 'Create account' : 'Sign in'}
               </Button>
             </form>
+            {mode === 'sign-in' ? (
+              <p style={{ marginTop: 12, textAlign: 'center' }}>
+                <a className="btn btn-ghost btn-sm" href="/forgot-password">
+                  Forgot your password?
+                </a>
+              </p>
+            ) : null}
             <p style={{ marginTop: 16, textAlign: 'center' }}>
               <button
                 className="btn btn-ghost btn-sm"

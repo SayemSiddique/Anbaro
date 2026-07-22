@@ -86,7 +86,10 @@ export function HeroMockupCard() {
         </div>
       </div>
       <div className="float-card float-card-2">
-        <div className="float-card-icon" style={{ background: 'var(--mkt-decorative-green, #28c840)' }}>
+        <div
+          className="float-card-icon"
+          style={{ background: 'var(--mkt-decorative-green, #28c840)' }}
+        >
           <Barcode aria-hidden="true" size={16} />
         </div>
         <div>

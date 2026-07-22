@@ -41,8 +41,8 @@ export function Footer() {
               <AnbaroWordmark dark size={30} />
             </a>
             <p>
-              Simple inventory management for small businesses. Know what you have, where it is,
-              and what is running low.
+              Simple inventory management for small businesses. Know what you have, where it is, and
+              what is running low.
             </p>
           </div>
           <div className="footer-col">
@@ -83,7 +83,12 @@ export function Footer() {
           <p>© 2026 Anbaro. Built with care for small businesses.</p>
           <div className="footer-socials">
             {socials.map(({ Icon, label }) => (
-              <span aria-disabled="true" aria-label={label} className="footer-social-item" key={label}>
+              <span
+                aria-disabled="true"
+                aria-label={label}
+                className="footer-social-item"
+                key={label}
+              >
                 <Icon />
               </span>
             ))}

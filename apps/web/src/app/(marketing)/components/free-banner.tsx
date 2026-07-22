@@ -25,8 +25,8 @@ export function FreeBanner() {
           Priced for small businesses.
         </h2>
         <p>
-          Anbaro is free to use. No trials, no feature gates, no surprise charges. Just a
-          genuinely useful inventory tool for your team.
+          Anbaro is free to use. No trials, no feature gates, no surprise charges. Just a genuinely
+          useful inventory tool for your team.
         </p>
         <div className="free-features-row">
           {included.map((item) => (
@@ -36,7 +36,11 @@ export function FreeBanner() {
             </div>
           ))}
         </div>
-        <Link className="btn-primary" href="/login?mode=sign-up" style={{ fontSize: '1.05rem', padding: '1rem 2.5rem' }}>
+        <Link
+          className="btn-primary"
+          href="/login?mode=sign-up"
+          style={{ fontSize: '1.05rem', padding: '1rem 2.5rem' }}
+        >
           <ArrowRight aria-hidden="true" size={17} />
           Try Anbaro for Free
         </Link>

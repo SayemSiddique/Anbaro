@@ -12,7 +12,14 @@ import {
 } from 'lucide-react';
 
 const items = [
-  { icon: Coffee, tint: 'var(--mkt-primary-tint-10)', color: 'var(--primary)', name: 'Paper Cups', qty: 24, low: true },
+  {
+    icon: Coffee,
+    tint: 'var(--mkt-primary-tint-10)',
+    color: 'var(--primary)',
+    name: 'Paper Cups',
+    qty: 24,
+    low: true,
+  },
   {
     icon: Droplets,
     tint: 'rgb(40 200 64 / 10%)',
@@ -21,8 +28,22 @@ const items = [
     qty: 156,
     low: false,
   },
-  { icon: Package, tint: 'var(--mkt-accent-tint-15)', color: 'var(--accent)', name: 'Shipping Boxes', qty: 89, low: false },
-  { icon: Printer, tint: 'var(--mkt-primary-tint-10)', color: 'var(--primary)', name: 'Printer Paper', qty: 8, low: true },
+  {
+    icon: Package,
+    tint: 'var(--mkt-accent-tint-15)',
+    color: 'var(--accent)',
+    name: 'Shipping Boxes',
+    qty: 89,
+    low: false,
+  },
+  {
+    icon: Printer,
+    tint: 'var(--mkt-primary-tint-10)',
+    color: 'var(--primary)',
+    name: 'Printer Paper',
+    qty: 8,
+    low: true,
+  },
   {
     icon: SoapDispenserDroplet,
     tint: 'rgb(40 200 64 / 10%)',

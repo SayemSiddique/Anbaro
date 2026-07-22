@@ -1,9 +1,30 @@
 import { Bell } from 'lucide-react';
 
 const rows = [
-  { name: 'Paper Cups (12oz)', location: 'Main Storeroom', qty: 24, target: 200, reorder: 176, tone: 'tone-primary' as const },
-  { name: 'Printer Paper (A4)', location: 'Office', qty: 8, target: 50, reorder: 42, tone: 'tone-primary' as const },
-  { name: 'Napkins (Pack)', location: 'Kitchen', qty: 15, target: 100, reorder: 85, tone: 'tone-accent' as const },
+  {
+    name: 'Paper Cups (12oz)',
+    location: 'Main Storeroom',
+    qty: 24,
+    target: 200,
+    reorder: 176,
+    tone: 'tone-primary' as const,
+  },
+  {
+    name: 'Printer Paper (A4)',
+    location: 'Office',
+    qty: 8,
+    target: 50,
+    reorder: 42,
+    tone: 'tone-primary' as const,
+  },
+  {
+    name: 'Napkins (Pack)',
+    location: 'Kitchen',
+    qty: 15,
+    target: 100,
+    reorder: 85,
+    tone: 'tone-accent' as const,
+  },
 ];
 
 export function ShowcaseLowStockCard() {

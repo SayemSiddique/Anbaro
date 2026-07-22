@@ -4,6 +4,7 @@ import { FreeBanner } from './free-banner';
 import { Footer } from './footer';
 import { Hero } from './hero';
 import { HowItWorks } from './how-it-works';
+import { IntroOverlay } from './intro-overlay';
 import { Navbar } from './navbar';
 import { Showcase } from './showcase';
 import { ShowcaseLowStockCard } from './showcase-low-stock-card';
@@ -13,6 +14,7 @@ import { TrustedBy } from './trusted-by';
 export function LandingPage() {
   return (
     <>
+      <IntroOverlay />
       <Navbar />
       <Hero />
       <TrustedBy />
