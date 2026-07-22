@@ -87,20 +87,99 @@ export type LocationListResponse = ApiSuccess<Location[]> & {
 export type DeleteAccountRequest = { email: string; password: string };
 
 /**
- * Anbaro is free. Support is voluntary and buys nothing — no feature, tier, or
- * content is gated behind it, which is what keeps the link outside the scope of
- * Apple's and Google's in-app purchase rules.
+ * Anbaro's public pricing. One paid plan ("Pro"), billed at three intervals —
+ * longer commitment, lower effective price. This constant is the single source
+ * of truth for the pricing page's presentation so it renders identically whether
+ * or not the transactional billing API is live; the plan-catalog migration and
+ * Stripe Prices mirror these figures. Amounts elsewhere are in minor units
+ * (cents); the display strings here are what the UI shows.
  *
- * This is the only place it is defined; web and Android both read it from here.
+ * Billing surfaces on web only for now. The mobile apps stay on the free tier to
+ * keep Anbaro clear of Apple's and Google's in-app-purchase rules.
  */
-export const DONATION_URL = 'https://buymeacoffee.com/samsid';
+export const TRIAL_DAYS = 30 as const;
 
-/**
- * iOS deliberately omits the support link. Apple treats donations to a developer
- * (as opposed to a registered nonprofit) as needing In-App Purchase, and a first
- * submission is the worst time to argue the point. Web and Android show it.
- */
-export const DONATION_ENABLED_PLATFORMS = ['web', 'android'] as const;
+export type BillingInterval = 'monthly' | 'quarterly' | 'annual';
+
+export type PricingInterval = {
+  interval: BillingInterval;
+  /** Tab label, e.g. "Monthly". */
+  label: string;
+  /** Headline price for the interval, e.g. "$24.99". */
+  price: string;
+  /** Unit the price is billed over, e.g. "/quarter". */
+  period: string;
+  /** Effective monthly cost, e.g. "$7.50/mo billed annually". */
+  monthlyEquivalent: string;
+  /** Savings vs. paying monthly, or null for the monthly interval itself. */
+  savingsLabel: string | null;
+  /** Stripe Price lookup key operations maps to a real Price at go-live. */
+  stripeLookupKey: string;
+  /** Marks the interval highlighted as the best deal. */
+  highlighted?: boolean;
+};
+
+export const PRICING_INTERVALS: readonly PricingInterval[] = [
+  {
+    interval: 'monthly',
+    label: 'Monthly',
+    price: '$10',
+    period: '/month',
+    monthlyEquivalent: 'Billed monthly',
+    savingsLabel: null,
+    stripeLookupKey: 'anbaro_pro_monthly',
+  },
+  {
+    interval: 'quarterly',
+    label: 'Quarterly',
+    price: '$24.99',
+    period: '/quarter',
+    monthlyEquivalent: '$8.33/mo billed quarterly',
+    savingsLabel: 'Save 17%',
+    stripeLookupKey: 'anbaro_pro_quarterly',
+  },
+  {
+    interval: 'annual',
+    label: 'Annual',
+    price: '$89.99',
+    period: '/year',
+    monthlyEquivalent: '$7.50/mo billed yearly',
+    savingsLabel: 'Save 25%',
+    stripeLookupKey: 'anbaro_pro_annual',
+    highlighted: true,
+  },
+];
+
+/** The exact Free-tier caps, enforced server-side once billing is enabled. */
+export const FREE_TIER_LIMITS = {
+  maxLocations: 2,
+  maxMembers: 4,
+  maxMembersPerLocation: 2,
+  maxItems: 100,
+  csvOpsPer7Days: 2,
+} as const;
+
+/** One row of the Free vs. Pro comparison table on the pricing page. */
+export type PlanComparisonRow = {
+  label: string;
+  /** `true`/`false` render as a check/dash; a string renders verbatim. */
+  free: string | boolean;
+  pro: string | boolean;
+};
+
+export const PLAN_COMPARISON: readonly PlanComparisonRow[] = [
+  { label: 'Locations', free: '2', pro: 'Unlimited' },
+  { label: 'Team members', free: '4 (2 per location)', pro: 'Unlimited' },
+  { label: 'Items tracked', free: '100', pro: 'Unlimited' },
+  { label: 'CSV import & export', free: '2 / week', pro: 'Unlimited' },
+  { label: 'Barcode scanning', free: true, pro: true },
+  { label: 'Stock counts & history', free: true, pro: true },
+  { label: 'Low-stock alerts', free: true, pro: true },
+  { label: 'Reorder suggestions', free: true, pro: true },
+  { label: 'Suppliers', free: true, pro: true },
+  { label: 'Priority support', free: false, pro: true },
+];
+
 export type CreateLocationRequest = { name: string; address?: string | null };
 export type UpdateLocationRequest = Partial<CreateLocationRequest>;
 
@@ -111,7 +190,6 @@ export type BillingOverview = {
   customerId: string | null;
   planName: string;
   priceDescription: string;
-  locationAddonPriceDescription: string;
   locations: { used: number; capacity: number | null };
 };
 export type BillingPlan = {
@@ -119,13 +197,13 @@ export type BillingPlan = {
   name: string;
   basePrice: number;
   currency: string;
-  billingInterval: 'monthly' | 'quarterly' | 'annual';
+  billingInterval: BillingInterval;
   includedLocations: number;
   displayPrice: string;
   tagline: string;
   features: string[];
 };
-export type CapacityCheckoutRequest = { idempotencyKey: string; quantity?: number };
+export type BillingCheckoutRequest = { interval?: BillingInterval };
 export type CheckoutSessionResponse = {
   checkoutUrl: string | null;
   status: 'awaiting_reconciliation' | 'completed';
@@ -195,11 +273,17 @@ export type StockEvent = {
   quantityDelta: string;
   resultingQuantity: string;
   reasonCode: string | null;
-  source: 'manual' | 'barcode' | 'csv_import' | 'count_session' | 'system';
+  source: 'manual' | 'barcode' | 'csv_import' | 'count_session' | 'system' | 'assistant';
   actorUserId: string;
   actorName?: string;
   locationName?: string;
   createdAt: string;
+};
+/** Attribution for an assistant-confirmed movement; only valid with source: 'assistant'. */
+export type AssistantAttribution = {
+  transcriptId?: string;
+  model?: string;
+  extractionConfidence?: number;
 };
 export type CreateStockEventRequest = {
   itemId: string;
@@ -207,10 +291,32 @@ export type CreateStockEventRequest = {
   eventType: 'adjustment' | 'loss';
   quantityDelta: number;
   reasonCode?: string;
+  /** Client-generated UUID; a retry with the same key returns the original event. */
+  idempotencyKey: string;
+  /** Defaults to 'manual'; 'assistant' requires the assistant:use permission. */
+  source?: 'manual' | 'assistant';
+  assistant?: AssistantAttribution;
 };
 export type StockEventHistoryResponse = ApiSuccess<StockEvent[]> & {
   meta: { nextCursor: null };
 };
+
+export type ProposedMovement = {
+  itemQuery: string;
+  resolvedItem: { id: string; name: string } | null;
+  candidates: { id: string; name: string }[];
+  eventType: 'adjustment' | 'loss';
+  quantityDelta: number;
+  reason: string | null;
+  confidence: 'high' | 'low';
+};
+export type StockProposal = {
+  locationId: string | null;
+  locationName: string | null;
+  movements: ProposedMovement[];
+  clarification: string | null;
+};
+export type CreateStockProposalRequest = { message: string; locationId?: string };
 
 export type CountSessionStatus = 'in_progress' | 'finalized' | 'abandoned';
 export type CountLineResolution = 'pending' | 'single_submission' | 'conflict' | 'accepted';
@@ -375,6 +481,9 @@ export type TeamMembership = {
   grantSetName: string;
   grantSetScope: 'system' | 'organization';
   grantSetIsMutable: boolean;
+  /** True for org-wide members; false when limited to `locationIds`. */
+  allLocations: boolean;
+  locationIds: string[];
 };
 export type MembershipInvitation = {
   id: string;
@@ -385,11 +494,22 @@ export type MembershipInvitation = {
   createdAt: string;
   grantSetId: string;
   grantSetName: string;
+  allLocations: boolean;
+  locationIds: string[];
 };
 export type CreateMembershipInvitationRequest = {
   email: string;
   name?: string | null;
   grantSetId: string;
+  /** Defaults to org-wide; set false with a non-empty locationIds to scope. */
+  allLocations?: boolean;
+  locationIds?: string[];
+};
+export type UpdateMembershipRequest = {
+  grantSetId?: string;
+  status?: 'active' | 'revoked';
+  allLocations?: boolean;
+  locationIds?: string[];
 };
 export type AcceptInvitationRequest = {
   token: string;
@@ -489,8 +609,7 @@ export class SessionApiClient {
     // Wrap rather than reference the global: calling a stored `fetch` as
     // `this.fetchImplementation(...)` rebinds `this` to the client, which
     // browsers reject with "Illegal invocation" (Node does not care).
-    this.fetchImplementation =
-      options.fetchImplementation ?? ((input, init) => fetch(input, init));
+    this.fetchImplementation = options.fetchImplementation ?? ((input, init) => fetch(input, init));
   }
 
   async register(input: RegisterRequest): Promise<AuthResponse> {
@@ -565,6 +684,27 @@ export class SessionApiClient {
     }
   }
 
+  requestPasswordReset(input: { email: string }): Promise<ApiSuccess<{ status: string }>> {
+    return this.request('/auth/password-reset/request', {
+      method: 'POST',
+      body: JSON.stringify(input),
+    });
+  }
+
+  confirmPasswordReset(input: {
+    token: string;
+    password: string;
+  }): Promise<ApiSuccess<{ status: string }>> {
+    return this.request('/auth/password-reset/confirm', {
+      method: 'POST',
+      body: JSON.stringify(input),
+    });
+  }
+
+  verifyEmail(input: { token: string }): Promise<ApiSuccess<{ status: string }>> {
+    return this.request('/auth/verify-email', { method: 'POST', body: JSON.stringify(input) });
+  }
+
   async selectActiveOrganization(
     input: SelectActiveOrganizationRequest,
   ): Promise<SelectActiveOrganizationResponse> {
@@ -635,18 +775,10 @@ export class SessionApiClient {
     return this.request('/billing/plans', { method: 'GET' }, true);
   }
 
-  createBillingCheckout(): Promise<ApiSuccess<CheckoutSessionResponse>> {
-    return this.request('/billing/checkout', { method: 'POST' }, true);
-  }
-
-  createCapacityCheckout(
-    input: CapacityCheckoutRequest,
+  createBillingCheckout(
+    input: BillingCheckoutRequest = {},
   ): Promise<ApiSuccess<CheckoutSessionResponse>> {
-    return this.request(
-      '/billing/capacity-checkout',
-      { method: 'POST', body: JSON.stringify(input) },
-      true,
-    );
+    return this.request('/billing/checkout', { method: 'POST', body: JSON.stringify(input) }, true);
   }
 
   createBillingPortal(returnUrl: string): Promise<ApiSuccess<{ portalUrl: string }>> {
@@ -748,6 +880,14 @@ export class SessionApiClient {
   createStockEvent(input: CreateStockEventRequest): Promise<ApiSuccess<StockEvent>> {
     return this.request<ApiSuccess<StockEvent>>(
       '/stock-events',
+      { method: 'POST', body: JSON.stringify(input) },
+      true,
+    );
+  }
+
+  createStockProposal(input: CreateStockProposalRequest): Promise<ApiSuccess<StockProposal>> {
+    return this.request<ApiSuccess<StockProposal>>(
+      '/assistant/stock-proposals',
       { method: 'POST', body: JSON.stringify(input) },
       true,
     );
@@ -879,8 +1019,10 @@ export class SessionApiClient {
 
   updateMembership(
     id: string,
-    input: { grantSetId?: string; status?: 'active' | 'revoked' },
-  ): Promise<ApiSuccess<Pick<TeamMembership, 'id' | 'userId' | 'status' | 'grantSetId'>>> {
+    input: UpdateMembershipRequest,
+  ): Promise<
+    ApiSuccess<Pick<TeamMembership, 'id' | 'userId' | 'status' | 'grantSetId' | 'allLocations'>>
+  > {
     return this.request(
       `/memberships/${id}`,
       { method: 'PATCH', body: JSON.stringify(input) },

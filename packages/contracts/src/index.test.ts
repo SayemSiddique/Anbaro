@@ -109,7 +109,14 @@ describe('stock quantity contract', () => {
   });
 
   it('rejects values the API would refuse, so they are never queued offline', () => {
-    for (const value of [0.0001, 5.0004, 1e-7, 100000000000, Number.NaN, Number.POSITIVE_INFINITY]) {
+    for (const value of [
+      0.0001,
+      5.0004,
+      1e-7,
+      100000000000,
+      Number.NaN,
+      Number.POSITIVE_INFINITY,
+    ]) {
       expect(fitsStockQuantity(value)).toBe(false);
     }
   });

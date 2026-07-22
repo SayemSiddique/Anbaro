@@ -7,14 +7,15 @@ import {
   processNotificationDeliveries,
   queueNotificationDelivery,
 } from '../notifications/service.js';
+import { requireLocationAccess, requirePermission } from '../auth/context.js';
 import { withVerifiedTenant } from '../db/client.js';
-import { assertOrganizationWritable } from '../onboarding/service.js';
+import { assertItemCapacity, assertOrganizationWritable } from '../onboarding/service.js';
 import { withAuthorizedTenant } from '../tenant/access.js';
 import { numeric3 } from '../validation.js';
 
 const rateLimit = { max: 300, timeWindow: '1 minute' };
 const idSchema = z.object({ id: z.string().uuid() }).strict();
-const categorySchema = z
+export const categorySchema = z
   .object({
     name: z.string().trim().min(1).max(100),
     icon: z.string().trim().min(1).max(64).nullable().optional(),
@@ -34,7 +35,7 @@ const packConsistency = (value: {
   packSize?: number | null | undefined;
   packUnit?: string | null | undefined;
 }) => (value.packSize == null) === (value.packUnit == null);
-const itemSchema = z
+export const itemSchema = z
   .object({
     categoryId: z.string().uuid(),
     name: z.string().trim().min(1).max(160),
@@ -76,7 +77,18 @@ const historyQuerySchema = z
     limit: z.coerce.number().int().min(1).max(100).default(50),
   })
   .strict();
-const stockEventSchema = z
+// Attribution for an assistant-confirmed movement. The model never writes; the
+// user confirms a proposal through this same route, and these fields record that
+// origin in the ledger so a mis-extraction has a findable blast radius.
+const assistantAttributionSchema = z
+  .object({
+    transcriptId: z.string().trim().min(1).max(128).optional(),
+    model: z.string().trim().min(1).max(128).optional(),
+    extractionConfidence: z.number().min(0).max(1).optional(),
+  })
+  .strict();
+
+export const stockEventSchema = z
   .object({
     itemId: z.string().uuid(),
     locationId: z.string().uuid(),
@@ -85,6 +97,9 @@ const stockEventSchema = z
       (value) => value !== 0,
     ),
     reasonCode: z.string().trim().min(1).max(64).optional(),
+    idempotencyKey: z.string().uuid(),
+    source: z.enum(['manual', 'assistant']).default('manual'),
+    assistant: assistantAttributionSchema.optional(),
   })
   .strict()
   .superRefine((value, context) => {
@@ -100,6 +115,14 @@ const stockEventSchema = z
         code: 'custom',
         path: ['quantityDelta'],
         message: 'A loss quantity must be negative.',
+      });
+    }
+    // Attribution metadata only belongs on an assistant-sourced write.
+    if (value.assistant && value.source !== 'assistant') {
+      context.addIssue({
+        code: 'custom',
+        path: ['assistant'],
+        message: 'Assistant metadata is only allowed when source is "assistant".',
       });
     }
   });
@@ -305,6 +328,7 @@ export async function registerCatalogRoutes(app: FastifyInstance): Promise<void>
           await assertOrganizationWritable(client);
           const input = parse(itemSchema, request.body);
           await requireActiveCategory(client, input.categoryId);
+          await assertItemCapacity(client);
           const result = await client.query<{ id: string }>(
             `INSERT INTO items (organization_id, category_id, name, unit, pack_size, pack_unit, barcode_identifier, status, created_by)
          VALUES (app.current_organization_id(), $1, $2, $3, $4, $5, $6, 'active', $7)
@@ -461,6 +485,10 @@ export async function registerCatalogRoutes(app: FastifyInstance): Promise<void>
         async (client, context) => {
           await assertOrganizationWritable(client);
           const input = parse(stockEventSchema, request.body);
+          requireLocationAccess(context, input.locationId);
+          // An assistant-attributed write is a normal stock write plus proof the
+          // caller may use the assistant at all — attribution is not a bypass.
+          if (input.source === 'assistant') requirePermission(context, 'assistant', 'use');
           await Promise.all([
             requireActiveItem(client, input.itemId),
             requireActiveLocation(client, input.locationId),
@@ -469,18 +497,27 @@ export async function registerCatalogRoutes(app: FastifyInstance): Promise<void>
             event_id: string;
             resulting_quantity: string;
             created_at: string;
-          }>('SELECT * FROM app.apply_manual_stock_event($1, $2, $3, $4, $5, $6)', [
+            replayed: boolean;
+          }>('SELECT * FROM app.apply_manual_stock_event($1, $2, $3, $4, $5, $6, $7, $8, $9)', [
             input.locationId,
             input.itemId,
             input.eventType,
             input.quantityDelta.toString(),
             input.reasonCode ?? null,
             context.userId,
+            input.idempotencyKey,
+            input.source,
+            JSON.stringify(input.source === 'assistant' ? (input.assistant ?? {}) : {}),
           ]);
-          queueNotificationDelivery(context.organizationId, (organizationId) =>
-            withVerifiedTenant(organizationId, processNotificationDeliveries),
-          );
-          return reply.code(201).send({
+          const replayed = event.rows[0]?.replayed ?? false;
+          // A replayed idempotency key made no new ledger entry, so skip the
+          // notification sweep it would otherwise trigger.
+          if (!replayed) {
+            queueNotificationDelivery(context.organizationId, (organizationId) =>
+              withVerifiedTenant(organizationId, processNotificationDeliveries),
+            );
+          }
+          return reply.code(replayed ? 200 : 201).send({
             data: {
               id: event.rows[0]?.event_id,
               itemId: input.itemId,
@@ -489,7 +526,7 @@ export async function registerCatalogRoutes(app: FastifyInstance): Promise<void>
               quantityDelta: input.quantityDelta.toString(),
               resultingQuantity: event.rows[0]?.resulting_quantity,
               reasonCode: input.reasonCode ?? null,
-              source: 'manual',
+              source: input.source,
               actorUserId: context.userId,
               createdAt: event.rows[0]?.created_at,
             },
