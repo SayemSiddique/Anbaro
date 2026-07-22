@@ -1,0 +1,102 @@
+name: Deploy
+
+# Continuous deployment — INERT SCAFFOLD.
+#
+# This workflow is intentionally dormant until the deploy secrets exist. It runs
+# only after the "Quality gates" workflow succeeds on `main`, then a `preflight`
+# job checks whether the Railway / Vercel secrets are configured. Until they are,
+# the deploy jobs are skipped and this workflow is a no-op — nothing is ever
+# deployed by accident. It is fully wired up in plan Session 5, when the deploy
+# tokens are added as GitHub Actions secrets and the prod job is placed behind a
+# protected environment for manual approval.
+#
+# Required secrets (added in Session 5 — see docs/operations/ENVIRONMENTS.md):
+#   RAILWAY_TOKEN, RAILWAY_SERVICE_ID           → API (Railway)
+#   VERCEL_TOKEN, VERCEL_ORG_ID, VERCEL_PROJECT_ID → web (Vercel)
+
+on:
+  # Deploy only what has already passed the quality gate on main.
+  workflow_run:
+    workflows: ['Quality gates']
+    types: [completed]
+    branches: [main]
+  # Manual trigger for Session 5 wiring and one-off redeploys.
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: deploy-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  # Gate everything on a green quality run AND on the secrets actually existing.
+  # Secrets are not readable in job-level `if:`, so we surface their presence as
+  # job outputs here and let the deploy jobs depend on them.
+  preflight:
+    runs-on: ubuntu-latest
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      github.event.workflow_run.conclusion == 'success'
+    outputs:
+      deploy_api: ${{ steps.check.outputs.deploy_api }}
+      deploy_web: ${{ steps.check.outputs.deploy_web }}
+    steps:
+      - id: check
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+          RAILWAY_SERVICE_ID: ${{ secrets.RAILWAY_SERVICE_ID }}
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+        run: |
+          if [ -n "$RAILWAY_TOKEN" ] && [ -n "$RAILWAY_SERVICE_ID" ]; then
+            echo "deploy_api=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "deploy_api=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::Railway secrets not set — skipping API deploy (inert)."
+          fi
+          if [ -n "$VERCEL_TOKEN" ] && [ -n "$VERCEL_PROJECT_ID" ]; then
+            echo "deploy_web=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "deploy_web=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::Vercel secrets not set — skipping web deploy (inert)."
+          fi
+
+  # API → Railway. Activated in Session 5. Staging first; prod promotion is gated
+  # behind a protected environment / manual approval (added when this goes live).
+  deploy-api:
+    needs: preflight
+    if: needs.preflight.outputs.deploy_api == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - name: Deploy API to Railway
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+          RAILWAY_SERVICE_ID: ${{ secrets.RAILWAY_SERVICE_ID }}
+        run: |
+          echo "Session 5 wires the real Railway deploy here, e.g.:"
+          echo "  npx -y @railway/cli up --service \"$RAILWAY_SERVICE_ID\" --ci"
+          echo "Then a post-deploy health gate: curl -fsS https://api.anbaro.com/health"
+
+  # web → Vercel. Activated in Session 5.
+  deploy-web:
+    needs: preflight
+    if: needs.preflight.outputs.deploy_web == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - name: Deploy web to Vercel
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+        run: |
+          echo "Session 5 wires the real Vercel deploy here, e.g.:"
+          echo "  npx -y vercel@latest pull  --yes --environment=production --token \"$VERCEL_TOKEN\""
+          echo "  npx -y vercel@latest build --prod --token \"$VERCEL_TOKEN\""
+          echo "  npx -y vercel@latest deploy --prebuilt --prod --token \"$VERCEL_TOKEN\""
+          echo "Then a post-deploy health gate: curl -fsS https://anbaro.com"
