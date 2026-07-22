@@ -4,7 +4,7 @@
 
 **Anbaro is a simple, free inventory-management app for small businesses.** It helps a team know what stock they have, where it is stored, and what is running low—without living in messy spreadsheets or paying for complicated enterprise software.
 
-**Core message:** *Know what you have, where it is, and what is running low—without the spreadsheet chaos.*
+**Core message:** _Know what you have, where it is, and what is running low—without the spreadsheet chaos._
 
 ## What Anbaro is building
 
@@ -45,20 +45,20 @@ Anbaro makes the basic inventory workflow clear: **add what you carry, record wh
 
 ## Key features
 
-| Feature | What it means for a small business |
-|---|---|
-| Item and location tracking | See what items you have and the quantity at each location. |
-| Guided stock counts | Run repeatable counts that help staff count carefully and reconcile results. |
-| Offline mobile counting | Continue counting in a back room or other low-signal area; changes sync when the connection returns. |
-| Barcode scanning | Use a phone camera to find or add an item quickly—no separate scanner hardware needed. |
-| Low-stock alerts | Get notified when an item reaches its chosen low-stock level. |
-| Reorder suggestions | See suggested quantities based on target stock levels, then review the recommendation yourself. Anbaro does not place orders automatically. |
-| Supplier details | Keep supplier contact information and item relationships in one place. |
-| Units and pack sizes | Track stock in useful units, such as pieces, weight, volume, cases, or packs. |
-| Stock history | Keep a clear record of stock movements and adjustments, so teams can understand how a quantity changed. |
-| Team access | Invite staff and give people the access they need. |
-| CSV import and export | Bring in an existing catalog and take your data with you. |
-| Web and mobile apps | Review inventory at a desk and count it on the floor, with shared data. |
+| Feature                    | What it means for a small business                                                                                                          |
+| -------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
+| Item and location tracking | See what items you have and the quantity at each location.                                                                                  |
+| Guided stock counts        | Run repeatable counts that help staff count carefully and reconcile results.                                                                |
+| Offline mobile counting    | Continue counting in a back room or other low-signal area; changes sync when the connection returns.                                        |
+| Barcode scanning           | Use a phone camera to find or add an item quickly—no separate scanner hardware needed.                                                      |
+| Low-stock alerts           | Get notified when an item reaches its chosen low-stock level.                                                                               |
+| Reorder suggestions        | See suggested quantities based on target stock levels, then review the recommendation yourself. Anbaro does not place orders automatically. |
+| Supplier details           | Keep supplier contact information and item relationships in one place.                                                                      |
+| Units and pack sizes       | Track stock in useful units, such as pieces, weight, volume, cases, or packs.                                                               |
+| Stock history              | Keep a clear record of stock movements and adjustments, so teams can understand how a quantity changed.                                     |
+| Team access                | Invite staff and give people the access they need.                                                                                          |
+| CSV import and export      | Bring in an existing catalog and take your data with you.                                                                                   |
+| Web and mobile apps        | Review inventory at a desk and count it on the floor, with shared data.                                                                     |
 
 ## What makes it simple
 

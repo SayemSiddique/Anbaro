@@ -9,13 +9,13 @@ off. Leave it unset and no Stripe account, product, price, or webhook is needed.
 
 ## Recommended services
 
-| Part | Service | Reason |
-|---|---|---|
-| Web | Vercel | Direct fit for the existing Next.js app and custom domain. |
-| API | Railway | Runs the committed Dockerfile continuously for webhooks and notification jobs. |
-| PostgreSQL | Neon | Managed Postgres with pooled connections, backups, and low early-stage cost. |
-| Redis | Upstash | Managed Redis for the existing distributed rate limiter. |
-| Mobile builds | Expo EAS | Produces signed Android and iOS store binaries without build-machine upkeep. |
+| Part          | Service  | Reason                                                                         |
+| ------------- | -------- | ------------------------------------------------------------------------------ |
+| Web           | Vercel   | Direct fit for the existing Next.js app and custom domain.                     |
+| API           | Railway  | Runs the committed Dockerfile continuously for webhooks and notification jobs. |
+| PostgreSQL    | Neon     | Managed Postgres with pooled connections, backups, and low early-stage cost.   |
+| Redis         | Upstash  | Managed Redis for the existing distributed rate limiter.                       |
+| Mobile builds | Expo EAS | Produces signed Android and iOS store binaries without build-machine upkeep.   |
 
 Keep Postgres, Redis, and Railway in the same broad region. Do not put Postgres
 or Redis in the API container.
@@ -101,6 +101,7 @@ first store build; it cannot be changed after release.
 
    Keep the EAS project ID generated in `app.json`. The committed `eas.json`
    supplies preview and production profiles.
+
 2. Set these EAS production variables (they are public URLs, never secrets):
 
    ```text

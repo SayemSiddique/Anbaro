@@ -20,17 +20,17 @@ Anbaro is deliberately general-purpose. Whether you're managing a stockroom, a w
 
 ## What's included
 
-| | |
-|---|---|
-| **Guided stock counts** | Structured, repeatable counting sessions with offline capture and automatic reconciliation |
-| **Barcode scanning** | Camera-based lookup and entry on mobile — no dedicated hardware |
-| **Immutable stock ledger** | A permanent, auditable history of every movement and adjustment |
-| **Smart categorization** | Items are automatically organized with recognizable icons, so lists stay scannable at a glance |
-| **Units & pack sizes** | Count in the units that make sense for each item — pieces, weight, volume, cases — with conversions handled for you |
-| **Low-stock & reorder alerts** | Get notified before shelves go empty, with suggested reorder quantities |
-| **Supplier management** | Keep supplier details and reorder history attached to the items they supply |
-| **Team access** | Multi-user workspaces with role-based permissions |
-| **Simple billing** | A free tier to get started, transparent paid plans when you need more |
+|                                |                                                                                                                     |
+| ------------------------------ | ------------------------------------------------------------------------------------------------------------------- |
+| **Guided stock counts**        | Structured, repeatable counting sessions with offline capture and automatic reconciliation                          |
+| **Barcode scanning**           | Camera-based lookup and entry on mobile — no dedicated hardware                                                     |
+| **Immutable stock ledger**     | A permanent, auditable history of every movement and adjustment                                                     |
+| **Smart categorization**       | Items are automatically organized with recognizable icons, so lists stay scannable at a glance                      |
+| **Units & pack sizes**         | Count in the units that make sense for each item — pieces, weight, volume, cases — with conversions handled for you |
+| **Low-stock & reorder alerts** | Get notified before shelves go empty, with suggested reorder quantities                                             |
+| **Supplier management**        | Keep supplier details and reorder history attached to the items they supply                                         |
+| **Team access**                | Multi-user workspaces with role-based permissions                                                                   |
+| **Simple billing**             | A free tier to get started, transparent paid plans when you need more                                               |
 
 ## Where you can use it
 
