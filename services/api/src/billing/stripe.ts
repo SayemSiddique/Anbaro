@@ -2,15 +2,38 @@ import { createHmac, timingSafeEqual } from 'node:crypto';
 
 import { ApiError } from '../errors.js';
 
+export type BillingInterval = 'monthly' | 'quarterly' | 'annual';
+
 export type HostedCheckoutInput = {
   kind: 'subscription' | 'capacity';
   organizationId: string;
+  /** Chosen billing interval for a subscription checkout. Defaults to monthly. */
+  interval?: BillingInterval;
   intentId?: string;
   quantity?: number;
   customerId?: string | null;
   successUrl: string;
   cancelUrl: string;
 };
+
+/**
+ * Each interval maps to a Stripe Price created in the dashboard. Monthly falls
+ * back to the original single-price env so existing configuration keeps working.
+ */
+const SUBSCRIPTION_PRICE_ENV: Record<BillingInterval, readonly string[]> = {
+  monthly: ['STRIPE_PRICE_ID_MONTHLY', 'STRIPE_SUBSCRIPTION_PRICE_ID'],
+  quarterly: ['STRIPE_PRICE_ID_QUARTERLY'],
+  annual: ['STRIPE_PRICE_ID_ANNUAL'],
+};
+
+function subscriptionPriceId(interval: BillingInterval): string {
+  const candidates = SUBSCRIPTION_PRICE_ENV[interval];
+  for (const name of candidates) {
+    const value = process.env[name];
+    if (value) return value;
+  }
+  return requiredEnvironment(candidates[0] ?? 'STRIPE_SUBSCRIPTION_PRICE_ID');
+}
 
 export type StripeGateway = {
   createCheckoutSession(input: HostedCheckoutInput): Promise<{ id: string; url: string }>;
@@ -63,9 +86,9 @@ export function createStripeGateway(): StripeGateway {
   return {
     async createCheckoutSession(input) {
       const isCapacity = input.kind === 'capacity';
-      const priceId = requiredEnvironment(
-        isCapacity ? 'STRIPE_LOCATION_ADDON_PRICE_ID' : 'STRIPE_SUBSCRIPTION_PRICE_ID',
-      );
+      const priceId = isCapacity
+        ? requiredEnvironment('STRIPE_LOCATION_ADDON_PRICE_ID')
+        : subscriptionPriceId(input.interval ?? 'monthly');
       const form = new URLSearchParams({
         mode: isCapacity ? 'payment' : 'subscription',
         success_url: input.successUrl,
@@ -79,8 +102,13 @@ export function createStripeGateway(): StripeGateway {
       if (input.intentId) form.set('metadata[capacityIntentId]', input.intentId);
       if (input.customerId) form.set('customer', input.customerId);
       if (!isCapacity) {
+        // Let Stripe collect promotion codes at checkout. Codes and their
+        // discounts (incl. 100%-off comps for friends) are created in the
+        // Stripe dashboard — no promo state lives in Anbaro.
+        form.set('allow_promotion_codes', 'true');
         form.set('subscription_data[metadata][organizationId]', input.organizationId);
         form.set('subscription_data[metadata][kind]', 'subscription');
+        form.set('subscription_data[metadata][interval]', input.interval ?? 'monthly');
       }
       const session = await stripeRequest('/checkout/sessions', form);
       if (typeof session.url !== 'string') {

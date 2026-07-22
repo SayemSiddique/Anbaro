@@ -4,7 +4,7 @@ import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
 
 import { ApiError } from '../errors.js';
-import { assertOrganizationWritable, getLocationCapacity } from '../onboarding/service.js';
+import { getLocationCapacity } from '../onboarding/service.js';
 import { withAuthorizedTenant } from '../tenant/access.js';
 import { BILLING_ENABLED } from '../billing/config.js';
 import {
@@ -15,13 +15,10 @@ import {
 import { withBillingReconciliation } from '../db/client.js';
 
 const rateLimit = { max: 10, timeWindow: '1 minute' };
-const capacityCheckoutSchema = z
-  .object({
-    idempotencyKey: z.string().uuid(),
-    quantity: z.number().int().min(1).max(100).default(1),
-  })
-  .strict();
 const returnUrlSchema = z.object({ returnUrl: z.string().url().max(2000) }).strict();
+const subscriptionCheckoutSchema = z
+  .object({ interval: z.enum(['monthly', 'quarterly', 'annual']).default('monthly') })
+  .strict();
 const stripeEventSchema = z
   .object({
     id: z.string().min(1).max(255),
@@ -38,7 +35,6 @@ type SubscriptionOverview = {
   customerId: string | null;
   planName: string;
   priceDescription: string;
-  locationAddonPriceDescription: string;
 };
 
 function parse<T>(schema: z.ZodType<T>, value: unknown): T {
@@ -57,11 +53,6 @@ function parse<T>(schema: z.ZodType<T>, value: unknown): T {
 function appReturnUrl(path: string): string {
   const appUrl = process.env.WEB_ORIGIN ?? 'http://localhost:3000';
   return `${appUrl}/billing?billing=${path}`;
-}
-
-function capacityReturnUrl(path: string): string {
-  const appUrl = process.env.WEB_ORIGIN ?? 'http://localhost:3000';
-  return `${appUrl}/locations?billing=${path}`;
 }
 
 function stringValue(value: unknown): string | null {
@@ -106,8 +97,7 @@ export async function registerBillingRoutes(
           `SELECT subscription.status, subscription.trial_end AS "trialEnd",
                   subscription.current_period_end AS "currentPeriodEnd",
                   subscription.external_billing_customer_id AS "customerId", plan.name AS "planName",
-                  COALESCE(plan.config->>'displayPrice', '') AS "priceDescription",
-                  COALESCE(plan.config->>'locationAddonDisplayPrice', '') AS "locationAddonPriceDescription"
+                  COALESCE(plan.config->>'displayPrice', '') AS "priceDescription"
            FROM subscriptions subscription JOIN plans plan ON plan.id = subscription.plan_id
            ORDER BY subscription.created_at DESC LIMIT 1`,
         ),
@@ -153,11 +143,13 @@ export async function registerBillingRoutes(
         request,
         { resource: 'billing', action: 'manage' },
         async (client, context) => {
+          const { interval } = parse(subscriptionCheckoutSchema, request.body ?? {});
           const subscription = await client.query<{ customer_id: string | null }>(
             'SELECT external_billing_customer_id AS customer_id FROM subscriptions ORDER BY created_at DESC LIMIT 1',
           );
           const checkout = await gateway.createCheckoutSession({
             kind: 'subscription',
+            interval,
             organizationId: context.organizationId,
             customerId: subscription.rows[0]?.customer_id ?? null,
             successUrl: appReturnUrl('confirming'),
@@ -165,69 +157,6 @@ export async function registerBillingRoutes(
           });
           return {
             data: { checkoutUrl: checkout.url, status: 'awaiting_reconciliation' as const },
-          };
-        },
-      ),
-  );
-
-  app.post(
-    '/api/v1/billing/capacity-checkout',
-    { config: { authenticated: true, rateLimit } },
-    async (request) =>
-      withAuthorizedTenant(
-        request,
-        { resource: 'billing', action: 'manage' },
-        async (client, context) => {
-          await assertOrganizationWritable(client);
-          const input = parse(capacityCheckoutSchema, request.body);
-          const intent = await client.query<{
-            id: string;
-            requested_addon_qty: number;
-            status: string;
-            provider_checkout_session_id: string | null;
-          }>('SELECT * FROM app.create_capacity_purchase_intent($1, $2)', [
-            input.idempotencyKey,
-            input.quantity,
-          ]);
-          const currentIntent = intent.rows[0];
-          if (!currentIntent)
-            throw new ApiError(
-              409,
-              'CAPACITY_PURCHASE_UNAVAILABLE',
-              'Try starting the upgrade again.',
-            );
-          if (currentIntent.status === 'completed') {
-            return {
-              data: { checkoutUrl: null, status: 'completed' as const, intentId: currentIntent.id },
-            };
-          }
-          if (currentIntent.provider_checkout_session_id) {
-            return {
-              data: {
-                checkoutUrl: null,
-                status: 'awaiting_reconciliation' as const,
-                intentId: currentIntent.id,
-              },
-            };
-          }
-          const checkout = await gateway.createCheckoutSession({
-            kind: 'capacity',
-            organizationId: context.organizationId,
-            intentId: currentIntent.id,
-            quantity: currentIntent.requested_addon_qty,
-            successUrl: capacityReturnUrl('confirming'),
-            cancelUrl: capacityReturnUrl('canceled'),
-          });
-          await client.query('SELECT * FROM app.attach_capacity_checkout_session($1, $2)', [
-            currentIntent.id,
-            checkout.id,
-          ]);
-          return {
-            data: {
-              checkoutUrl: checkout.url,
-              status: 'awaiting_reconciliation' as const,
-              intentId: currentIntent.id,
-            },
           };
         },
       ),

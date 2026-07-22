@@ -2,6 +2,7 @@
 
 import type {
   ActivityEvent,
+  Location,
   LossByReason,
   MembershipInvitation,
   PermissionGrantSet,
@@ -146,40 +147,64 @@ export function TeamFeature() {
   const [members, setMembers] = useState<TeamMembership[]>([]);
   const [invitations, setInvitations] = useState<MembershipInvitation[]>([]);
   const [grantSets, setGrantSets] = useState<PermissionGrantSet[]>([]);
+  const [locations, setLocations] = useState<Location[]>([]);
+  const [inviteAllLocations, setInviteAllLocations] = useState(true);
+  const [inviteLocationIds, setInviteLocationIds] = useState<string[]>([]);
   const [error, setError] = useState('');
   const [notice, setNotice] = useState('');
+  const locationName = useCallback(
+    (id: string) => locations.find((location) => location.id === id)?.name ?? 'Unknown location',
+    [locations],
+  );
   const load = useCallback(async () => {
     setError('');
     try {
-      const [memberResponse, invitationResponse, grantResponse] = await Promise.all([
-        api.getMemberships(),
-        api.getMembershipInvitations(),
-        api.getPermissionGrantSets(),
-      ]);
+      const [memberResponse, invitationResponse, grantResponse, locationResponse] =
+        await Promise.all([
+          api.getMemberships(),
+          api.getMembershipInvitations(),
+          api.getPermissionGrantSets(),
+          api.getLocations(),
+        ]);
       setMembers(memberResponse.data);
       setInvitations(invitationResponse.data);
       setGrantSets(grantResponse.data);
+      setLocations(locationResponse.data);
     } catch (caught) {
       setError(apiErrorMessage(caught));
     }
   }, [api]);
   useEffect(() => void load(), [load]);
 
+  function toggleInviteLocation(id: string) {
+    setInviteLocationIds((current) =>
+      current.includes(id) ? current.filter((value) => value !== id) : [...current, id],
+    );
+  }
+
   async function invite(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setNotice('');
     const formElement = event.currentTarget;
     const form = new FormData(formElement);
+    if (!inviteAllLocations && inviteLocationIds.length === 0) {
+      setError('Assign at least one location, or grant access to all locations.');
+      return;
+    }
     try {
       const result = await api.createMembershipInvitation({
         email: String(form.get('email')),
         name: String(form.get('name')) || null,
         grantSetId: String(form.get('grantSetId')),
+        allLocations: inviteAllLocations,
+        ...(inviteAllLocations ? {} : { locationIds: inviteLocationIds }),
       });
       setNotice(
         `Invitation created. Share this one-time acceptance token securely: ${result.data.acceptanceToken}`,
       );
       formElement.reset();
+      setInviteAllLocations(true);
+      setInviteLocationIds([]);
       await load();
     } catch (caught) {
       setError(apiErrorMessage(caught));
@@ -235,6 +260,7 @@ export function TeamFeature() {
                   <th>Name</th>
                   <th>Email</th>
                   <th>Permission set</th>
+                  <th>Locations</th>
                   <th>Status</th>
                 </tr>
               </thead>
@@ -244,6 +270,11 @@ export function TeamFeature() {
                     <td style={{ fontWeight: 600 }}>{member.name}</td>
                     <td>{member.email}</td>
                     <td>{member.grantSetName}</td>
+                    <td>
+                      {member.allLocations
+                        ? 'All locations'
+                        : member.locationIds.map(locationName).join(', ') || 'None'}
+                    </td>
                     <td>
                       <Badge tone={member.status === 'active' ? 'success' : 'neutral'} withDot>
                         {member.status}
@@ -275,6 +306,44 @@ export function TeamFeature() {
               ))}
             </Select>
           </Field>
+          <Field
+            hint="Managers see every location. Scope a helper to only the locations they work in."
+            label="Location access"
+          >
+            <label className="checkbox-row">
+              <input
+                checked={inviteAllLocations}
+                onChange={(event) => setInviteAllLocations(event.currentTarget.checked)}
+                type="checkbox"
+              />{' '}
+              All locations
+            </label>
+            {!inviteAllLocations ? (
+              <div
+                style={{
+                  display: 'grid',
+                  gap: 8,
+                  gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))',
+                  marginTop: 8,
+                }}
+              >
+                {locations.length === 0 ? (
+                  <p style={{ color: 'var(--text-muted)', fontSize: 13 }}>No locations yet.</p>
+                ) : (
+                  locations.map((location) => (
+                    <label className="checkbox-row" key={location.id}>
+                      <input
+                        checked={inviteLocationIds.includes(location.id)}
+                        onChange={() => toggleInviteLocation(location.id)}
+                        type="checkbox"
+                      />{' '}
+                      {location.name}
+                    </label>
+                  ))
+                )}
+              </div>
+            ) : null}
+          </Field>
           <div>
             <Button icon={<UserPlus size={15} />} type="submit">
               Send invite
@@ -293,8 +362,11 @@ export function TeamFeature() {
                 <div>
                   <strong>{invitation.email}</strong>
                   <p style={{ color: 'var(--text-muted)', fontSize: 13 }}>
-                    {invitation.grantSetName} · expires{' '}
-                    {new Date(invitation.expiresAt).toLocaleDateString()}
+                    {invitation.grantSetName} ·{' '}
+                    {invitation.allLocations
+                      ? 'All locations'
+                      : invitation.locationIds.map(locationName).join(', ') || 'No locations'}{' '}
+                    · expires {new Date(invitation.expiresAt).toLocaleDateString()}
                   </p>
                 </div>
                 <Badge tone={invitation.status === 'pending' ? 'info' : 'neutral'}>

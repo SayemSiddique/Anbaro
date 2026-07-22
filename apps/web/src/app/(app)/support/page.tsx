@@ -7,8 +7,8 @@ export default function SupportPage() {
   return (
     <>
       <PageHeader
-        subtitle="Anbaro is free to use. Support is optional and always will be."
-        title="Support Anbaro"
+        subtitle="Questions, bugs, or workspace help — reach the person who builds Anbaro."
+        title="Help"
       />
       <SupportFeature />
     </>

@@ -1,8 +1,7 @@
 'use client';
 
-import { ApiClientError, type BillingOverview, type Location } from '@anbaro/contracts';
+import { ApiClientError, type Location } from '@anbaro/contracts';
 import { MapPin, Pencil, Plus } from 'lucide-react';
-import { useSearchParams } from 'next/navigation';
 import { useCallback, useEffect, useState, type FormEvent } from 'react';
 
 import {
@@ -19,9 +18,8 @@ import { apiErrorMessage, useSession } from '../lib/session';
 
 export function LocationsFeature() {
   const { api, reload } = useSession();
-  const confirmationPending = useSearchParams().get('billing') === 'confirming';
   const [locations, setLocations] = useState<Location[]>([]);
-  // capacity === null means unlimited, which is always the case while Anbaro is free.
+  // capacity === null means unlimited (billing off, or a workspace on Pro).
   const [capacity, setCapacity] = useState<{ used: number; capacity: number | null }>({
     used: 0,
     capacity: null,
@@ -30,8 +28,6 @@ export function LocationsFeature() {
   const [editing, setEditing] = useState<Location | null>(null);
   const [error, setError] = useState('');
   const [capacityPrompt, setCapacityPrompt] = useState(false);
-  const [billing, setBilling] = useState<BillingOverview | null>(null);
-  const [openingCheckout, setOpeningCheckout] = useState(false);
   const [loading, setLoading] = useState(true);
 
   const loadLocations = useCallback(async () => {
@@ -81,24 +77,6 @@ export function LocationsFeature() {
       else setError(apiErrorMessage(caught));
     }
   }
-  async function openCapacityCheckout() {
-    setOpeningCheckout(true);
-    setError('');
-    try {
-      const overview = await api.getBilling();
-      setBilling(overview.data);
-      const result = await api.createCapacityCheckout({
-        idempotencyKey: crypto.randomUUID(),
-        quantity: 1,
-      });
-      if (result.data.checkoutUrl) window.location.assign(result.data.checkoutUrl);
-      else setCapacityPrompt(true);
-    } catch (caught) {
-      setError(apiErrorMessage(caught));
-    } finally {
-      setOpeningCheckout(false);
-    }
-  }
   async function saveEdit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!editing) return;
@@ -127,12 +105,6 @@ export function LocationsFeature() {
 
   return (
     <div className="stack">
-      {confirmationPending ? (
-        <StatePanel title="Stripe has received your request" tone="info">
-          Your saved location details remain here while the signed webhook confirms the added
-          capacity.
-        </StatePanel>
-      ) : null}
       <Card labelledBy="locations-title">
         <CardTitle
           action={
@@ -179,11 +151,7 @@ export function LocationsFeature() {
                   >
                     Edit
                   </Button>
-                  <Button
-                    onClick={() => void archive(location.id)}
-                    size="sm"
-                    tone="danger"
-                  >
+                  <Button onClick={() => void archive(location.id)} size="sm" tone="danger">
                     Archive
                   </Button>
                 </div>
@@ -245,22 +213,17 @@ export function LocationsFeature() {
         <StatePanel
           action={
             <div style={{ display: 'flex', gap: 8 }}>
-              <Button disabled={openingCheckout} onClick={() => void openCapacityCheckout()}>
-                {openingCheckout
-                  ? 'Opening checkout…'
-                  : `Add a location — ${billing?.locationAddonPriceDescription || 'configured in Stripe'}`}
-              </Button>
+              <Button onClick={() => window.location.assign('/billing')}>Upgrade to Pro</Button>
               <Button onClick={() => setCapacityPrompt(false)} tone="secondary">
                 Not now
               </Button>
             </div>
           }
-          title="Add another location"
+          title="You’ve reached your location limit"
           tone="info"
         >
-          You’ve used all {capacity.capacity} locations on your plan. Your entered details are
-          preserved while Stripe confirms the upgrade. The location is not created until a signed
-          webhook grants capacity.
+          The Free plan includes {capacity.capacity} locations. Upgrade to Pro for unlimited
+          locations — your entered details are saved here in the meantime.
         </StatePanel>
       ) : null}
     </div>

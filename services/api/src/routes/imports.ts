@@ -7,7 +7,7 @@ import {
   processNotificationDeliveries,
   queueNotificationDelivery,
 } from '../notifications/service.js';
-import { assertOrganizationWritable } from '../onboarding/service.js';
+import { assertCsvOperationCapacity, assertOrganizationWritable } from '../onboarding/service.js';
 import { withAuthorizedTenant } from '../tenant/access.js';
 import {
   commitValidRows,
@@ -21,7 +21,7 @@ import {
 
 const rateLimit = { max: 300, timeWindow: '1 minute' };
 const idSchema = z.object({ id: z.string().uuid() }).strict();
-const initSchema = z
+export const initSchema = z
   .object({ idempotencyKey: z.string().uuid(), filename: z.string().trim().min(1).max(255) })
   .strict();
 const uploadSchema = z
@@ -150,6 +150,7 @@ export async function registerImportRoutes(app: FastifyInstance): Promise<void> 
               [batch.id, sha256(uploadToken), input.filename],
             );
           } else {
+            await assertCsvOperationCapacity(client);
             const created = await client.query<{ id: string; status: string }>(
               `INSERT INTO import_batches (organization_id, initiated_by, file_ref, original_filename, status,
            idempotency_key, upload_token_hash, upload_expires_at)

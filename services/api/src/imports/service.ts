@@ -165,8 +165,7 @@ export async function validateImportBatch(client: PoolClient, batchId: string): 
       // validates, then fails the whole commit with a database error.
       if (name && name.length > 160) errors.push('Item names must be 160 characters or fewer.');
       if (category.length > 100) errors.push('Category names must be 100 characters or fewer.');
-      if (barcode && barcode.length > 255)
-        errors.push('Barcodes must be 255 characters or fewer.');
+      if (barcode && barcode.length > 255) errors.push('Barcodes must be 255 characters or fewer.');
       if (!unit || !acceptedUnits.has(unit))
         errors.push('Use a recognized unit from the template.');
       if (!categoryTypes.has(categoryType))
