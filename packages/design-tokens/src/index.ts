@@ -44,11 +44,32 @@ export const tokens = {
     infoSurface: '#F1ECEA',
   },
   typography: {
-    fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
+    /**
+     * SN Pro is the brand typeface everywhere (web, native, and the logo
+     * wordmark). The system stack exists only as a fallback while the font
+     * streams in. To swap typefaces later: replace the font files in brand/
+     * and each app's fonts folder, update these names, and re-run
+     * `pnpm brand:wordmark` + `pnpm brand:export` — no component edits required.
+     */
+    brandFamily: 'SN Pro',
+    fontFamily: '"SN Pro", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
     monoFamily: 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace',
+    /**
+     * React Native resolves each weight as its own family name (Android has
+     * no weight matching within a loaded family), so native consumers map
+     * semantic weights through this table instead of `fontWeight`.
+     * Names match the PostScript names of the static cuts in brand/SN_Pro.
+     */
+    nativeFontFamily: {
+      regular: 'SNPro-Regular',
+      medium: 'SNPro-Medium',
+      semibold: 'SNPro-SemiBold',
+      bold: 'SNPro-Bold',
+      extrabold: 'SNPro-ExtraBold',
+    },
     fontSize: { xs: 12, sm: 14, md: 16, lg: 18, xl: 24, '2xl': 30 },
     lineHeight: { compact: 1.2, normal: 1.5, relaxed: 1.65 },
-    fontWeight: { regular: 400, medium: 500, semibold: 600, bold: 700 },
+    fontWeight: { regular: 400, medium: 500, semibold: 600, bold: 700, extrabold: 800 },
   },
   spacing: { base: 4, 1: 4, 2: 8, 3: 12, 4: 16, 5: 20, 6: 24, 8: 32, 10: 40, 12: 48 },
   radius: { sm: 6, md: 10, lg: 16, full: 9999 },
@@ -71,3 +92,4 @@ export const stockConditionLabels: Record<StockCondition, string> = {
 
 export * from './units.js';
 export * from './icons.js';
+export * from './brand.js';

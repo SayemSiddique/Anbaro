@@ -6,13 +6,14 @@ import {
   ClipboardCheck,
   CreditCard,
   FileSpreadsheet,
-  Heart,
   LayoutDashboard,
+  LifeBuoy,
   LogOut,
   MapPin,
   Package,
   Settings,
   ShoppingCart,
+  Sparkles,
   Truck,
   Users,
   type LucideIcon,
@@ -35,6 +36,7 @@ export type ShellPermission =
   | 'notification:read'
   | 'user:manage'
   | 'billing:manage'
+  | 'assistant:use'
   | 'settings:read';
 
 export type ShellAccess = {
@@ -46,6 +48,7 @@ export type NavigationItem = { id: string; label: string; href: string; section?
 
 const icons: Record<string, LucideIcon> = {
   dashboard: LayoutDashboard,
+  assistant: Sparkles,
   locations: MapPin,
   items: Package,
   imports: FileSpreadsheet,
@@ -56,7 +59,7 @@ const icons: Record<string, LucideIcon> = {
   notifications: Bell,
   team: Users,
   billing: CreditCard,
-  support: Heart,
+  support: LifeBuoy,
   settings: Settings,
 };
 
@@ -69,6 +72,13 @@ const primaryNavigation: Array<
     href: '/dashboard',
     permission: 'dashboard:read',
     section: 'Overview',
+  },
+  {
+    id: 'assistant',
+    label: 'Assistant',
+    href: '/assistant',
+    permission: 'assistant:use',
+    section: 'Inventory',
   },
   {
     id: 'items',
@@ -126,11 +136,17 @@ const primaryNavigation: Array<
     permission: 'user:manage',
     section: 'Workspace',
   },
-  // Billing is intentionally absent while Anbaro is free. The route, feature, and
-  // permission all still exist; only the way in is gone. See DONATION_URL.
+  {
+    id: 'billing',
+    label: 'Plans & billing',
+    href: '/billing',
+    permission: 'billing:manage',
+    ownerOnly: true,
+    section: 'Workspace',
+  },
   {
     id: 'support',
-    label: 'Support Anbaro',
+    label: 'Help',
     href: '/support',
     section: 'Workspace',
   },
@@ -154,6 +170,7 @@ const roleDefaults: Record<ShellRole, ReadonlySet<ShellPermission>> = {
     'reorder:read',
     'reports:read',
     'notification:read',
+    'assistant:use',
     'settings:read',
   ]),
   server: new Set(['item:read', 'count:read', 'notification:read', 'settings:read']),

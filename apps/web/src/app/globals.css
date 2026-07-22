@@ -35,6 +35,10 @@
   --shadow-md: 0 4px 12px -2px rgb(16 24 40 / 0.1);
   --shadow-lg: 0 20px 40px -12px rgb(16 24 40 / 0.18);
   --sidebar-width: 252px;
+  /* SN Pro is the only brand typeface; the system stack is fallback-only.
+     --font-sn-pro is injected by next/font in the root layout. */
+  --font-sans:
+    var(--font-sn-pro), system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
 }
 
 * {
@@ -49,13 +53,7 @@ body {
   margin: 0;
   background: var(--canvas);
   color: var(--text);
-  font-family:
-    -apple-system,
-    BlinkMacSystemFont,
-    'Segoe UI',
-    Inter,
-    Roboto,
-    sans-serif;
+  font-family: var(--font-sans);
   font-size: 14.5px;
   line-height: 1.55;
   -webkit-font-smoothing: antialiased;
@@ -565,52 +563,68 @@ a {
   background: var(--canvas);
   display: flex;
   flex-direction: column;
-  gap: 18px;
+  gap: 22px;
   inset: 0;
   justify-content: center;
   min-height: 100vh;
 }
-.splash-name {
-  font-size: 26px;
-  font-weight: 700;
-  letter-spacing: -0.02em;
+.splash-lockup {
+  align-items: center;
+  display: flex;
+  gap: 18px;
 }
-.splash-hint {
+.splash-letters {
+  animation: brand-rise 700ms 700ms ease both;
+  color: var(--text);
+}
+.splash-tagline {
+  animation: brand-rise 700ms 1000ms ease both;
   color: var(--text-muted);
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
 }
-.splash .tally-stroke {
-  animation: tally-pop 900ms ease both;
+/* The mark plate scales in, then each box drops into the stack. */
+.splash .mark-box {
+  animation: brand-box-in 550ms cubic-bezier(0.2, 0.9, 0.25, 1.2) both;
+  transform-box: fill-box;
+  transform-origin: 50% 100%;
 }
-.splash .tally-stroke:nth-child(2) {
-  animation-delay: 100ms;
+.splash .mark-box-1 {
+  animation-delay: 260ms;
 }
-.splash .tally-stroke:nth-child(3) {
-  animation-delay: 200ms;
+.splash .mark-box-2 {
+  animation-delay: 400ms;
 }
-.splash .tally-stroke:nth-child(4) {
-  animation-delay: 300ms;
+.splash .mark-box-3 {
+  animation-delay: 540ms;
 }
-.splash .tally-slash {
-  animation: tally-slash 500ms 480ms cubic-bezier(0.2, 0.9, 0.3, 1.4) both;
-}
-@keyframes tally-pop {
+@keyframes brand-box-in {
   from {
     opacity: 0;
-    transform: translateY(6px);
+    transform: translateY(5px) scale(0.7);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+@keyframes brand-rise {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
   }
   to {
     opacity: 1;
     transform: translateY(0);
   }
 }
-@keyframes tally-slash {
-  from {
-    opacity: 0;
-    transform: rotate(-24deg) scaleX(0);
-  }
-  to {
-    opacity: 1;
-    transform: rotate(0) scaleX(1);
+@media (prefers-reduced-motion: reduce) {
+  .splash-letters,
+  .splash-tagline,
+  .splash .mark-box {
+    animation: none;
   }
 }
 
