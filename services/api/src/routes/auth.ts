@@ -1,24 +1,36 @@
 import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
 import { z } from 'zod';
 
-import { activateOrganization } from '../auth/repository.js';
-import { listMemberships } from '../auth/repository.js';
+import {
+  activateOrganization,
+  consumeEmailVerification,
+  consumePasswordReset,
+  createEmailVerification,
+  createOpaqueToken,
+  createPasswordReset,
+  hashOpaqueToken,
+  listMemberships,
+} from '../auth/repository.js';
 import {
   authenticateLogin,
   createLoginSession,
   deleteOwnAccount,
   getAuthenticatedProfile,
+  hashPassword,
   invalidateLoginSession,
   registerCredential,
   rotateLoginSession,
   signAccessToken,
 } from '../auth/service.js';
 import { ApiError, sessionInvalid } from '../errors.js';
+import { sendPasswordResetEmail, sendVerificationEmail } from '../notifications/mailer.js';
 import { withAuthorizedTenant } from '../tenant/access.js';
+
+const HOUR_MS = 60 * 60 * 1000;
 
 const refreshCookieName = 'stock_refresh';
 
-const credentialSchema = z
+export const credentialSchema = z
   .object({
     email: z.string().trim().email().max(320),
     password: z.string().min(8).max(256),
@@ -27,7 +39,7 @@ const credentialSchema = z
   })
   .strict();
 
-const loginSchema = credentialSchema.omit({ name: true });
+export const loginSchema = credentialSchema.omit({ name: true });
 const refreshSchema = z.object({ refreshToken: z.string().min(32).max(512).optional() }).strict();
 const organizationSchema = z.object({ organizationId: z.string().uuid() }).strict();
 const deleteAccountSchema = z
@@ -37,6 +49,13 @@ const deleteAccountSchema = z
     confirm: z.literal('DELETE'),
   })
   .strict();
+export const passwordResetRequestSchema = z
+  .object({ email: z.string().trim().email().max(320) })
+  .strict();
+export const passwordResetConfirmSchema = z
+  .object({ token: z.string().min(32).max(512), password: z.string().min(8).max(256) })
+  .strict();
+export const emailVerifySchema = z.object({ token: z.string().min(32).max(512) }).strict();
 
 function parse<T>(schema: z.ZodType<T>, value: unknown): T {
   const result = schema.safeParse(value);
@@ -110,8 +129,75 @@ export async function registerAuthRoutes(app: FastifyInstance): Promise<void> {
         clientType: input.clientType,
       });
       if (session.clientType === 'web') setRefreshCookie(reply, session.refreshToken);
+      // Issue an email-verification token and send it (allow-and-nag: the account
+      // is usable immediately). Email failure must never fail registration.
+      const verificationToken = createOpaqueToken();
+      await createEmailVerification(
+        user.id,
+        hashOpaqueToken(verificationToken),
+        new Date(Date.now() + 24 * HOUR_MS),
+      );
+      await sendVerificationEmail({ to: user.email, name: user.name, verificationToken }).catch(
+        (error) => request.log.error({ err: error }, 'verification email failed to send'),
+      );
       request.log.info({ userId: user.id, event: 'auth.registered' }, 'Authentication event');
       return reply.code(201).send({ data: { user, session: sessionResponse(session) } });
+    },
+  );
+
+  app.post(
+    '/api/v1/auth/password-reset/request',
+    { config: { rateLimit: { max: 5, timeWindow: '1 hour' } } },
+    async (request, reply) => {
+      const input = parse(passwordResetRequestSchema, request.body);
+      const token = createOpaqueToken();
+      const user = await createPasswordReset(
+        input.email,
+        hashOpaqueToken(token),
+        new Date(Date.now() + HOUR_MS),
+      );
+      if (user) {
+        await sendPasswordResetEmail({ to: user.email, name: user.name, resetToken: token }).catch(
+          (error) => request.log.error({ err: error }, 'password reset email failed to send'),
+        );
+      }
+      // Always 202 — never reveal whether an address is registered.
+      return reply.code(202).send({ data: { status: 'accepted' } });
+    },
+  );
+
+  app.post(
+    '/api/v1/auth/password-reset/confirm',
+    { config: { rateLimit: { max: 10, timeWindow: '1 hour' } } },
+    async (request, reply) => {
+      const input = parse(passwordResetConfirmSchema, request.body);
+      const reset = await consumePasswordReset(
+        hashOpaqueToken(input.token),
+        await hashPassword(input.password),
+      );
+      if (!reset)
+        throw new ApiError(
+          400,
+          'RESET_TOKEN_INVALID',
+          'This reset link is invalid or has expired.',
+        );
+      return reply.code(200).send({ data: { status: 'reset' } });
+    },
+  );
+
+  app.post(
+    '/api/v1/auth/verify-email',
+    { config: { rateLimit: { max: 10, timeWindow: '1 hour' } } },
+    async (request, reply) => {
+      const input = parse(emailVerifySchema, request.body);
+      const verified = await consumeEmailVerification(hashOpaqueToken(input.token));
+      if (!verified)
+        throw new ApiError(
+          400,
+          'VERIFICATION_TOKEN_INVALID',
+          'This verification link is invalid or has expired.',
+        );
+      return reply.code(200).send({ data: { status: 'verified' } });
     },
   );
 
