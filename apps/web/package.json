@@ -13,6 +13,7 @@
   "dependencies": {
     "@anbaro/contracts": "workspace:*",
     "@anbaro/design-tokens": "workspace:*",
+    "@sentry/nextjs": "^10.67.0",
     "framer-motion": "^12.42.2",
     "lucide-react": "^1.24.0",
     "next": "15.5.2",

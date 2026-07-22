@@ -17,10 +17,14 @@
     "test": "pnpm -r --if-present test",
     "build": "pnpm --filter @anbaro/contracts build && pnpm --filter @anbaro/design-tokens build && pnpm --filter @anbaro/api build && pnpm --filter @anbaro/web build && pnpm --filter @anbaro/mobile build",
     "format:check": "prettier --check .",
-    "format": "prettier --write ."
+    "format": "prettier --write .",
+    "brand:wordmark": "node tools/generate-wordmark.mjs",
+    "brand:export": "pnpm --filter @anbaro/design-tokens build && node tools/export-brand.mjs"
   },
   "devDependencies": {
+    "opentype.js": "^2.0.0",
     "prettier": "^3.6.2",
+    "sharp": "^0.35.3",
     "typescript": "^5.9.2"
   }
 }

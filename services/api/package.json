@@ -14,6 +14,7 @@
     "db:rollback": "tsx src/db/rollback.ts",
     "db:seed": "tsx src/db/seed.ts",
     "db:verify": "tsx test/database.verify.ts",
+    "openapi:generate": "tsx src/openapi/generate.ts",
     "billing:expire-trials": "tsx src/billing/run-trial-expiry.ts"
   },
   "dependencies": {
@@ -22,6 +23,7 @@
     "@fastify/helmet": "^13.1.0",
     "@fastify/jwt": "^9.1.0",
     "@fastify/rate-limit": "^10.3.0",
+    "@sentry/node": "^10.67.0",
     "argon2": "^0.44.0",
     "fastify": "^5.6.1",
     "ioredis": "^5.11.1",
