@@ -32,3 +32,8 @@ export const permissionDenied = (resource: string, action: string) =>
       action,
     },
   );
+
+export const locationForbidden = (locationId: string) =>
+  new ApiError(403, 'AUTHZ_LOCATION_FORBIDDEN', 'You are not assigned to this location.', {
+    locationId,
+  });

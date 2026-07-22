@@ -7,6 +7,7 @@ import Fastify from 'fastify';
 import { Redis } from 'ioredis';
 
 import { ApiError } from './errors.js';
+import { captureException, flushObservability, initObservability } from './observability.js';
 import { requireAuthentication } from './auth/context.js';
 import { registerAuthRoutes } from './routes/auth.js';
 import { registerCatalogRoutes } from './routes/catalog.js';
@@ -17,6 +18,7 @@ import { registerOrganizationRoutes } from './routes/organizations.js';
 import { registerSupplierNotificationRoutes } from './routes/suppliers-notifications.js';
 import { registerVisibilityAdministrationRoutes } from './routes/visibility-administration.js';
 import { registerBillingRoutes } from './routes/billing.js';
+import { registerAssistantRoutes } from './routes/assistant.js';
 import { createStripeGateway, type StripeGateway } from './billing/stripe.js';
 
 /**
@@ -49,6 +51,7 @@ export function resolveAllowedWebOrigins(
 export function buildApp(
   options: { stripeGateway?: StripeGateway; allowedWebOrigins?: Set<string> } = {},
 ) {
+  initObservability();
   const app = Fastify({
     trustProxy: resolveTrustProxy(process.env.TRUST_PROXY),
     logger: {
@@ -67,8 +70,9 @@ export function buildApp(
   rateLimitRedis?.on('error', (error: Error) =>
     app.log.error({ err: error }, 'Rate-limit Redis error'),
   );
-  app.addHook('onClose', () => {
+  app.addHook('onClose', async () => {
     rateLimitRedis?.disconnect();
+    await flushObservability();
   });
 
   app.decorateRequest('auth', undefined);
@@ -204,7 +208,17 @@ export function buildApp(
         },
       });
     }
-    request.log.error({ err: error, event: 'request.failed' }, 'Unhandled request error');
+    request.log.error(
+      { err: error, event: 'request.failed', reqId: request.id },
+      'Unhandled request error',
+    );
+    captureException(error, {
+      requestId: request.id,
+      userId: request.auth?.userId,
+      organizationId: request.auth?.organizationId ?? undefined,
+      route: request.routeOptions?.url,
+      method: request.method,
+    });
     return reply.code(500).send({
       error: { code: 'INTERNAL_ERROR', message: 'An unexpected error occurred.', details: {} },
     });
@@ -223,6 +237,7 @@ export function buildApp(
   void app.register(registerImportRoutes);
   void app.register(registerSupplierNotificationRoutes);
   void app.register(registerVisibilityAdministrationRoutes);
+  void app.register(registerAssistantRoutes);
   void app.register(registerBillingRoutes, {
     gateway: options.stripeGateway ?? createStripeGateway(),
   });
