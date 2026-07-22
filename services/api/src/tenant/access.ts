@@ -20,5 +20,13 @@ export async function withAuthorizedTenant<T>(
 ): Promise<T> {
   const context = await resolveActiveMembership(request);
   requirePermission(context, permission.resource, permission.action);
-  return withVerifiedTenant(context.organizationId, (client) => work(client, context));
+  // The resolved scope is always published, so no route can forget to set it —
+  // the RLS location_scope policies then enforce it fail-closed. The request id
+  // rides along so DB statements correlate to the HTTP request.
+  return withVerifiedTenant(
+    context.organizationId,
+    (client) => work(client, context),
+    { allLocations: context.allLocations, locationIds: [...context.locationIds] },
+    request.id,
+  );
 }

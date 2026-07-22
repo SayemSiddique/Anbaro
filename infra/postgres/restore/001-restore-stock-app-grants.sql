@@ -78,7 +78,7 @@ GRANT EXECUTE ON FUNCTION app.auth_activate_organization(uuid, uuid, uuid) TO st
 GRANT EXECUTE ON FUNCTION app.auth_resolve_membership(uuid, uuid, uuid) TO stock_app;
 GRANT EXECUTE ON FUNCTION app.auth_list_memberships(uuid, uuid) TO stock_app;
 GRANT EXECUTE ON FUNCTION app.auth_create_organization(uuid, uuid, text) TO stock_app;
-GRANT EXECUTE ON FUNCTION app.apply_manual_stock_event(uuid, uuid, varchar, numeric, varchar, uuid) TO stock_app;
+GRANT EXECUTE ON FUNCTION app.apply_manual_stock_event(uuid, uuid, varchar, numeric, varchar, uuid, uuid) TO stock_app;
 GRANT EXECUTE ON FUNCTION app.apply_csv_import_stock_event(uuid, uuid, numeric, uuid, jsonb) TO stock_app;
 GRANT EXECUTE ON FUNCTION app.count_user_names() TO stock_app;
 GRANT EXECUTE ON FUNCTION app.finalize_count_session(uuid, uuid, uuid) TO stock_app;

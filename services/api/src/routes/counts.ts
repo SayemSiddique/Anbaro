@@ -10,6 +10,7 @@ import {
   startRecount,
   submitCount,
 } from '../counts/service.js';
+import { requireLocationAccess } from '../auth/context.js';
 import { ApiError } from '../errors.js';
 import {
   processNotificationDeliveries,
@@ -29,7 +30,7 @@ const listSchema = z
     status: z.enum(['in_progress', 'finalized', 'abandoned']).optional(),
   })
   .strict();
-const startSchema = z.object({ locationId: z.string().uuid() }).strict();
+export const startSchema = z.object({ locationId: z.string().uuid() }).strict();
 const submissionSchema = z
   .object({
     roundNumber: z.number().int().positive(),
@@ -74,6 +75,7 @@ export async function registerCountRoutes(app: FastifyInstance): Promise<void> {
         async (client, context) => {
           await assertOrganizationWritable(client);
           const input = parse(startSchema, request.body);
+          requireLocationAccess(context, input.locationId);
           const session = await startCountSession(client, input.locationId, context.userId);
           return reply.code(201).send({ data: session });
         },

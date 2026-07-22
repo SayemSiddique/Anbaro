@@ -4,6 +4,7 @@ import { resolveMembership } from './repository.js';
 import {
   activeOrganizationRequired,
   authenticationRequired,
+  locationForbidden,
   permissionDenied,
   sessionInvalid,
 } from '../errors.js';
@@ -19,6 +20,9 @@ export type ResolvedTenantContext = AuthenticatedRequestContext & {
   membershipId: string;
   permissionGrantSetId: string;
   permissions: ReadonlySet<string>;
+  /** True for org-wide members; false when scoped to `locationIds`. */
+  allLocations: boolean;
+  locationIds: ReadonlySet<string>;
 };
 
 declare module 'fastify' {
@@ -74,6 +78,8 @@ export async function resolveActiveMembership(
     permissions: new Set(
       membership.permissions.map(({ resource, action }) => `${resource}:${action}`),
     ),
+    allLocations: membership.all_locations,
+    locationIds: new Set(membership.location_ids),
   };
 }
 
@@ -84,5 +90,17 @@ export function requirePermission(
 ): void {
   if (!context.permissions.has(`${resource}:${action}`)) {
     throw permissionDenied(resource, action);
+  }
+}
+
+/**
+ * Gate a write against the caller's assigned locations. The RLS `location_scope`
+ * policies already deny cross-location writes at the database, but calling this
+ * in the route turns that into a clean 403 instead of a policy exception, and
+ * documents the location boundary at the call site.
+ */
+export function requireLocationAccess(context: ResolvedTenantContext, locationId: string): void {
+  if (!context.allLocations && !context.locationIds.has(locationId)) {
+    throw locationForbidden(locationId);
   }
 }

@@ -1,13 +1,16 @@
 import { randomBytes } from 'node:crypto';
 
 import type { FastifyInstance } from 'fastify';
+import type { PoolClient } from 'pg';
 import { z } from 'zod';
 
+import { requireLocationAccess, type ResolvedTenantContext } from '../auth/context.js';
 import { createLoginSession, hashPassword } from '../auth/service.js';
 import { pool } from '../db/client.js';
 import { ApiError, sessionInvalid } from '../errors.js';
-import { assertOrganizationWritable } from '../onboarding/service.js';
+import { assertMemberCapacity, assertOrganizationWritable } from '../onboarding/service.js';
 import { hashOpaqueToken } from '../auth/repository.js';
+import { sendInvitationEmail } from '../notifications/mailer.js';
 import { withAuthorizedTenant } from '../tenant/access.js';
 
 const rateLimit = { max: 300, timeWindow: '1 minute' };
@@ -21,20 +24,66 @@ const reportQuerySchema = z
     to: z.string().datetime({ offset: true }).optional(),
   })
   .strict();
-const invitationSchema = z
+const locationScopeFields = {
+  allLocations: z.boolean().default(true),
+  locationIds: z.array(z.string().uuid()).max(500).default([]),
+};
+const scopeConsistency = (
+  value: { allLocations: boolean; locationIds: string[] },
+  ctx: z.RefinementCtx,
+) => {
+  if (!value.allLocations && value.locationIds.length === 0) {
+    ctx.addIssue({
+      code: 'custom',
+      path: ['locationIds'],
+      message: 'Assign at least one location, or grant all-locations access.',
+    });
+  }
+  if (value.allLocations && value.locationIds.length > 0) {
+    ctx.addIssue({
+      code: 'custom',
+      path: ['locationIds'],
+      message: 'Do not list locations when granting all-locations access.',
+    });
+  }
+};
+export const invitationSchema = z
   .object({
     email: z.string().trim().email().max(320),
     name: z.string().trim().min(1).max(160).nullable().optional(),
     grantSetId: z.string().uuid(),
+    ...locationScopeFields,
   })
-  .strict();
-const memberUpdateSchema = z
+  .strict()
+  .superRefine(scopeConsistency);
+export const memberUpdateSchema = z
   .object({
     grantSetId: z.string().uuid().optional(),
     status: z.enum(['active', 'revoked']).optional(),
+    allLocations: z.boolean().optional(),
+    locationIds: z.array(z.string().uuid()).max(500).optional(),
   })
   .strict()
-  .refine((value) => Object.keys(value).length > 0, 'Provide a member field to update.');
+  .refine((value) => Object.keys(value).length > 0, 'Provide a member field to update.')
+  .superRefine((value, ctx) => {
+    if (
+      value.allLocations === false &&
+      (value.locationIds === undefined || value.locationIds.length === 0)
+    ) {
+      ctx.addIssue({
+        code: 'custom',
+        path: ['locationIds'],
+        message: 'Assign at least one location when scoping this member.',
+      });
+    }
+    if (value.allLocations === true && value.locationIds && value.locationIds.length > 0) {
+      ctx.addIssue({
+        code: 'custom',
+        path: ['locationIds'],
+        message: 'Do not list locations when granting all-locations access.',
+      });
+    }
+  });
 const customGrantSchema = z
   .object({
     name: z.string().trim().min(1).max(100),
@@ -109,6 +158,43 @@ async function grantSet(
   if (!value)
     throw new ApiError(404, 'GRANT_SET_NOT_FOUND', 'This permission set is not available.');
   return value;
+}
+
+/**
+ * Validate that every location exists in the tenant (RLS scopes the SELECT) and
+ * that the acting manager may reach it — a location-scoped manager cannot grant
+ * access beyond their own reach.
+ */
+async function assertLocationsInScope(
+  client: PoolClient,
+  context: ResolvedTenantContext,
+  locationIds: string[],
+): Promise<void> {
+  if (locationIds.length === 0) return;
+  const unique = [...new Set(locationIds)];
+  unique.forEach((locationId) => requireLocationAccess(context, locationId));
+  const found = await client.query<{ id: string }>(
+    'SELECT id FROM locations WHERE id = ANY($1::uuid[])',
+    [unique],
+  );
+  if (found.rows.length !== unique.length) {
+    throw new ApiError(400, 'LOCATION_NOT_FOUND', 'One or more locations are not available.');
+  }
+}
+
+async function replaceMembershipLocations(
+  client: PoolClient,
+  membershipId: string,
+  locationIds: string[],
+): Promise<void> {
+  await client.query('DELETE FROM membership_locations WHERE membership_id = $1', [membershipId]);
+  if (locationIds.length > 0) {
+    await client.query(
+      `INSERT INTO membership_locations (membership_id, location_id, organization_id)
+       SELECT $1, location_id, app.current_organization_id() FROM unnest($2::uuid[]) AS location_id`,
+      [membershipId, [...new Set(locationIds)]],
+    );
+  }
 }
 
 export async function registerVisibilityAdministrationRoutes(app: FastifyInstance): Promise<void> {
@@ -200,7 +286,12 @@ export async function registerVisibilityAdministrationRoutes(app: FastifyInstanc
         `WITH people AS (SELECT * FROM app.tenant_member_profiles())
          SELECT membership.id, membership.user_id AS "userId", people.name, people.email, membership.status,
            membership.joined_at::text AS "joinedAt", grant_set.id AS "grantSetId", grant_set.name AS "grantSetName",
-           grant_set.scope AS "grantSetScope", grant_set.is_mutable AS "grantSetIsMutable"
+           grant_set.scope AS "grantSetScope", grant_set.is_mutable AS "grantSetIsMutable",
+           membership.all_locations AS "allLocations",
+           COALESCE(
+             (SELECT array_agg(ml.location_id::text) FROM membership_locations ml WHERE ml.membership_id = membership.id),
+             ARRAY[]::text[]
+           ) AS "locationIds"
          FROM user_org_memberships AS membership JOIN permission_grant_sets AS grant_set ON grant_set.id = membership.permission_grant_set_id
          JOIN people ON people.user_id = membership.user_id ORDER BY people.name`,
       );
@@ -252,12 +343,23 @@ export async function registerVisibilityAdministrationRoutes(app: FastifyInstanc
                 'Keep at least one active Owner.',
               );
           }
+          if (input.locationIds !== undefined) {
+            await assertLocationsInScope(client, context, input.locationIds);
+          }
           const updated = await client.query(
             `UPDATE user_org_memberships SET permission_grant_set_id = COALESCE($1, permission_grant_set_id),
-          status = COALESCE($2, status), joined_at = CASE WHEN $2 = 'active' AND joined_at IS NULL THEN now() ELSE joined_at END
-         WHERE id = $3 RETURNING id, user_id AS "userId", status, permission_grant_set_id AS "grantSetId"`,
-            [input.grantSetId ?? null, input.status ?? null, id],
+          status = COALESCE($2, status), all_locations = COALESCE($4, all_locations),
+          joined_at = CASE WHEN $2 = 'active' AND joined_at IS NULL THEN now() ELSE joined_at END
+         WHERE id = $3 RETURNING id, user_id AS "userId", status, permission_grant_set_id AS "grantSetId", all_locations AS "allLocations"`,
+            [input.grantSetId ?? null, input.status ?? null, id, input.allLocations ?? null],
           );
+          // Reconcile the assigned-location set: an explicit list replaces it;
+          // switching to all-locations clears it.
+          if (input.locationIds !== undefined) {
+            await replaceMembershipLocations(client, id, input.locationIds);
+          } else if (input.allLocations === true) {
+            await replaceMembershipLocations(client, id, []);
+          }
           await audit(client, context.userId, 'membership.updated', 'membership', id, input);
           return { data: updated.rows[0] };
         },
@@ -272,7 +374,12 @@ export async function registerVisibilityAdministrationRoutes(app: FastifyInstanc
         const result = await client.query(
           `SELECT invitation.id, invitation.email, invitation.invited_name AS "invitedName", invitation.status,
           invitation.expires_at::text AS "expiresAt", invitation.created_at::text AS "createdAt",
-          grant_set.id AS "grantSetId", grant_set.name AS "grantSetName"
+          grant_set.id AS "grantSetId", grant_set.name AS "grantSetName",
+          invitation.all_locations AS "allLocations",
+          COALESCE(
+            (SELECT array_agg(il.location_id::text) FROM invitation_locations il WHERE il.invitation_id = invitation.id),
+            ARRAY[]::text[]
+          ) AS "locationIds"
          FROM membership_invitations AS invitation JOIN permission_grant_sets AS grant_set ON grant_set.id = invitation.permission_grant_set_id
          ORDER BY invitation.created_at DESC`,
         );
@@ -283,8 +390,8 @@ export async function registerVisibilityAdministrationRoutes(app: FastifyInstanc
   app.post(
     '/api/v1/membership-invitations',
     { config: { authenticated: true, rateLimit } },
-    async (request, reply) =>
-      withAuthorizedTenant(
+    async (request, reply) => {
+      const created = await withAuthorizedTenant(
         request,
         { resource: 'user', action: 'manage' },
         async (client, context) => {
@@ -292,6 +399,9 @@ export async function registerVisibilityAdministrationRoutes(app: FastifyInstanc
           const input = parse(invitationSchema, request.body);
           const set = await grantSet(client, input.grantSetId);
           if (set.scope === 'organization') requireGrantManagement(context.permissions);
+          if (!input.allLocations) {
+            await assertLocationsInScope(client, context, input.locationIds);
+          }
           const existing = await client.query(
             `SELECT 1 FROM app.tenant_member_profiles() WHERE lower(email) = lower($1) LIMIT 1`,
             [input.email],
@@ -302,31 +412,64 @@ export async function registerVisibilityAdministrationRoutes(app: FastifyInstanc
               'MEMBERSHIP_ALREADY_EXISTS',
               'This email already belongs to the team.',
             );
+          await assertMemberCapacity(client, {
+            allLocations: input.allLocations,
+            locationIds: input.locationIds,
+          });
           const token = randomBytes(32).toString('base64url');
           const result = await client.query(
-            `INSERT INTO membership_invitations (organization_id, email, invited_name, permission_grant_set_id, invited_by, token_hash, expires_at)
-         VALUES (app.current_organization_id(), lower($1), $2, $3, $4, $5, now() + interval '7 days')
-         RETURNING id, email, invited_name AS "invitedName", status, expires_at::text AS "expiresAt", created_at::text AS "createdAt"`,
+            `INSERT INTO membership_invitations (organization_id, email, invited_name, permission_grant_set_id, invited_by, token_hash, expires_at, all_locations)
+         VALUES (app.current_organization_id(), lower($1), $2, $3, $4, $5, now() + interval '7 days', $6)
+         RETURNING id, email, invited_name AS "invitedName", status, expires_at::text AS "expiresAt", created_at::text AS "createdAt", all_locations AS "allLocations"`,
             [
               input.email,
               input.name ?? null,
               input.grantSetId,
               context.userId,
               hashOpaqueToken(token),
+              input.allLocations,
             ],
           );
-          const invitation = result.rows[0] as { id: string };
+          const invitation = result.rows[0] as { id: string; email: string };
+          if (!input.allLocations) {
+            await client.query(
+              `INSERT INTO invitation_locations (invitation_id, location_id, organization_id)
+               SELECT $1, location_id, app.current_organization_id() FROM unnest($2::uuid[]) AS location_id`,
+              [invitation.id, [...new Set(input.locationIds)]],
+            );
+          }
+          const organization = await client.query<{ name: string }>(
+            'SELECT name FROM organizations WHERE id = app.current_organization_id()',
+          );
           await audit(
             client,
             context.userId,
             'membership.invited',
             'membership_invitation',
             invitation.id,
-            { grantSetId: input.grantSetId },
+            { grantSetId: input.grantSetId, allLocations: input.allLocations },
           );
-          return reply.code(201).send({ data: { ...invitation, acceptanceToken: token } });
+          return {
+            invitation: {
+              ...invitation,
+              locationIds: input.allLocations ? [] : [...new Set(input.locationIds)],
+            },
+            token,
+            organizationName: organization.rows[0]?.name ?? 'your team',
+          };
         },
-      ),
+      );
+      // Deliver after commit — never hold the tenant transaction open across the
+      // network call, and never fail a committed invite because email bounced.
+      await sendInvitationEmail({
+        to: created.invitation.email,
+        organizationName: created.organizationName,
+        acceptanceToken: created.token,
+      }).catch((error) => request.log.error({ err: error }, 'invitation email failed to send'));
+      return reply
+        .code(201)
+        .send({ data: { ...created.invitation, acceptanceToken: created.token } });
+    },
   );
 
   app.get(

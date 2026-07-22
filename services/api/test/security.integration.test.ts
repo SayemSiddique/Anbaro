@@ -244,7 +244,7 @@ describe.runIf(runIntegration)('API security integration', () => {
     expect(countDenied.statusCode).toBe(403);
   });
 
-  it('onboards a trial organization and enforces location capacity and read-only writes', async () => {
+  it('onboards a trial organization and enforces location capacity without a read-only lockout', async () => {
     const registration = await app.inject({
       method: 'POST',
       url: '/api/v1/auth/register',
@@ -282,7 +282,8 @@ describe.runIf(runIntegration)('API security integration', () => {
       permissions: expect.arrayContaining(['location:write']),
     });
 
-    for (const suffix of ['One', 'Two', 'Three', 'Four']) {
+    // A trial is on Pro, so locations are unlimited while it runs.
+    for (const suffix of ['One', 'Two', 'Three']) {
       const response = await app.inject({
         method: 'POST',
         url: '/api/v1/locations',
@@ -291,16 +292,22 @@ describe.runIf(runIntegration)('API security integration', () => {
       });
       expect(response.statusCode).toBe(201);
     }
+
+    // End the trial → Free tier, capped at 2 locations.
+    await admin.query(
+      "UPDATE subscriptions SET trial_end = now() - interval '1 second' WHERE organization_id = $1",
+      [organizationId],
+    );
     const blocked = await app.inject({
       method: 'POST',
       url: '/api/v1/locations',
       headers: { authorization: `Bearer ${accessToken}` },
-      payload: { name: 'Five' },
+      payload: { name: 'Four' },
     });
     expect(blocked.statusCode).toBe(409);
     expect(blocked.json().error).toMatchObject({
       code: 'LOCATION_CAPACITY_REACHED',
-      details: { used: 4, capacity: 4, upgradeDeferred: true },
+      details: { used: 3, capacity: 2, upgradeDeferred: true },
     });
     expect(
       (
@@ -309,20 +316,23 @@ describe.runIf(runIntegration)('API security integration', () => {
           [organizationId],
         )
       ).rows[0]?.count,
-    ).toBe(4);
+    ).toBe(3);
 
+    // Model A: an ended trial is no longer read-only — the workspace stays on the
+    // Free tier and remains writable. A further location is refused by capacity,
+    // not by a subscription lockout.
     await admin.query(
       "UPDATE subscriptions SET status = 'expired_readonly' WHERE organization_id = $1",
       [organizationId],
     );
-    const readOnly = await app.inject({
+    const stillCapped = await app.inject({
       method: 'POST',
       url: '/api/v1/locations',
       headers: { authorization: `Bearer ${accessToken}` },
-      payload: { name: 'Still blocked' },
+      payload: { name: 'Still capped' },
     });
-    expect(readOnly.statusCode).toBe(403);
-    expect(readOnly.json().error.code).toBe('SUBSCRIPTION_READ_ONLY');
+    expect(stillCapped.statusCode).toBe(409);
+    expect(stillCapped.json().error.code).toBe('LOCATION_CAPACITY_REACHED');
   });
 
   it('keeps reporting tenant-scoped and accepts an invitation into a custom grant set', async () => {
@@ -441,6 +451,214 @@ describe.runIf(runIntegration)('API security integration', () => {
     );
   });
 
+  it('scopes a member to assigned locations, denying and hiding stock elsewhere', async () => {
+    const registration = await app.inject({
+      method: 'POST',
+      url: '/api/v1/auth/register',
+      remoteAddress: freshIp(),
+      payload: {
+        email: `scope-owner-${randomUUID()}@example.test`,
+        password: 'A-very-safe-test-password',
+        name: 'Scope Owner',
+        clientType: 'mobile',
+      },
+    });
+    expect(registration.statusCode).toBe(201);
+    createdUserIds.push(registration.json().data.user.id as string);
+    const organization = await app.inject({
+      method: 'POST',
+      url: '/api/v1/organizations',
+      headers: {
+        authorization: `Bearer ${registration.json().data.session.accessToken as string}`,
+      },
+      payload: { name: 'Scope Organization' },
+    });
+    expect(organization.statusCode).toBe(201);
+    createdOrganizationIds.push(organization.json().data.id as string);
+    const ownerToken = organization.json().data.accessToken as string;
+    const authed = (token: string) => ({ authorization: `Bearer ${token}` });
+
+    const makeLocation = async (name: string) => {
+      const created = await app.inject({
+        method: 'POST',
+        url: '/api/v1/locations',
+        headers: authed(ownerToken),
+        payload: { name },
+      });
+      expect(created.statusCode).toBe(201);
+      return created.json().data.id as string;
+    };
+    const locationA = await makeLocation('Downtown');
+    const locationB = await makeLocation('Uptown');
+
+    const category = await app.inject({
+      method: 'POST',
+      url: '/api/v1/categories',
+      headers: authed(ownerToken),
+      payload: { name: 'Produce', broadTypeFallback: 'food', icon: 'leaf' },
+    });
+    expect(category.statusCode).toBe(201);
+    const item = await app.inject({
+      method: 'POST',
+      url: '/api/v1/items',
+      headers: authed(ownerToken),
+      payload: { categoryId: category.json().data.id, name: 'Limes', unit: 'kg' },
+    });
+    expect(item.statusCode).toBe(201);
+    const itemId = item.json().data.id as string;
+
+    const grant = await app.inject({
+      method: 'POST',
+      url: '/api/v1/permission-grant-sets',
+      headers: authed(ownerToken),
+      payload: {
+        name: 'Location clerk',
+        permissions: ['item:read', 'stock:read', 'stock:write', 'location:read'],
+      },
+    });
+    expect(grant.statusCode).toBe(201);
+
+    // Invite a member scoped to location A only.
+    const invitation = await app.inject({
+      method: 'POST',
+      url: '/api/v1/membership-invitations',
+      headers: authed(ownerToken),
+      payload: {
+        email: `clerk-${randomUUID()}@example.test`,
+        name: 'Downtown Clerk',
+        grantSetId: grant.json().data.id,
+        allLocations: false,
+        locationIds: [locationA],
+      },
+    });
+    expect(invitation.statusCode).toBe(201);
+    expect(invitation.json().data.allLocations).toBe(false);
+    expect(invitation.json().data.locationIds).toEqual([locationA]);
+    const accepted = await app.inject({
+      method: 'POST',
+      url: '/api/v1/invitations/accept',
+      remoteAddress: freshIp(),
+      payload: {
+        token: invitation.json().data.acceptanceToken,
+        password: 'A-very-safe-test-password',
+        name: 'Downtown Clerk',
+        clientType: 'mobile',
+      },
+    });
+    expect(accepted.statusCode).toBe(201);
+    createdUserIds.push(accepted.json().data.user.id as string);
+    const clerkToken = accepted.json().data.session.accessToken as string;
+
+    // The clerk may write to their assigned location.
+    const allowedWrite = await app.inject({
+      method: 'POST',
+      url: '/api/v1/stock-events',
+      headers: authed(clerkToken),
+      payload: {
+        itemId,
+        locationId: locationA,
+        eventType: 'adjustment',
+        quantityDelta: 5,
+        idempotencyKey: randomUUID(),
+      },
+    });
+    expect(allowedWrite.statusCode).toBe(201);
+
+    // Writing to an unassigned location is denied at the app layer (403).
+    const deniedWrite = await app.inject({
+      method: 'POST',
+      url: '/api/v1/stock-events',
+      headers: authed(clerkToken),
+      payload: {
+        itemId,
+        locationId: locationB,
+        eventType: 'adjustment',
+        quantityDelta: 5,
+        idempotencyKey: randomUUID(),
+      },
+    });
+    expect(deniedWrite.statusCode).toBe(403);
+    expect(deniedWrite.json().error.code).toBe('AUTHZ_LOCATION_FORBIDDEN');
+
+    // The owner (all-locations) writes stock into location B.
+    const ownerWriteB = await app.inject({
+      method: 'POST',
+      url: '/api/v1/stock-events',
+      headers: authed(ownerToken),
+      payload: {
+        itemId,
+        locationId: locationB,
+        eventType: 'adjustment',
+        quantityDelta: 9,
+        idempotencyKey: randomUUID(),
+      },
+    });
+    expect(ownerWriteB.statusCode).toBe(201);
+    await new Promise((resolve) => setTimeout(resolve, 0));
+
+    // RLS backstop: the clerk cannot even read location B's ledger, though it exists.
+    const clerkSeesB = await app.inject({
+      method: 'GET',
+      url: `/api/v1/items/${itemId}/stock-events?locationId=${locationB}`,
+      headers: authed(clerkToken),
+    });
+    expect(clerkSeesB.statusCode).toBe(200);
+    expect(clerkSeesB.json().data).toHaveLength(0);
+    const clerkSeesA = await app.inject({
+      method: 'GET',
+      url: `/api/v1/items/${itemId}/stock-events?locationId=${locationA}`,
+      headers: authed(clerkToken),
+    });
+    expect(clerkSeesA.json().data).toHaveLength(1);
+
+    // The owner sees both locations' ledgers.
+    const ownerSeesAll = await app.inject({
+      method: 'GET',
+      url: `/api/v1/items/${itemId}/stock-events`,
+      headers: authed(ownerToken),
+    });
+    expect(ownerSeesAll.json().data).toHaveLength(2);
+
+    // Team listing surfaces the scope to managers.
+    const team = await app.inject({
+      method: 'GET',
+      url: '/api/v1/memberships',
+      headers: authed(ownerToken),
+    });
+    const clerkRow = team
+      .json()
+      .data.find((row: { name: string }) => row.name === 'Downtown Clerk') as {
+      id: string;
+      allLocations: boolean;
+      locationIds: string[];
+    };
+    expect(clerkRow.allLocations).toBe(false);
+    expect(clerkRow.locationIds).toEqual([locationA]);
+
+    // Broadening the clerk to all locations takes effect on the next request.
+    const patched = await app.inject({
+      method: 'PATCH',
+      url: `/api/v1/memberships/${clerkRow.id}`,
+      headers: authed(ownerToken),
+      payload: { allLocations: true },
+    });
+    expect(patched.statusCode).toBe(200);
+    expect(patched.json().data.allLocations).toBe(true);
+    const nowAllowedB = await app.inject({
+      method: 'POST',
+      url: '/api/v1/stock-events',
+      headers: authed(clerkToken),
+      payload: {
+        itemId,
+        locationId: locationB,
+        eventType: 'adjustment',
+        quantityDelta: 1,
+        idempotencyKey: randomUUID(),
+      },
+    });
+    expect(nowAllowedB.statusCode).toBe(201);
+  });
+
   it('scopes catalog reads and appends attributed manual movements with atomic projections', async () => {
     const registration = await app.inject({
       method: 'POST',
@@ -513,7 +731,13 @@ describe.runIf(runIntegration)('API security integration', () => {
       method: 'POST',
       url: '/api/v1/stock-events',
       headers: { authorization: `Bearer ${accessToken}` },
-      payload: { itemId, locationId, eventType: 'adjustment', quantityDelta: 5 },
+      payload: {
+        itemId,
+        locationId,
+        eventType: 'adjustment',
+        quantityDelta: 5,
+        idempotencyKey: randomUUID(),
+      },
     });
     expect(adjustment.statusCode).toBe(201);
     expect(adjustment.json().data).toMatchObject({
@@ -525,14 +749,28 @@ describe.runIf(runIntegration)('API security integration', () => {
       method: 'POST',
       url: '/api/v1/stock-events',
       headers: { authorization: `Bearer ${accessToken}` },
-      payload: { itemId, locationId, eventType: 'loss', quantityDelta: -2 },
+      payload: {
+        itemId,
+        locationId,
+        eventType: 'loss',
+        quantityDelta: -2,
+        idempotencyKey: randomUUID(),
+      },
     });
     expect(lossWithoutReason.statusCode).toBe(400);
+    const lossKey = randomUUID();
     const loss = await app.inject({
       method: 'POST',
       url: '/api/v1/stock-events',
       headers: { authorization: `Bearer ${accessToken}` },
-      payload: { itemId, locationId, eventType: 'loss', quantityDelta: -2, reasonCode: 'spoilage' },
+      payload: {
+        itemId,
+        locationId,
+        eventType: 'loss',
+        quantityDelta: -2,
+        reasonCode: 'spoilage',
+        idempotencyKey: lossKey,
+      },
     });
     expect(loss.statusCode).toBe(201);
     expect(loss.json().data).toMatchObject({
@@ -540,6 +778,25 @@ describe.runIf(runIntegration)('API security integration', () => {
       reasonCode: 'spoilage',
       actorUserId: userId,
     });
+    // Replaying the same idempotency key (a lost-response retry) must return the
+    // original event with 200 and must not append a second ledger row or move
+    // the projection again.
+    const replay = await app.inject({
+      method: 'POST',
+      url: '/api/v1/stock-events',
+      headers: { authorization: `Bearer ${accessToken}` },
+      payload: {
+        itemId,
+        locationId,
+        eventType: 'loss',
+        quantityDelta: -2,
+        reasonCode: 'spoilage',
+        idempotencyKey: lossKey,
+      },
+    });
+    expect(replay.statusCode).toBe(200);
+    expect(replay.json().data.id).toBe(loss.json().data.id);
+    expect(replay.json().data.resultingQuantity).toBe('3.000');
     // The route sends its reply from inside the verified-tenant transaction;
     // wait one task turn so this assertion observes its completed commit.
     await new Promise((resolve) => setTimeout(resolve, 0));
@@ -673,14 +930,27 @@ describe.runIf(runIntegration)('API security integration', () => {
       method: 'POST',
       url: '/api/v1/stock-events',
       headers,
-      payload: { itemId, locationId, eventType: 'adjustment', quantityDelta: 5 },
+      payload: {
+        itemId,
+        locationId,
+        eventType: 'adjustment',
+        quantityDelta: 5,
+        idempotencyKey: randomUUID(),
+      },
     });
     expect(stocked.statusCode).toBe(201);
     const crossed = await app.inject({
       method: 'POST',
       url: '/api/v1/stock-events',
       headers,
-      payload: { itemId, locationId, eventType: 'loss', quantityDelta: -4, reasonCode: 'spoilage' },
+      payload: {
+        itemId,
+        locationId,
+        eventType: 'loss',
+        quantityDelta: -4,
+        reasonCode: 'spoilage',
+        idempotencyKey: randomUUID(),
+      },
     });
     expect(crossed.statusCode).toBe(201);
     const remainsLow = await app.inject({
@@ -693,6 +963,7 @@ describe.runIf(runIntegration)('API security integration', () => {
         eventType: 'loss',
         quantityDelta: -0.5,
         reasonCode: 'spoilage',
+        idempotencyKey: randomUUID(),
       },
     });
     expect(remainsLow.statusCode).toBe(201);
@@ -795,7 +1066,13 @@ describe.runIf(runIntegration)('API security integration', () => {
       method: 'POST',
       url: '/api/v1/stock-events',
       headers: { authorization: `Bearer ${ownerToken}` },
-      payload: { itemId, locationId, eventType: 'adjustment', quantityDelta: 5 },
+      payload: {
+        itemId,
+        locationId,
+        eventType: 'adjustment',
+        quantityDelta: 5,
+        idempotencyKey: randomUUID(),
+      },
     });
 
     const started = await app.inject({
@@ -830,7 +1107,13 @@ describe.runIf(runIntegration)('API security integration', () => {
       method: 'POST',
       url: '/api/v1/stock-events',
       headers: { authorization: `Bearer ${ownerToken}` },
-      payload: { itemId, locationId, eventType: 'adjustment', quantityDelta: 2 },
+      payload: {
+        itemId,
+        locationId,
+        eventType: 'adjustment',
+        quantityDelta: 2,
+        idempotencyKey: randomUUID(),
+      },
     });
     const ownerKey = randomUUID();
     const ownerSubmission = await app.inject({

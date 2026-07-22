@@ -28,6 +28,8 @@ type MembershipRow = {
   membership_id: string;
   permission_grant_set_id: string;
   permissions: Array<{ resource: string; action: string }>;
+  all_locations: boolean;
+  location_ids: string[];
 };
 
 type MembershipSummaryRow = {
@@ -172,6 +174,41 @@ export async function listMemberships(sessionId: string, userId: string) {
     grantSetName: row.grant_set_name,
     permissions: row.permissions.map(({ resource, action }) => `${resource}:${action}`),
   }));
+}
+
+export async function createPasswordReset(email: string, tokenHash: string, expiresAt: Date) {
+  const result = await requirePool().query<{ user_id: string; email: string; name: string }>(
+    'SELECT * FROM app.auth_create_password_reset($1, $2, $3)',
+    [email, tokenHash, expiresAt],
+  );
+  return one(result.rows);
+}
+
+export async function consumePasswordReset(
+  tokenHash: string,
+  passwordHash: string,
+): Promise<boolean> {
+  const result = await requirePool().query<{ auth_consume_password_reset: boolean }>(
+    'SELECT app.auth_consume_password_reset($1, $2)',
+    [tokenHash, passwordHash],
+  );
+  return result.rows[0]?.auth_consume_password_reset === true;
+}
+
+export async function createEmailVerification(userId: string, tokenHash: string, expiresAt: Date) {
+  await requirePool().query('SELECT app.auth_create_email_verification($1, $2, $3)', [
+    userId,
+    tokenHash,
+    expiresAt,
+  ]);
+}
+
+export async function consumeEmailVerification(tokenHash: string) {
+  const result = await requirePool().query<{ user_id: string }>(
+    'SELECT * FROM app.auth_consume_email_verification($1)',
+    [tokenHash],
+  );
+  return one(result.rows);
 }
 
 export async function createOrganization(sessionId: string, userId: string, name: string) {
