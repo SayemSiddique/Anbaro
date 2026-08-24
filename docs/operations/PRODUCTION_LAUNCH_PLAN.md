@@ -1,11 +1,25 @@
 # Anbaro — Production Launch Plan (Master Doc)
 
-**Owner:** Sam · **Created:** 2026-07-21 · **Status:** ACTIVE — execution not yet started
+**Owner:** Sam · **Created:** 2026-07-21 · **Status:** ACTIVE — Session 1 landed; Session 2 partially done (see the pre-completion callout below)
 **Launch posture (locked):** Free launch, billing dormant (`BILLING_ENABLED` unset). Pro billing is a fast-follow 2–4 weeks after go-live.
 **Stack (locked):** Neon (Postgres) · Upstash (Redis) · Railway (API container) · Vercel (Next.js web) · Expo EAS (mobile) · Sentry (errors) · Postmark (email) · Groq (AI, optional).
 **Domain (locked):** `anbaro.com` is registered. API at `api.anbaro.com`, web at `anbaro.com` + `www.anbaro.com`.
 
 This is the single source of truth for taking Anbaro from "code-complete" to "live for real customers." The companion operational doc is [`launch-anbaro.md`](launch-anbaro.md) (provider-specific settings). Where the two differ, **this plan wins** and I'll reconcile `launch-anbaro.md` / `SETUP_REQUIRED.md` in Session 1.
+
+---
+
+## Pre-completed ahead of schedule (Session 2 no-input batch)
+
+Session 2 was blocked on the Neon credentials Sam had not yet provisioned, so rather than idle, the agent pulled forward **every task across the plan that needs no operator input** (Sam's explicit direction). These are **done and verified**; the later session only needs to do the input-gated remainder:
+
+- **Session 4 (web) →** `apps/web/src/app/(marketing)/privacy/page.tsx` — the `/privacy` page is built, renders clean, and passes lint/typecheck/build. Legal facts are `[BRACKETED]` placeholders to fill. Footer "Privacy" link still inert (don't expose a draft).
+- **Session 5 (CD) + Session 6 (observability) →** [`RUNBOOK.md`](RUNBOOK.md) written (deploy/promote/rollback, migration safety, ops dashboard map, alert thresholds, on-call). Activation still gated on deploy secrets.
+- **Session 8 (mobile) →** brand assets regenerated via `pnpm brand:export`; result was **zero-diff** (committed PNGs were already current Anbaro — the plan's "still carry old branding" note is stale).
+- **Session 9 (stores) →** [`store-listing.md`](store-listing.md) — listing copy, keywords, screenshot specs, reviewer notes, data-safety mapping. Test creds / support URL are `[BRACKETED]`.
+- **Session 12 (go/no-go) →** [`go-no-go-checklist.md`](go-no-go-checklist.md) written; an initial `/security-review` was run on this branch (no findings — the diff is a static page + docs). Re-run at go time against the full release.
+
+Everything above was handed off to Sam as chat text at the end of that session. The still-input-gated work (Neon go-live itself, plus all deploy/secret steps) is unchanged below.
 
 ---
 
@@ -18,7 +32,7 @@ Work happens in **numbered sessions**, each a **fresh Claude Code session**. Thi
 1. **Do NOT read the whole codebase.** Read only the files that session's block lists under _Agent reads ONLY_. The architecture is already understood and captured in the docs; re-deriving it burns tokens for no gain.
 2. **Trust the docs.** `docs/security/api-security.md`, `docs/operations/launch-anbaro.md`, and this file describe the system accurately. Don't go verify the whole design from source.
 3. **Stay in the session's scope.** Each session has a single goal and an acceptance test. Don't start the next session's work.
-4. **End every session by writing a handoff prompt** (template at the bottom) into `docs/operations/handoffs/session-NN-handoff.md`, referencing the files the _next_ session needs — not the whole tree.
+4. **End every session by giving Sam a handoff prompt as chat text** (template at the bottom), referencing the files the _next_ session needs — not the whole tree. This is spoken output for Sam to paste into the next session, never a committed file.
 5. **The agent never runs `git commit` or `git push`.** At the end of each session the agent (a) `git add`s only the files that session touched, and (b) writes a ready-to-use commit message as text. **Sam** runs the commit and the push. Staging is allowed and expected; committing/pushing is Sam's alone. See "Git & commit workflow" below.
 
 **Two parallel tracks:**
@@ -125,7 +139,7 @@ _No external accounts required. Run this first, in parallel with Sam's provision
 - **Do NOT read:** the route handlers, migrations, feature components, or design-token internals. This session touches docs + config + two SDK init points only.
 - **Steps:**
   1. Reconcile stale docs: fix `SETUP_REQUIRED.md` (still says "Counted", old `$12/$29` two-tier pricing, `counted_standard_*` keys) to match Anbaro + free-launch + the one-Pro-plan model. Make `launch-anbaro.md` + this plan the cited source of truth.
-  2. Add `docs/operations/handoffs/` directory with a `README.md` explaining the handoff convention.
+  2. ~~Add `docs/operations/handoffs/` directory~~ — superseded: handoffs are given to Sam as chat text at session end, never committed as files (see rule 4 above).
   3. Add a **CD workflow** `.github/workflows/deploy.yml` — jobs for API (Railway) and web (Vercel), triggered on green `main`, **guarded so they no-op until the deploy tokens/secrets exist** (activated in Session 5). Keep `quality.yml` as the gate.
   4. Scaffold **web Sentry** (`@sentry/nextjs`) and **mobile Sentry** (`@sentry/react-native`) mirroring the API's dormant-until-DSN pattern in `observability.ts`. No behavior change when DSN unset.
   5. Write `docs/operations/ENVIRONMENTS.md` = the env/secret matrix above, as the operational reference.
@@ -133,7 +147,7 @@ _No external accounts required. Run this first, in parallel with Sam's provision
   7. Run `pnpm lint && pnpm typecheck && pnpm build` locally; keep everything green.
   8. **Clear the git backlog (final step of this session).** The whole uncommitted backlog PLUS this session's changes get staged into the thematic commit sequence in "Git & commit workflow" (refine the ~11-group list against the actual tree). For each group: `git add <paths>` then hand Sam the commit message as text. **Do NOT run `git commit` or `git push`** — Sam commits and pushes each group. Goal: after Sam pushes, `git status` is clean, so Session 2 onward starts with an empty backlog and only ever commits its own session's files.
 - **Done when:** repo builds green, docs reconciled, `deploy.yml` present but inert, web/mobile Sentry inert-scaffolded, `ENVIRONMENTS.md` written, and the entire backlog is staged into thematic groups with a commit message provided for each (Sam pushes).
-- **Handoff:** write `session-01-handoff.md` → confirm the tree is clean/pushed, and point Session 2 at Neon + migration files only.
+- **Handoff (chat text, not a file):** confirm the tree is clean/pushed, and point Session 2 at Neon + migration files only.
 
 ---
 
@@ -154,7 +168,7 @@ _No external accounts required. Run this first, in parallel with Sam's provision
   5. Confirm PITR/backups are enabled in Neon; note the retention window in `ENVIRONMENTS.md`.
   6. Do **not** put `DATABASE_ADMIN_URL` anywhere near a runtime service — hand it back to Sam to store in his own vault/password manager.
 - **Done when:** `db:verify` passes on prod + staging branches; `stock_app` role confirmed non-superuser, no createrole/createdb, RLS-forced.
-- **Handoff:** `session-02-handoff.md` → give Session 3 the `stock_app` `DATABASE_URL`s + Redis expectation.
+- **Handoff (chat text, not a file):** give Session 3 the `stock_app` `DATABASE_URL`s + Redis expectation.
 
 ---
 
@@ -175,7 +189,7 @@ _No external accounts required. Run this first, in parallel with Sam's provision
   5. Repeat for **prod** service; attach `api.anbaro.com` custom domain + the DNS record Railway shows; set a Railway usage limit.
   6. Verify CORS: only `anbaro.com`/`www` origins allowed.
 - **Done when:** `https://api.anbaro.com/health` = ok in prod, staging equivalent live, Sentry receiving, sweeper running.
-- **Handoff:** `session-03-handoff.md` → give Session 4 the API base URLs + Sentry web DSN.
+- **Handoff (chat text, not a file):** give Session 4 the API base URLs + Sentry web DSN.
 
 ---
 
@@ -184,6 +198,7 @@ _No external accounts required. Run this first, in parallel with Sam's provision
 ### Session 4 — Deploy the web app to Vercel + DNS + e2e smoke
 
 - **Goal:** `anbaro.com` live, talking to the prod API, core flows verified in prod.
+- **Pre-done in Session 2:** the `/privacy` page (step 4) is already built at `apps/web/src/app/(marketing)/privacy/page.tsx` (renders clean, green in CI) — just fill its `[BRACKETED]` legal facts and confirm it deploys. Footer "Privacy" link left inert until the placeholders are filled.
 - **Depends on:** Session 3.
 - **Sam must have ready:** Vercel (S-5), DNS access for `anbaro.com`, Sentry web DSN.
 - **Agent reads ONLY:** `apps/web/package.json`, `apps/web/next.config.ts`, `docs/operations/launch-anbaro.md` (Web section), the marketing/landing entry + login page paths (only if a smoke test fails).
@@ -194,7 +209,7 @@ _No external accounts required. Run this first, in parallel with Sam's provision
   3. Smoke-test in prod (browser tools): sign-up, sign-in, barcode lookup, a full count cycle, low-stock alert appears, **account deletion** (App Store 5.1.1(v) requirement), support page link, `/billing` → `/support` redirect, `GET /api/v1/billing` returns 404.
   4. Publish `https://anbaro.com/privacy` (covers account, inventory, camera/device, billing-dormant, processor data, retention, deletion, support contact) and confirm it's reachable — the stores require it.
 - **Done when:** all smoke flows pass in prod; privacy + support URLs live.
-- **Handoff:** `session-04-handoff.md` → Session 5 gets Railway + Vercel deploy tokens expectation.
+- **Handoff (chat text, not a file):** Session 5 gets Railway + Vercel deploy tokens expectation.
 
 ---
 
@@ -203,6 +218,7 @@ _No external accounts required. Run this first, in parallel with Sam's provision
 ### Session 5 — Turn on CD + staging pipeline + rollback runbook
 
 - **Goal:** Green `main` auto-deploys staging → (manual gate) → prod. One-command rollback documented.
+- **Pre-done in Session 2:** [`RUNBOOK.md`](RUNBOOK.md) (step 3) is already written — deploy/promote/rollback, migration safety, decision guide. This session only activates `deploy.yml` + branch protection once the deploy secrets exist.
 - **Depends on:** Sessions 3, 4 (targets must exist).
 - **Sam must have ready:** Railway deploy token + Vercel deploy token/project IDs, added as GitHub Actions secrets (agent lists exact secret names).
 - **Agent reads ONLY:** `.github/workflows/quality.yml`, `.github/workflows/deploy.yml` (from Session 1).
@@ -213,11 +229,12 @@ _No external accounts required. Run this first, in parallel with Sam's provision
   3. Write `docs/operations/RUNBOOK.md`: deploy, promote, rollback (Railway redeploy previous image / Vercel instant rollback), migration-safety note (never auto-run destructive migrations in CD; migrations are a deliberate manual `db:migrate` step against admin URL).
   4. Configure branch protection to require `quality.yml` before merge.
 - **Done when:** a test PR merged to `main` auto-deploys staging, prod promotion is gated, rollback steps proven once on staging.
-- **Handoff:** `session-05-handoff.md`.
+- **Handoff (chat text, not a file).**
 
 ### Session 6 — Observability: uptime, alerting, log drains, dashboards
 
 - **Goal:** You find out about problems before customers tell you.
+- **Pre-done in Session 2:** the ops dashboard map + alert thresholds + on-call notes (steps 4–5) are drafted in [`RUNBOOK.md`](RUNBOOK.md) under "Observability" — this session wires the actual monitor/alert destinations to match.
 - **Depends on:** Session 3, 4.
 - **Sam must have ready:** Uptime provider (S-13); confirm Sentry alert rules email/Slack destination.
 - **Agent reads ONLY:** `docs/operations/RUNBOOK.md`, `services/api/src/observability.ts`.
@@ -228,7 +245,7 @@ _No external accounts required. Run this first, in parallel with Sam's provision
   4. A minimal ops dashboard doc: where to look for API errors, DB health (Neon console), Redis (Upstash), deploys.
   5. Add alert thresholds + on-call note (even solo: what to do at 2am) to `RUNBOOK.md`.
 - **Done when:** a simulated API outage triggers an alert to Sam within ~2 min.
-- **Handoff:** `session-06-handoff.md`.
+- **Handoff (chat text, not a file).**
 
 ---
 
@@ -247,7 +264,7 @@ _No external accounts required. Run this first, in parallel with Sam's provision
   3. Confirm SPF/DKIM pass (Postmark shows deliverability); check spam placement.
   4. Promote token to **prod**; re-verify one flow in prod.
 - **Done when:** all four email types deliver in prod with passing DKIM.
-- **Handoff:** `session-07-handoff.md`.
+- **Handoff (chat text, not a file).**
 
 ---
 
@@ -256,6 +273,7 @@ _No external accounts required. Run this first, in parallel with Sam's provision
 ### Session 8 — EAS configure + brand assets + preview build
 
 - **Goal:** A signed internal build installs and runs against the prod API.
+- **Pre-done in Session 2:** brand assets already regenerated (`pnpm brand:export`, step 3) — it produced a **zero-diff**, so the committed icon/adaptive-icon/splash are already current Anbaro. The plan's "still carry old branding" note is stale; no asset work remains.
 - **Depends on:** Session 3 (API live).
 - **Sam must have ready:** Expo account (S-8); run `eas login` interactively once (agent can't do the interactive login).
 - **Agent reads ONLY:** `apps/mobile/app.json`, `apps/mobile/eas.json`, `apps/mobile/package.json`, `packages/design-tokens/src/brand.ts`, `docs/operations/launch-anbaro.md` (store section), the brand memory file guidance (regenerate, don't hand-edit assets).
@@ -267,11 +285,12 @@ _No external accounts required. Run this first, in parallel with Sam's provision
   4. `eas build --platform all --profile preview`; install on a physical iOS + Android device.
   5. Test on-device: camera permission prompt wording, barcode scan, **offline count then sync**, account deletion (More → Delete account).
 - **Done when:** preview build runs on both platforms against prod API; offline sync verified.
-- **Handoff:** `session-08-handoff.md`.
+- **Handoff (chat text, not a file).**
 
 ### Session 9 — Production builds + store submission
 
 - **Goal:** Binaries in TestFlight + Play internal track, listings ready for review.
+- **Pre-done in Session 2:** [`store-listing.md`](store-listing.md) (steps 3–4) — listing copy, keywords, screenshot shot-list/specs, reviewer notes (account-deletion path + `[BRACKETED]` test creds), and data-safety mapping. Note the flagged mobile "Upgrade to Pro at anbaro.com" capacity prompt (anti-steering decision).
 - **Depends on:** Session 8; privacy URL from Session 4.
 - **Sam must have ready:** Apple Developer (S-9) + Play Console (S-10) — reserve `com.anbaro.app` in both **before** the first build (immutable after release). Store listing text, screenshots.
 - **Agent reads ONLY:** `apps/mobile/eas.json`, `apps/mobile/app.json`, `docs/operations/launch-anbaro.md` (store policy + privacy gates).
@@ -282,7 +301,7 @@ _No external accounts required. Run this first, in parallel with Sam's provision
   4. Write **reviewer notes** that explicitly point to the account-deletion path (common rejection cause) and supply working test credentials + confirm the API is live.
   5. Submit for review.
 - **Done when:** both builds uploaded, listings complete, submitted for review.
-- **Handoff:** `session-09-handoff.md`.
+- **Handoff (chat text, not a file).**
 
 ---
 
@@ -296,7 +315,7 @@ _No external accounts required. Run this first, in parallel with Sam's provision
 - **Agent reads ONLY:** `services/api/src/assistant/extraction.ts`, `services/api/src/routes/assistant.ts`, `docs/HARDENING_AND_AI_PLAN.md` (WS6).
 - **Steps:** set key in staging → verify a propose→confirm loop → promote to prod → smoke one proposal. Confirm the model never writes directly (writes go through the idempotent, location-checked stock-event path).
 - **Done when:** `/assistant/stock-proposals` returns real proposals in prod; a confirmed movement lands stamped `source:'assistant'`.
-- **Handoff:** `session-10-handoff.md`.
+- **Handoff (chat text, not a file).**
 
 ---
 
@@ -310,7 +329,7 @@ _No external accounts required. Run this first, in parallel with Sam's provision
 - **Agent reads ONLY:** the `anbaro-pricing-model` memory, `services/api/src/onboarding/service.ts` (tier caps), `services/api/src/billing/stripe.ts`, `services/api/.env.example` (Stripe block), `services/api/test/billing.integration.test.ts`.
 - **Steps:** set `STRIPE_*` + price IDs in **staging**, `BILLING_ENABLED=true`; run the billing integration test; verify checkout, trial→Free transition, promo code, webhook reconciliation, Free-tier caps (2 loc / 4 team / 100 items / 2 CSV per 7d). Seed an entitlement row per workspace. Promote to prod. **Keep mobile free** (no IAP).
 - **Done when:** a real test purchase + trial expiry + promo code verified in prod; caps enforced.
-- **Handoff:** `session-11-handoff.md`.
+- **Handoff (chat text, not a file).**
 
 ---
 
@@ -319,6 +338,7 @@ _No external accounts required. Run this first, in parallel with Sam's provision
 ### Session 12 — Launch readiness review
 
 - **Goal:** Final gate before public announcement.
+- **Pre-done in Session 2:** [`go-no-go-checklist.md`](go-no-go-checklist.md) (step 5) is written and ready to work top-to-bottom; an initial `/security-review` (step 3) was run on the Session 2 branch with no findings. Re-run the review against the full live release at go time.
 - **Depends on:** Sessions 2–7 (billing/AI optional).
 - **Agent reads ONLY:** `docs/operations/RUNBOOK.md`, `docs/operations/restore-bootstrap.md`, `docs/security/api-security.md`, `docs/operations/ENVIRONMENTS.md`.
 - **Steps:**
@@ -350,7 +370,7 @@ Critical path to a public web launch: **S1 → S2 → S3 → S4 → S6 → S12.*
 
 ## Session handoff prompt — template
 
-At the end of every session, write this into `docs/operations/handoffs/session-NN-handoff.md` and give it to Sam to paste into the next fresh session:
+At the end of every session, output this as **chat text** (never a committed file) for Sam to copy and paste into the next fresh session:
 
 ```
 You are continuing the Anbaro production launch. This is Session <NN+1>: <title>.
@@ -358,7 +378,6 @@ You are continuing the Anbaro production launch. This is Session <NN+1>: <title>
 CONTEXT — read ONLY these (do not scan the codebase, do not read migrations/routes/components unless a step fails):
 - docs/operations/PRODUCTION_LAUNCH_PLAN.md  → find "Session <NN+1>" and follow its block
 - <the 2–5 files that session's block lists under "Agent reads ONLY">
-- docs/operations/handoffs/session-<NN>-handoff.md  → what the previous session finished + any gotchas
 
 STATE FROM LAST SESSION:
 - Done: <bullet list>
@@ -369,7 +388,7 @@ STATE FROM LAST SESSION:
 YOUR GOAL THIS SESSION: <one sentence from the plan>
 DONE WHEN: <acceptance test from the plan>
 
-RULES: don't read the whole codebase; stay in this session's scope; don't commit or push unless Sam explicitly says so in this session; end by writing session-<NN+1>-handoff.md.
+RULES: don't read the whole codebase; stay in this session's scope; don't commit or push unless Sam explicitly says so in this session; end by giving the next handoff as chat text, not a file.
 ```
 
 ---
