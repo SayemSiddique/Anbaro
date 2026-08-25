@@ -195,6 +195,19 @@ export function getCommandItems(
     ...(item.section ? { hint: item.section } : {}),
   }));
   const extras: CommandItem[] = [];
+  // Import/export has a route and a screen but no sidebar slot — it is a task,
+  // not a destination, and it is linked from Items. The palette is where a task
+  // becomes findable, so it goes here, behind the same `item:write` gate the
+  // Items page puts on its link.
+  if (access.permissions.has('item:write'))
+    extras.push({
+      group: 'Actions',
+      href: '/imports',
+      icon: FileSpreadsheet,
+      id: 'open-imports',
+      keywords: 'csv bulk upload export spreadsheet catalog',
+      label: 'Import or export a CSV',
+    });
   if (access.permissions.has('reports:read'))
     extras.push({
       group: 'Go to',

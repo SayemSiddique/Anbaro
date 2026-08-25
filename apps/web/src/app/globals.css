@@ -456,6 +456,19 @@ a {
   margin-top: 2px;
 }
 
+/* The centred mark-title-prose lockup a first-run card opens with. It is the
+   only place a heading is centred: the screen has one thing to say and no
+   surrounding content to align to. */
+.card-intro {
+  display: grid;
+  gap: 8px;
+  justify-items: center;
+  text-align: center;
+}
+.card-intro .meta {
+  max-width: 42ch;
+}
+
 .tile-grid {
   display: grid;
   gap: 14px;
@@ -645,6 +658,14 @@ a {
   color: var(--ink-faint);
   font-size: 12.5px;
 }
+/* The field that takes the slack in a `.form-row`, so the control beside it
+   keeps its natural width instead of both splitting the row in half. Capped at
+   a comfortable measure for the same reason `.form-grid` is: past about 360px
+   an input stops reading as a field and starts reading as a banner. */
+.field-grow {
+  flex: 1 1 220px;
+  max-width: 360px;
+}
 
 .input {
   background: var(--surface);
@@ -662,6 +683,13 @@ a {
   border-color: var(--accent);
   box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 22%, transparent);
   outline: none;
+}
+/* The chrome form of a select: shorter than a form control, and capped so a
+   long organization name truncates rather than pushing the topbar around. */
+.input-compact {
+  max-width: 260px;
+  min-height: 38px;
+  padding: 6px 10px;
 }
 
 .form-grid {

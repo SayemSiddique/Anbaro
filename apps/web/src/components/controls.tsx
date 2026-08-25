@@ -22,16 +22,24 @@ import {
 
 /* ---------- Switch ---------- */
 
-/** An immediate on/off. If the change needs saving, use a Checkbox in a form. */
+/**
+ * An immediate on/off. If the change needs saving, use a Checkbox in a form.
+ *
+ * `labelHidden` keeps the accessible name and drops the visible one, for the
+ * settings row that already names the setting on its left — the switch belongs
+ * at the right edge there, and a second copy of the word in between is noise.
+ */
 export function Switch({
   checked,
   disabled = false,
   label,
+  labelHidden = false,
   onChange,
 }: {
   checked: boolean;
   disabled?: boolean;
   label: string;
+  labelHidden?: boolean;
   onChange: (next: boolean) => void;
 }) {
   const id = useId();
@@ -48,7 +56,7 @@ export function Switch({
       >
         <span aria-hidden="true" className="switch-thumb" />
       </button>
-      <label className="switch-label" htmlFor={id} id={id}>
+      <label className={labelHidden ? 'visually-hidden' : 'switch-label'} htmlFor={id} id={id}>
         {label}
       </label>
     </span>

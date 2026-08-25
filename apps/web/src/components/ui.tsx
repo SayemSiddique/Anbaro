@@ -140,6 +140,26 @@ export function CardTitle({
   );
 }
 
+/**
+ * The opening of a first-run card: a mark, the one thing the screen is for, and
+ * a line of prose, all centred. `CardTitle` is the everyday form — this one is
+ * for the screens that have no surrounding content to align to.
+ */
+export function CardIntro({
+  children,
+  icon,
+  id,
+  title,
+}: PropsWithChildren<{ icon?: ReactNode; id?: string; title: ReactNode }>) {
+  return (
+    <div className="card-intro">
+      {icon}
+      <h1 id={id}>{title}</h1>
+      {children}
+    </div>
+  );
+}
+
 export function PageHeader({
   action,
   subtitle,
@@ -338,13 +358,19 @@ export function FormSection({
   );
 }
 
+/**
+ * `grow` is for a field sharing a `.form-row` with a button: the field takes
+ * the slack so the button keeps its natural width, which is the one thing a
+ * feature reached for `style={{ flex: 1, minWidth: 220 }}` to get.
+ */
 export function Field({
   children,
+  grow = false,
   hint,
   label,
-}: PropsWithChildren<{ hint?: ReactNode; label: ReactNode }>) {
+}: PropsWithChildren<{ grow?: boolean; hint?: ReactNode; label: ReactNode }>) {
   return (
-    <label className="field">
+    <label className={grow ? 'field field-grow' : 'field'}>
       <span className="field-label">{label}</span>
       {children}
       {hint ? <span className="field-hint">{hint}</span> : null}
@@ -356,8 +382,22 @@ export function Input(props: InputHTMLAttributes<HTMLInputElement>) {
   return <input {...props} className={['input', props.className ?? ''].join(' ').trim()} />;
 }
 
-export function Select(props: SelectHTMLAttributes<HTMLSelectElement>) {
-  return <select {...props} className={['input', props.className ?? ''].join(' ').trim()} />;
+/**
+ * `compact` is the chrome form — shorter, and width-capped — for a select that
+ * lives in the topbar rather than in a form.
+ */
+export function Select({
+  compact = false,
+  ...props
+}: SelectHTMLAttributes<HTMLSelectElement> & { compact?: boolean }) {
+  return (
+    <select
+      {...props}
+      className={['input', compact ? 'input-compact' : '', props.className ?? '']
+        .filter(Boolean)
+        .join(' ')}
+    />
+  );
 }
 
 /**

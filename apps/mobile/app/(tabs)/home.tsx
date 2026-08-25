@@ -1,16 +1,26 @@
-import { ApiClientError, type Location } from '@anbaro/contracts';
+import { ApiClientError, type Location, type Notification } from '@anbaro/contracts';
 
+import { useRouter } from 'expo-router';
 import * as SecureStore from 'expo-secure-store';
+import { Bell, Check } from 'lucide-react-native';
 import { useCallback, useEffect, useState } from 'react';
 import { Alert, Text, TextInput, View } from 'react-native';
 
 import { useMobileSession } from '../../src/components/app-shell';
-import { PrimaryButton, StatePanel } from '../../src/components/ui';
+import { PrimaryButton, QuietButton, StatePanel } from '../../src/components/ui';
 import { makeStyles, text } from '../../src/lib/theme';
+
+/* Three is the whole point. D4 folded Alerts out of the tab bar on the promise
+   that Today would carry what needs you now — not that Today would become a
+   second alerts screen. Anything past the third unread alert is a list, and a
+   list belongs on /alerts, which the button beside the heading opens. */
+const TODAY_ALERT_LIMIT = 3;
 
 export default function HomeScreen() {
   const styles = useStyles();
+  const router = useRouter();
   const { state, controller, reload } = useMobileSession();
+  const [alerts, setAlerts] = useState<Notification[]>([]);
   const [locations, setLocations] = useState<Location[]>([]);
   // capacity === null means unlimited, which is always the case while Anbaro is free.
   const [capacity, setCapacity] = useState<{ used: number; capacity: number | null }>({
@@ -33,9 +43,22 @@ export default function HomeScreen() {
       setError(caught instanceof ApiClientError ? caught.message : 'Could not load locations.');
     }
   }, [controller, state]);
+  const loadAlerts = useCallback(async () => {
+    if (state.kind !== 'ready' || !state.user.activeOrganizationId) return;
+    try {
+      setAlerts((await controller.getNotifications(true)).data);
+    } catch {
+      // Today does not report that alerts are unreachable — /alerts does, with
+      // a retry. Everything below this section loaded and still works.
+      setAlerts([]);
+    }
+  }, [controller, state]);
   useEffect(() => {
     void load();
   }, [load]);
+  useEffect(() => {
+    void loadAlerts();
+  }, [loadAlerts]);
   useEffect(() => {
     void SecureStore.getItemAsync('stock.location-capacity-draft').then((saved) => {
       if (saved) {
@@ -88,6 +111,14 @@ export default function HomeScreen() {
       else setError(caught instanceof ApiClientError ? caught.message : 'Could not save location.');
     }
   }
+  async function markAlertRead(id: string) {
+    try {
+      await controller.markNotificationRead(id);
+      await loadAlerts();
+    } catch {
+      setError('Could not update this alert.');
+    }
+  }
   async function archiveLocation(location: Location) {
     Alert.alert('Archive location?', 'Its history will remain available.', [
       { text: 'Cancel', style: 'cancel' },
@@ -131,6 +162,42 @@ export default function HomeScreen() {
   return (
     <View style={styles.form}>
       <Text accessibilityRole="header" style={styles.title}>
+        Today
+      </Text>
+      <View style={styles.panel}>
+        <View style={styles.panelHead}>
+          <Text accessibilityRole="header" style={styles.section}>
+            Needs you now
+          </Text>
+          <QuietButton icon={Bell} onPress={() => router.push('/alerts')}>
+            All alerts
+          </QuietButton>
+        </View>
+        {alerts.length === 0 ? (
+          <Text style={styles.detail}>
+            Nothing is below its threshold. Alerts appear here the moment stock crosses one.
+          </Text>
+        ) : (
+          alerts.slice(0, TODAY_ALERT_LIMIT).map((alert) => (
+            <View key={alert.id} style={styles.alert}>
+              <Text style={styles.locationTitle}>{alert.title}</Text>
+              <Text style={styles.detail}>{alert.body}</Text>
+              <Text style={styles.detail}>{alert.locationName}</Text>
+              <View style={styles.actions}>
+                <QuietButton icon={Check} onPress={() => void markAlertRead(alert.id)}>
+                  Mark read
+                </QuietButton>
+              </View>
+            </View>
+          ))
+        )}
+        {alerts.length > TODAY_ALERT_LIMIT ? (
+          <Text style={styles.detail}>
+            {alerts.length - TODAY_ALERT_LIMIT} more unread on the Alerts screen.
+          </Text>
+        ) : null}
+      </View>
+      <Text accessibilityRole="header" style={styles.section}>
         Locations
       </Text>
       {state.user.memberships.length > 1 ? (
@@ -229,6 +296,7 @@ export default function HomeScreen() {
 
 const useStyles = makeStyles((c) => ({
   actions: { flexDirection: 'row', gap: 8, marginTop: 8 },
+  alert: { borderTopColor: c.hairline, borderTopWidth: 1, gap: 4, paddingTop: 10 },
   detail: { ...text.body, color: c.inkMuted },
   error: { color: c.bad },
   form: { gap: 12 },
@@ -247,6 +315,20 @@ const useStyles = makeStyles((c) => ({
     borderRadius: 6,
     borderWidth: 1,
     padding: 12,
+  },
+  panel: {
+    backgroundColor: c.surface,
+    borderColor: c.hairline,
+    borderRadius: 8,
+    borderWidth: 1,
+    gap: 10,
+    padding: 14,
+  },
+  panelHead: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: 8,
+    justifyContent: 'space-between',
   },
   locationTitle: { ...text.title, color: c.ink },
   section: { ...text.title, color: c.ink, marginTop: 12 },

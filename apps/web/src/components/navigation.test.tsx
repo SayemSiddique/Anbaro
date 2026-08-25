@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
-import { getWebNavigation, WebApplicationShell } from './navigation';
+import { getCommandItems, getWebNavigation, WebApplicationShell } from './navigation';
 
 vi.mock('next/navigation', () => ({
   usePathname: () => '/items',
@@ -33,6 +33,14 @@ describe('web navigation shell', () => {
     for (const item of navigation) {
       expect(item.href).toMatch(/^\/[a-z]+$/);
     }
+  });
+
+  it('makes import/export findable in the palette, gated the way Items gates it', () => {
+    const navigation = getWebNavigation({ role: 'owner', permissions: new Set() });
+    const withWrite = getCommandItems(navigation, { permissions: new Set(['item:write']) });
+    const withoutWrite = getCommandItems(navigation, { permissions: new Set() });
+    expect(withWrite.map((item) => item.href)).toContain('/imports');
+    expect(withoutWrite.map((item) => item.href)).not.toContain('/imports');
   });
 
   it('renders a labelled primary navigation and skip link', () => {
