@@ -5,19 +5,50 @@ import { Plus, Trash2, Truck } from 'lucide-react';
 import { useCallback, useEffect, useState, type FormEvent } from 'react';
 
 import {
+  Actions,
+  AsyncPanel,
   Badge,
   Button,
   Card,
   CardTitle,
+  Checkbox,
+  type Column,
+  DataTable,
   EmptyState,
   Field,
+  FormSection,
   Input,
-  Select,
-  LoadingAnnouncement,
+  Meta,
   PageSkeleton,
-  StatePanel,
+  Select,
 } from '../components/ui';
 import { apiErrorMessage, useSession } from '../lib/session';
+
+const supplierColumns: Column<Supplier>[] = [
+  {
+    id: 'name',
+    header: 'Supplier',
+    cell: (row) => <span className="compact-strong">{row.name}</span>,
+    sortValue: (row) => row.name,
+  },
+  {
+    id: 'contact',
+    header: 'Contact',
+    cell: (row) =>
+      [row.contactEmail, row.contactPhone].filter(Boolean).join(' · ') || (
+        <Meta inline>No contact on file</Meta>
+      ),
+    sortValue: (row) => row.contactEmail ?? row.contactPhone ?? null,
+  },
+  {
+    id: 'itemCount',
+    header: 'Mapped items',
+    align: 'end',
+    numeric: true,
+    cell: (row) => row.itemCount ?? 0,
+    sortValue: (row) => row.itemCount ?? 0,
+  },
+];
 
 export function SuppliersFeature() {
   const { api } = useSession();
@@ -25,10 +56,15 @@ export function SuppliersFeature() {
   const [items, setItems] = useState<ItemWithStock[]>([]);
   const [mappings, setMappings] = useState<SupplierMapping[]>([]);
   const [selectedItemId, setSelectedItemId] = useState('');
+  // The Checkbox primitive is controlled and carries no `name`, so this one
+  // field sits in state while the rest of the form stays uncontrolled.
+  const [mappingIsPrimary, setMappingIsPrimary] = useState(false);
   const [error, setError] = useState('');
+  const [loaded, setLoaded] = useState(false);
   const [loading, setLoading] = useState(true);
 
   const load = useCallback(async () => {
+    setLoading(true);
     try {
       const [supplierResponse, itemResponse] = await Promise.all([
         api.getSuppliers(),
@@ -42,6 +78,7 @@ export function SuppliersFeature() {
       setItems(itemResponse.data);
       setMappings(mappingResponse.data);
       setSelectedItemId(itemId);
+      setLoaded(true);
       setError('');
     } catch (caught) {
       setError(apiErrorMessage(caught));
@@ -78,9 +115,10 @@ export function SuppliersFeature() {
       await api.createItemSupplier(selectedItemId, {
         supplierId: String(form.get('supplierId')),
         supplierSku: String(form.get('supplierSku')) || null,
-        isPrimary: form.get('isPrimary') === 'on',
+        isPrimary: mappingIsPrimary,
       });
       formElement.reset();
+      setMappingIsPrimary(false);
       await load();
     } catch (caught) {
       setError(apiErrorMessage(caught));
@@ -96,127 +134,128 @@ export function SuppliersFeature() {
     }
   }
 
-  if (loading)
-    return (
-      <>
-        <LoadingAnnouncement label="Loading suppliers and mappings" />
-        <PageSkeleton body="list" />
-      </>
-    );
-
   return (
-    <div className="stack">
-      {error ? (
-        <StatePanel title="Couldn’t update suppliers" tone="error">
-          {error}
-        </StatePanel>
-      ) : null}
-      <Card labelledBy="suppliers-title">
-        <CardTitle
-          id="suppliers-title"
-          subtitle="Reference data for reorder recommendations. Anbaro never places orders for you."
-          title="Suppliers"
-        />
-        {!suppliers.length ? (
-          <EmptyState
-            hint="Add the vendors you order from, then map them to items below."
-            icon={<Truck size={36} strokeWidth={1.5} />}
-            title="No suppliers yet"
+    <AsyncPanel
+      error={error || null}
+      hasContent={loaded}
+      loading={loading}
+      loadingLabel="Loading suppliers and mappings"
+      onRetry={() => void load()}
+      skeleton={<PageSkeleton body="table" />}
+    >
+      <div className="stack">
+        <Card labelledBy="suppliers-title">
+          <CardTitle
+            id="suppliers-title"
+            subtitle="Reference data for reorder recommendations. Anbaro never places orders for you."
+            title="Suppliers"
           />
-        ) : (
-          <ul className="list-plain" style={{ marginBottom: 18 }}>
-            {suppliers.map((supplier) => (
-              <li className="list-row" key={supplier.id}>
-                <div>
-                  <strong>{supplier.name}</strong>
-                  {supplier.contactEmail || supplier.contactPhone ? (
-                    <p style={{ color: 'var(--text-muted)', fontSize: 13 }}>
-                      {[supplier.contactEmail, supplier.contactPhone].filter(Boolean).join(' · ')}
-                    </p>
-                  ) : null}
-                </div>
-                <Badge tone="neutral">{supplier.itemCount ?? 0} mapped items</Badge>
-              </li>
-            ))}
-          </ul>
-        )}
-        <form className="form-grid" onSubmit={createSupplier}>
-          <h3>Add supplier</h3>
-          <Field label="Name">
-            <Input name="name" required />
-          </Field>
-          <Field hint="Optional" label="Email">
-            <Input name="email" type="email" />
-          </Field>
-          <Field hint="Optional" label="Phone">
-            <Input name="phone" />
-          </Field>
-          <div>
-            <Button icon={<Plus size={15} />} type="submit">
-              Add supplier
-            </Button>
-          </div>
-        </form>
-      </Card>
-      <Card labelledBy="mappings-title">
-        <CardTitle
-          id="mappings-title"
-          subtitle="Mappings are reference data only; they do not place orders."
-          title="Item supplier mappings"
-        />
-        <Field label="Item">
-          <Select
-            onChange={(event) => setSelectedItemId(event.target.value)}
-            style={{ maxWidth: 320 }}
-            value={selectedItemId}
-          >
-            {items.map((item) => (
-              <option key={item.id} value={item.id}>
-                {item.name}
-              </option>
-            ))}
-          </Select>
-        </Field>
-        <ul className="list-plain" style={{ margin: '14px 0' }}>
-          {mappings.map((mapping) => (
-            <li className="list-row" key={mapping.id}>
-              <div style={{ alignItems: 'center', display: 'flex', gap: 8 }}>
-                <strong>{mapping.supplierName ?? mapping.supplierId}</strong>
-                {mapping.supplierSku ? <small>SKU {mapping.supplierSku}</small> : null}
-                {mapping.isPrimary ? <Badge tone="info">Primary</Badge> : null}
-              </div>
-              <Button
-                icon={<Trash2 size={14} />}
-                onClick={() => void removeMapping(mapping.id)}
-                size="sm"
-                tone="secondary"
-              >
-                Remove
+          <DataTable
+            caption="Suppliers"
+            columns={supplierColumns}
+            emptyHint="Add the vendors you order from, then map them to items below."
+            emptyIcon={<Truck size={36} strokeWidth={1.5} />}
+            emptyTitle="No suppliers yet"
+            getRowId={(row) => row.id}
+            rows={suppliers}
+            searchPlaceholder="Search suppliers"
+            searchValue={(row) =>
+              `${row.name} ${row.contactEmail ?? ''} ${row.contactPhone ?? ''}`
+            }
+          />
+          <FormSection onSubmit={createSupplier} title="Add supplier">
+            <Field label="Name">
+              <Input name="name" required />
+            </Field>
+            <Field hint="Optional" label="Email">
+              <Input name="email" type="email" />
+            </Field>
+            <Field hint="Optional" label="Phone">
+              <Input name="phone" />
+            </Field>
+            <div>
+              <Button icon={<Plus size={15} />} type="submit">
+                Add supplier
               </Button>
-            </li>
-          ))}
-        </ul>
-        <form className="form-grid" onSubmit={addMapping}>
-          <Field label="Supplier">
-            <Select name="supplierId" required>
-              {suppliers.map((supplier) => (
-                <option key={supplier.id} value={supplier.id}>
-                  {supplier.name}
-                </option>
-              ))}
-            </Select>
-          </Field>
-          <Field hint="Optional" label="Supplier SKU">
-            <Input name="supplierSku" />
-          </Field>
-          <label className="checkbox-row">
-            <input name="isPrimary" type="checkbox" /> Primary supplier
-          </label>
-          <div>
-            <Button type="submit">Save mapping</Button>
+            </div>
+          </FormSection>
+        </Card>
+
+        <Card labelledBy="mappings-title">
+          <CardTitle
+            id="mappings-title"
+            subtitle="Mappings are reference data only; they do not place orders."
+            title="Item supplier mappings"
+          />
+          {/* form-grid, not a bare Field: it carries the same readable measure
+              every other field on the page sits at. */}
+          <div className="form-grid">
+            <Field label="Item">
+              <Select
+                onChange={(event) => setSelectedItemId(event.target.value)}
+                value={selectedItemId}
+              >
+                {items.map((item) => (
+                  <option key={item.id} value={item.id}>
+                    {item.name}
+                  </option>
+                ))}
+              </Select>
+            </Field>
           </div>
-        </form>
-      </Card>
-    </div>
+          {mappings.length === 0 ? (
+            <EmptyState
+              hint="Map a supplier to this item so reorder suggestions know who to point at."
+              icon={<Truck size={36} strokeWidth={1.5} />}
+              title="No suppliers mapped to this item"
+            />
+          ) : (
+            <ul className="list-plain">
+              {mappings.map((mapping) => (
+                <li className="list-row" key={mapping.id}>
+                  <div>
+                    <Actions>
+                      <strong>{mapping.supplierName ?? mapping.supplierId}</strong>
+                      {mapping.isPrimary ? <Badge tone="info">Primary</Badge> : null}
+                    </Actions>
+                    {mapping.supplierSku ? <Meta>SKU {mapping.supplierSku}</Meta> : null}
+                  </div>
+                  <Button
+                    icon={<Trash2 size={14} />}
+                    onClick={() => void removeMapping(mapping.id)}
+                    size="sm"
+                    tone="secondary"
+                  >
+                    Remove
+                  </Button>
+                </li>
+              ))}
+            </ul>
+          )}
+          <FormSection onSubmit={addMapping} title="Map a supplier">
+            <Field label="Supplier">
+              <Select name="supplierId" required>
+                {suppliers.map((supplier) => (
+                  <option key={supplier.id} value={supplier.id}>
+                    {supplier.name}
+                  </option>
+                ))}
+              </Select>
+            </Field>
+            <Field hint="Optional" label="Supplier SKU">
+              <Input name="supplierSku" />
+            </Field>
+            <Checkbox
+              checked={mappingIsPrimary}
+              label="Primary supplier"
+              onChange={setMappingIsPrimary}
+            />
+            <div>
+              <Button type="submit">Save mapping</Button>
+            </div>
+          </FormSection>
+        </Card>
+      </div>
+    </AsyncPanel>
   );
 }

@@ -5,16 +5,20 @@ import { MapPin, Pencil, Plus } from 'lucide-react';
 import { useCallback, useEffect, useState, type FormEvent } from 'react';
 
 import {
+  Actions,
+  AsyncPanel,
   Badge,
   Button,
   Card,
   CardTitle,
+  Dialog,
   EmptyState,
   Field,
+  FormSection,
+  InlineError,
   Input,
-  LoadingAnnouncement,
+  Meta,
   SkeletonList,
-  StatePanel,
 } from '../components/ui';
 import { apiErrorMessage, useSession } from '../lib/session';
 
@@ -28,18 +32,23 @@ export function LocationsFeature() {
   });
   const [draft, setDraft] = useState({ name: '', address: '' });
   const [editing, setEditing] = useState<Location | null>(null);
+  const [archiving, setArchiving] = useState<Location | null>(null);
   const [error, setError] = useState('');
+  const [listError, setListError] = useState('');
   const [capacityPrompt, setCapacityPrompt] = useState(false);
+  const [loaded, setLoaded] = useState(false);
   const [loading, setLoading] = useState(true);
 
   const loadLocations = useCallback(async () => {
     setLoading(true);
+    setListError('');
     try {
       const response = await api.getLocations();
       setLocations(response.data);
       setCapacity({ used: response.meta.used, capacity: response.meta.capacity });
+      setLoaded(true);
     } catch (caught) {
-      setError(apiErrorMessage(caught));
+      setListError(apiErrorMessage(caught));
     } finally {
       setLoading(false);
     }
@@ -95,12 +104,14 @@ export function LocationsFeature() {
       setError(apiErrorMessage(caught));
     }
   }
-  async function archive(id: string) {
-    if (!window.confirm('Archive this location? History will remain available.')) return;
+  async function archive() {
+    if (!archiving) return;
     try {
-      await api.archiveLocation(id);
+      await api.archiveLocation(archiving.id);
+      setArchiving(null);
       await loadLocations();
     } catch (caught) {
+      setArchiving(null);
       setError(apiErrorMessage(caught));
     }
   }
@@ -126,50 +137,52 @@ export function LocationsFeature() {
           subtitle="Each location keeps its own stock levels, counts, and alerts."
           title="Locations"
         />
-        {loading ? (
-          <>
-            <LoadingAnnouncement label="Loading locations" />
-            <SkeletonList rows={4} />
-          </>
-        ) : locations.length === 0 ? (
-          <EmptyState
-            hint="Your first location makes your workspace ready for inventory setup."
-            icon={<MapPin size={36} strokeWidth={1.5} />}
-            title="No locations yet"
-          />
-        ) : (
-          <ul className="list-plain">
-            {locations.map((location) => (
-              <li className="list-row" key={location.id}>
-                <div>
-                  <strong>{location.name}</strong>
-                  {location.address ? (
-                    <p style={{ color: 'var(--text-muted)', fontSize: 13 }}>{location.address}</p>
-                  ) : null}
-                </div>
-                <div style={{ display: 'flex', gap: 8 }}>
-                  <Button
-                    icon={<Pencil size={14} />}
-                    onClick={() => setEditing(location)}
-                    size="sm"
-                    tone="secondary"
-                  >
-                    Edit
-                  </Button>
-                  <Button onClick={() => void archive(location.id)} size="sm" tone="danger">
-                    Archive
-                  </Button>
-                </div>
-              </li>
-            ))}
-          </ul>
-        )}
-        <form
-          className="form-grid"
-          onSubmit={create}
-          style={{ borderTop: '1px solid var(--border)', marginTop: 20, paddingTop: 20 }}
+        {/* The add-location form below stays usable even when the list fails to
+            load, so the failure is scoped to the list rather than the card. */}
+        <AsyncPanel
+          error={listError || null}
+          hasContent={loaded}
+          loading={loading}
+          loadingLabel="Loading locations"
+          onRetry={() => void loadLocations()}
+          skeleton={<SkeletonList rows={4} />}
         >
-          <h3>{locations.length ? 'Add another location' : 'Add your first location'}</h3>
+          {locations.length === 0 ? (
+            <EmptyState
+              hint="Your first location makes your workspace ready for inventory setup."
+              icon={<MapPin size={36} strokeWidth={1.5} />}
+              title="No locations yet"
+            />
+          ) : (
+            <ul className="list-plain">
+              {locations.map((location) => (
+                <li className="list-row" key={location.id}>
+                  <div>
+                    <strong>{location.name}</strong>
+                    {location.address ? <Meta>{location.address}</Meta> : null}
+                  </div>
+                  <Actions>
+                    <Button
+                      icon={<Pencil size={14} />}
+                      onClick={() => setEditing(location)}
+                      size="sm"
+                      tone="secondary"
+                    >
+                      Edit
+                    </Button>
+                    <Button onClick={() => setArchiving(location)} size="sm" tone="danger">
+                      Archive
+                    </Button>
+                  </Actions>
+                </li>
+              ))}
+            </ul>
+          )}
+        </AsyncPanel>
+        <FormSection
+          onSubmit={create}
+          title={locations.length ? 'Add another location' : 'Add your first location'}
+        >
           <Field label="Name">
             <Input
               onChange={(event) => setDraft({ ...draft, name: event.target.value })}
@@ -188,49 +201,82 @@ export function LocationsFeature() {
               Save location
             </Button>
           </div>
-        </form>
+        </FormSection>
         {error ? (
-          <p role="alert" style={{ color: 'var(--danger)', marginTop: 10 }}>
-            {error}
-          </p>
+          <div className="inline-error-stacked">
+            <InlineError detail={error} title="Couldn’t save that change" />
+          </div>
         ) : null}
       </Card>
-      {editing ? (
-        <Card labelledBy="edit-location-title">
-          <CardTitle id="edit-location-title" title={`Edit ${editing.name}`} />
-          <form className="form-grid" onSubmit={saveEdit}>
+
+      <Dialog
+        description="Renaming a location does not affect its stock, counts, or history."
+        footer={
+          <Actions>
+            <Button form="edit-location-form" type="submit">
+              Save changes
+            </Button>
+            <Button onClick={() => setEditing(null)} tone="secondary" type="button">
+              Cancel
+            </Button>
+          </Actions>
+        }
+        onClose={() => setEditing(null)}
+        open={editing !== null}
+        title={editing ? `Edit ${editing.name}` : 'Edit location'}
+      >
+        {editing ? (
+          <form className="form-grid" id="edit-location-form" onSubmit={saveEdit}>
             <Field label="Name">
               <Input defaultValue={editing.name} name="name" required />
             </Field>
-            <Field label="Address">
+            <Field hint="Optional" label="Address">
               <Input defaultValue={editing.address ?? ''} name="address" />
             </Field>
-            <div style={{ display: 'flex', gap: 8 }}>
-              <Button type="submit">Save changes</Button>
-              <Button onClick={() => setEditing(null)} tone="secondary" type="button">
-                Cancel
-              </Button>
-            </div>
           </form>
-        </Card>
-      ) : null}
-      {capacityPrompt ? (
-        <StatePanel
-          action={
-            <div style={{ display: 'flex', gap: 8 }}>
-              <Button onClick={() => window.location.assign('/billing')}>Upgrade to Pro</Button>
-              <Button onClick={() => setCapacityPrompt(false)} tone="secondary">
-                Not now
-              </Button>
-            </div>
-          }
-          title="You’ve reached your location limit"
-          tone="info"
-        >
+        ) : null}
+      </Dialog>
+
+      <Dialog
+        description="History stays available, and the location stops appearing in counts and alerts."
+        footer={
+          <Actions>
+            <Button onClick={() => void archive()} tone="danger">
+              Archive location
+            </Button>
+            <Button onClick={() => setArchiving(null)} tone="secondary">
+              Keep it
+            </Button>
+          </Actions>
+        }
+        onClose={() => setArchiving(null)}
+        open={archiving !== null}
+        size="sm"
+        title={archiving ? `Archive ${archiving.name}?` : 'Archive location'}
+      >
+        <p>This can be undone by an owner, but the location leaves every active view now.</p>
+      </Dialog>
+
+      <Dialog
+        description="Your entered details are saved here in the meantime."
+        footer={
+          <Actions>
+            <Button onClick={() => window.location.assign('/billing')}>Upgrade to Pro</Button>
+            <Button onClick={() => setCapacityPrompt(false)} tone="secondary">
+              Not now
+            </Button>
+          </Actions>
+        }
+        onClose={() => setCapacityPrompt(false)}
+        open={capacityPrompt}
+        size="sm"
+        title="You’ve reached your location limit"
+      >
+        <p>
           The Free plan includes {capacity.capacity} locations. Upgrade to Pro for unlimited
-          locations — your entered details are saved here in the meantime.
-        </StatePanel>
-      ) : null}
+          locations.
+        </p>
+      </Dialog>
     </div>
   );
 }

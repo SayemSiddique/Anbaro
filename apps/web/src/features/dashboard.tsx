@@ -5,50 +5,150 @@ import { AlertTriangle, ClipboardCheck, MapPin, PackageSearch } from 'lucide-rea
 import { useCallback, useEffect, useState } from 'react';
 
 import {
+  AsyncPanel,
   Badge,
-  Button,
   Card,
   CardTitle,
-  EmptyState,
-  LoadingAnnouncement,
+  type Column,
+  DataTable,
+  Meta,
   PageSkeleton,
-  StatePanel,
   StatTile,
 } from '../components/ui';
 import { apiErrorMessage, useSession } from '../lib/session';
+
+type LocationRow = DashboardReport['locations'][number];
+type LowStockRow = DashboardReport['lowStock'][number];
+
+function plural(count: number, word: string) {
+  return `${count} ${word}${count === 1 ? '' : 's'}`;
+}
+
+function shortDate(value: string | null | undefined) {
+  return value ? new Date(value).toLocaleDateString() : null;
+}
+
+/**
+ * Quantities arrive as numeric(14,3) strings. The dashboard has no unit to hand
+ * to `formatQuantity`, so it does the one thing that is safe without one: trim
+ * the stored trailing zeros and leave anything unparseable alone.
+ */
+function decimal(value: string | null | undefined) {
+  if (value == null || value === '') return null;
+  const parsed = Number.parseFloat(value);
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
+const locationColumns: Column<LocationRow>[] = [
+  {
+    id: 'name',
+    header: 'Location',
+    cell: (row) => <span className="compact-strong">{row.name}</span>,
+    sortValue: (row) => row.name,
+  },
+  {
+    id: 'lowStock',
+    header: 'Low stock',
+    cell: (row) => (
+      <Badge tone={row.lowStockCount ? 'warning' : 'success'} withDot>
+        {plural(row.lowStockCount, 'item')}
+      </Badge>
+    ),
+    sortValue: (row) => row.lowStockCount,
+  },
+  {
+    id: 'conflicts',
+    header: 'Open conflicts',
+    cell: (row) => (
+      <Badge tone={row.openConflictCount ? 'danger' : 'success'} withDot>
+        {plural(row.openConflictCount, 'conflict')}
+      </Badge>
+    ),
+    sortValue: (row) => row.openConflictCount,
+  },
+  {
+    id: 'lastCount',
+    header: 'Last count',
+    cell: (row) => shortDate(row.lastCountAt) ?? 'Not finalized yet',
+    // Null sorts last, which is what "never counted" deserves at the bottom of
+    // an ascending sort and at the bottom of a descending one too.
+    sortValue: (row) => row.lastCountAt ?? null,
+  },
+];
+
+const lowStockColumns: Column<LowStockRow>[] = [
+  {
+    id: 'location',
+    header: 'Location',
+    cell: (row) => row.locationName,
+    sortValue: (row) => row.locationName,
+  },
+  {
+    id: 'item',
+    header: 'Item',
+    cell: (row) => <span className="compact-strong">{row.itemName}</span>,
+    sortValue: (row) => row.itemName,
+  },
+  {
+    id: 'quantity',
+    header: 'On hand',
+    align: 'end',
+    numeric: true,
+    cell: (row) => decimal(row.quantity) ?? row.quantity,
+    sortValue: (row) => decimal(row.quantity),
+  },
+  {
+    id: 'threshold',
+    header: 'Threshold',
+    align: 'end',
+    numeric: true,
+    cell: (row) => decimal(row.threshold) ?? row.threshold,
+    sortValue: (row) => decimal(row.threshold),
+  },
+  {
+    id: 'parLevel',
+    header: 'Target',
+    align: 'end',
+    numeric: true,
+    cell: (row) => decimal(row.parLevel) ?? <Meta inline>Not set</Meta>,
+    sortValue: (row) => decimal(row.parLevel),
+  },
+];
 
 export function DashboardFeature() {
   const { api } = useSession();
   const [report, setReport] = useState<DashboardReport | null>(null);
   const [error, setError] = useState('');
+  const [loading, setLoading] = useState(true);
+
   const load = useCallback(async () => {
+    setLoading(true);
     setError('');
     try {
       setReport((await api.getDashboard()).data);
     } catch (caught) {
       setError(apiErrorMessage(caught));
+    } finally {
+      setLoading(false);
     }
   }, [api]);
   useEffect(() => void load(), [load]);
 
-  if (error)
-    return (
-      <StatePanel
-        action={<Button onClick={() => void load()}>Try again</Button>}
-        title="Couldn’t load the dashboard"
-        tone="error"
-      >
-        {error}
-      </StatePanel>
-    );
-  if (!report)
-    return (
-      <>
-        <LoadingAnnouncement label="Loading the dashboard" />
-        <PageSkeleton body="list" tiles={4} />
-      </>
-    );
+  return (
+    <AsyncPanel
+      error={error || null}
+      hasContent={report !== null}
+      loading={loading}
+      loadingLabel="Loading the dashboard"
+      onRetry={() => void load()}
+      skeleton={<PageSkeleton body="table" tiles={4} />}
+    >
+      {report ? <DashboardBody report={report} /> : null}
+    </AsyncPanel>
+  );
+}
 
+function DashboardBody({ report }: { report: DashboardReport }) {
   const lowStockTotal = report.locations.reduce((sum, location) => sum + location.lowStockCount, 0);
   const conflictTotal = report.locations.reduce(
     (sum, location) => sum + location.openConflictCount,
@@ -83,62 +183,28 @@ export function DashboardFeature() {
         <StatTile
           icon={<ClipboardCheck size={15} />}
           label="Last finalized count"
-          value={lastCount ? new Date(lastCount).toLocaleDateString() : '—'}
+          value={shortDate(lastCount) ?? '—'}
         />
       </div>
 
-      {report.locations.length === 0 ? (
-        <Card>
-          <EmptyState
-            hint="Add items, invite helpers, and run a first count to see operational health here."
-            icon={<MapPin size={36} strokeWidth={1.5} />}
-            title="Set up your first location"
-          />
-        </Card>
-      ) : (
-        <Card labelledBy="location-health">
-          <CardTitle
-            id="location-health"
-            subtitle="Stock health and count progress for every active location."
-            title="Locations"
-          />
-          <div className="table-wrap">
-            <table className="data-table">
-              <thead>
-                <tr>
-                  <th>Location</th>
-                  <th>Low stock</th>
-                  <th>Open conflicts</th>
-                  <th>Last count</th>
-                </tr>
-              </thead>
-              <tbody>
-                {report.locations.map((location) => (
-                  <tr key={location.id}>
-                    <td style={{ fontWeight: 600 }}>{location.name}</td>
-                    <td>
-                      <Badge tone={location.lowStockCount ? 'warning' : 'success'} withDot>
-                        {location.lowStockCount} item{location.lowStockCount === 1 ? '' : 's'}
-                      </Badge>
-                    </td>
-                    <td>
-                      <Badge tone={location.openConflictCount ? 'danger' : 'success'} withDot>
-                        {location.openConflictCount} conflict
-                        {location.openConflictCount === 1 ? '' : 's'}
-                      </Badge>
-                    </td>
-                    <td>
-                      {location.lastCountAt
-                        ? new Date(location.lastCountAt).toLocaleDateString()
-                        : 'Not finalized yet'}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </Card>
-      )}
+      <Card labelledBy="location-health">
+        <CardTitle
+          id="location-health"
+          subtitle="Stock health and count progress for every active location."
+          title="Locations"
+        />
+        <DataTable
+          caption="Location health"
+          columns={locationColumns}
+          emptyHint="Add items, invite helpers, and run a first count to see operational health here."
+          emptyIcon={<MapPin size={36} strokeWidth={1.5} />}
+          emptyTitle="Set up your first location"
+          getRowId={(row) => row.id}
+          rows={report.locations}
+          searchPlaceholder="Search locations"
+          searchValue={(row) => row.name}
+        />
+      </Card>
 
       <Card labelledBy="aggregate-low-stock">
         <CardTitle
@@ -146,38 +212,29 @@ export function DashboardFeature() {
           subtitle="Items at or below their threshold across every location."
           title="Low stock"
         />
-        {report.lowStock.length === 0 ? (
-          <EmptyState
-            hint="All active stock is above its threshold."
-            icon={<PackageSearch size={36} strokeWidth={1.5} />}
-            title="Nothing is running low"
-          />
-        ) : (
-          <div className="table-wrap">
-            <table className="data-table">
-              <thead>
-                <tr>
-                  <th>Location</th>
-                  <th>Item</th>
-                  <th>On hand</th>
-                  <th>Threshold</th>
-                  <th>Target</th>
-                </tr>
-              </thead>
-              <tbody>
-                {report.lowStock.map((row) => (
-                  <tr key={`${row.locationId}-${row.itemId}`}>
-                    <td>{row.locationName}</td>
-                    <td style={{ fontWeight: 600 }}>{row.itemName}</td>
-                    <td>{row.quantity}</td>
-                    <td>{row.threshold}</td>
-                    <td>{row.parLevel ?? 'Not set'}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
+        <DataTable
+          caption="Low stock across locations"
+          columns={lowStockColumns}
+          emptyHint="All active stock is above its threshold."
+          emptyIcon={<PackageSearch size={36} strokeWidth={1.5} />}
+          emptyTitle="Nothing is running low"
+          filters={[
+            {
+              id: 'no-target',
+              label: 'No target set',
+              predicate: (row) => decimal(row.parLevel) === null,
+            },
+            {
+              id: 'empty',
+              label: 'Out of stock',
+              predicate: (row) => (decimal(row.quantity) ?? 0) <= 0,
+            },
+          ]}
+          getRowId={(row) => `${row.locationId}-${row.itemId}`}
+          rows={report.lowStock}
+          searchPlaceholder="Search items or locations"
+          searchValue={(row) => `${row.itemName} ${row.locationName}`}
+        />
       </Card>
     </div>
   );

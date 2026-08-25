@@ -238,6 +238,12 @@ small {
   font: var(--type-compact-strong);
 }
 
+/* The secondary line under a record's name: muted, compact, never a heading. */
+.meta {
+  color: var(--ink-muted);
+  font: var(--type-compact);
+}
+
 /* Every quantity. Tabular figures so decimals line up down a column — the
    single highest-value typographic rule in an app whose job is numbers. */
 .numeric {
@@ -668,6 +674,22 @@ a {
   display: flex;
   flex-wrap: wrap;
   gap: 12px;
+}
+
+/* A row of buttons that wraps rather than overflowing. Every feature had this
+   as `style={{ display: 'flex', gap: 8 }}`; it is one class now. */
+.actions {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+/* A form that follows content inside the same card, ruled off from it. */
+.form-section {
+  border-top: 1px solid var(--hairline);
+  margin-top: 20px;
+  padding-top: 20px;
 }
 
 .checkbox-row {

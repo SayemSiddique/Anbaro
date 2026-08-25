@@ -17,6 +17,7 @@ import { categoryVisual, unitsByKind } from '@anbaro/design-tokens';
 import { icons, Package } from 'lucide-react';
 import type {
   ButtonHTMLAttributes,
+  FormEvent,
   InputHTMLAttributes,
   PropsWithChildren,
   ReactNode,
@@ -285,6 +286,55 @@ export function StockBadge({ condition }: { condition: string | null | undefined
     <Badge tone={stockConditionTones[condition] ?? 'neutral'} withDot>
       {condition.replaceAll('_', ' ')}
     </Badge>
+  );
+}
+
+/**
+ * A row of buttons that wraps instead of overflowing. Two secondary actions in
+ * a `CardTitle` action slot, or a save/cancel pair under a form — anywhere a
+ * feature was reaching for `style={{ display: 'flex', gap: 8 }}`.
+ */
+export function Actions({ children }: PropsWithChildren) {
+  return <div className="actions">{children}</div>;
+}
+
+/**
+ * The muted second line under a record's name — an address, a contact, a hint.
+ * It is deliberately not a heading and not `<small>`: it is body text one step
+ * down the ramp, so it stays legible at AA while clearly ranking below the name.
+ *
+ * `inline` is the span form, for a "no value" stand-in inside a table cell. It
+ * matters most in a `numeric` column, where the cell's mono tabular face would
+ * otherwise set a word like "Not set" in figures spacing.
+ */
+export function Meta({ children, inline = false }: PropsWithChildren<{ inline?: boolean }>) {
+  return inline ? <span className="meta">{children}</span> : <p className="meta">{children}</p>;
+}
+
+/**
+ * A form that sits below content inside the same card, ruled off from it.
+ * `standalone` drops the rule for a form that is the card's only content.
+ */
+export function FormSection({
+  children,
+  onSubmit,
+  standalone = false,
+  title,
+}: PropsWithChildren<{
+  onSubmit: (event: FormEvent<HTMLFormElement>) => void;
+  standalone?: boolean;
+  title?: ReactNode;
+}>) {
+  // The rule is on the wrapper, not the form: `.form-grid` is capped at a
+  // readable measure, and a divider that stopped at the last input would read
+  // as a stray line rather than as the edge of a section.
+  return (
+    <div className={standalone ? undefined : 'form-section'}>
+      <form className="form-grid" onSubmit={onSubmit}>
+        {title ? <h3>{title}</h3> : null}
+        {children}
+      </form>
+    </div>
   );
 }
 

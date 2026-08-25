@@ -1,6 +1,6 @@
 # Anbaro — Design Overhaul Plan (Master Doc)
 
-**Owner:** Sam · **Created:** 2026-08-24 · **Status:** ACTIVE — D1–D4 done, D5 next
+**Owner:** Sam · **Created:** 2026-08-24 · **Status:** ACTIVE — D1–D4 done, D5a done, D5b next
 **Relationship to the launch plan:** the production rollout
 ([`PRODUCTION_LAUNCH_PLAN.md`](../operations/PRODUCTION_LAUNCH_PLAN.md)) is **paused
 at Session 2** (Neon go-live, credential-gated). This overhaul runs first. Neither
@@ -460,5 +460,5 @@ changes as work proceeds.
 | 2 | D2 — Count loop ⭐ | **Done** | 2026-08-24 | On-screen keypad, live delta, location gate, scan-to-jump, jump sheet, commit pulse + haptics, A3 fixed. 20-item count verified on device. Barcode scan-to-jump still needs a physical device (no simulator camera) |
 | 3 | D3 — Component library | **Done** | 2026-08-24 | 14 new primitives + DataTable; `compact` added to §5.2 (Sam's call); prose loading gone from every feature; 37 tests green. Two pre-existing `navigation.test.tsx` failures assert D4's target IA — D4 fixes them |
 | 4 | D4 — Information architecture | **Done** | 2026-08-24 | Sidebar 13 → 6; command palette (⌘K / `/`); account menu bottom-left; notifications as topbar badge + panel; Billing dropped (Sam's call). Mobile: Scan promoted to tab-bar centre, Alerts folded out of the bar, `more/` regrouped into three headed groups. `compact`/`compactStrong` landed in the shared tokens — D3 had added them to §5.2 and web CSS only. Both `navigation.test.tsx` failures fixed without editing the test; 57 web tests green |
-| 5 | D5 — Screen migration | Not started | — | Split into batches if needed |
+| 5 | D5 — Screen migration | **In progress** — D5a done | 2026-08-24 | Batches of 4. **D5a: dashboard, imports, locations, suppliers.** Four raw `<table>`s → DataTable; `StatePanel`-as-loading → `AsyncPanel` + skeletons that hold the table's geometry; `window.confirm` and the capacity upsell → real Dialogs. Three new primitives — `Actions`, `Meta`, `FormSection` — retire 21 inline `style` props and all 12 legacy `var(--text-muted)` reads in this batch. 23 new tests, four of them the standing D5 invariant (no inline style, no `var(--`, no raw table, no `StatePanel`) — add each batch's files to `MIGRATED` in `features.test.tsx` as it lands. 80 web tests green; both themes verified in a browser against real rendered markup. **Remaining: alerts, assistant, billing, catalog (partial), counts, onboarding, operations, reorder, support, plus marketing.css and the compatibility-alias block.** |
 | 6 | D6 — Motion and finish | Not started | — | |
