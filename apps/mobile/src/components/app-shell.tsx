@@ -47,13 +47,40 @@ export function MobileShell({ children }: { children: ReactNode }) {
       setState({ kind: 'error' });
     }
   }, [controller]);
+
+  /**
+   * Coming back from the background revalidates the session *behind* whatever
+   * is on screen. It must never pass through `loading`: that swaps `children`
+   * for a panel, which unmounts every screen below it, and a half-finished
+   * count loses its place, its entry, and its position in the item list.
+   *
+   * A failure is left alone on purpose. Resuming with no signal is ordinary in
+   * a stockroom, and the offline queue already holds the writes — dropping to
+   * the error panel would throw away a working screen over a blip. Only a
+   * genuine sign-out (no user) changes what is rendered.
+   */
+  const revalidate = useCallback(async () => {
+    try {
+      const user = await controller.bootstrap();
+      setState(user ? { kind: 'ready', user } : { kind: 'signed-out' });
+    } catch {
+      // Keep the screen that is already working.
+    }
+  }, [controller]);
+
   useEffect(() => {
     void bootstrap();
+    // iOS reports 'inactive' → 'active' for a pulled-down notification shade or
+    // a permission dialog — including the camera prompt the count loop raises.
+    // Only a real return from 'background' is worth a round trip.
+    let previous = AppState.currentState;
     const subscription = AppState.addEventListener('change', (nextState) => {
-      if (nextState === 'active') void bootstrap();
+      const returned = previous === 'background' && nextState === 'active';
+      previous = nextState;
+      if (returned) void revalidate();
     });
     return () => subscription.remove();
-  }, [bootstrap]);
+  }, [bootstrap, revalidate]);
   const content =
     state.kind === 'loading' ? (
       <LoadingPanel />

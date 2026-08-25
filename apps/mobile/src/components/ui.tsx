@@ -1,4 +1,4 @@
-import { CircleAlert, Info, Package } from 'lucide-react-native';
+import { CircleAlert, Info, Package, type LucideIcon } from 'lucide-react-native';
 import type { PropsWithChildren, ReactNode } from 'react';
 import { Pressable, Text, View } from 'react-native';
 
@@ -59,6 +59,51 @@ export function SecondaryButton({
       ]}
     >
       <Text style={styles.secondaryButtonText}>{children}</Text>
+    </Pressable>
+  );
+}
+
+/**
+ * A low-weight action. Screens are allowed exactly one filled `PrimaryButton`,
+ * so everything that is genuinely secondary — skipping an item, opening a
+ * list, refreshing — lives here instead of competing with it.
+ *
+ * `emphasis="tinted"` sits on an accent wash for an action that should read as
+ * readily available (scanning, mid-count) without becoming a second primary.
+ * The label stays `ink` in both cases: accent is a weak text colour, so the
+ * hue is carried by the icon, which is a graphic.
+ */
+export function QuietButton({
+  children,
+  disabled = false,
+  emphasis = 'plain',
+  icon: Icon,
+  onPress,
+}: PropsWithChildren<{
+  disabled?: boolean;
+  emphasis?: 'plain' | 'tinted';
+  icon?: LucideIcon;
+  onPress: () => void;
+}>) {
+  const { colors: c } = useTheme();
+  const styles = useStyles();
+  return (
+    <Pressable
+      accessibilityRole="button"
+      accessibilityState={{ disabled }}
+      disabled={disabled}
+      onPress={onPress}
+      style={({ pressed }) => [
+        styles.quietButton,
+        emphasis === 'tinted' && styles.quietButtonTinted,
+        disabled && styles.buttonDisabled,
+        pressed && !disabled && styles.quietButtonPressed,
+      ]}
+    >
+      {Icon ? (
+        <Icon color={emphasis === 'tinted' ? c.accent : c.inkMuted} size={18} strokeWidth={2.2} />
+      ) : null}
+      <Text style={styles.quietButtonText}>{children}</Text>
     </Pressable>
   );
 }
@@ -302,6 +347,18 @@ const useStyles = makeStyles((c) => ({
   panelCopy: { flex: 1 },
   panelDetail: { ...text.body, color: c.inkMuted, marginTop: tokens.spacing[1] },
   panelTitle: { ...text.heading, color: c.ink },
+  quietButton: {
+    alignItems: 'center',
+    borderRadius: tokens.radius.sm,
+    flexDirection: 'row',
+    gap: tokens.spacing[2],
+    justifyContent: 'center',
+    minHeight: tokens.touchTarget.minimum,
+    paddingHorizontal: tokens.spacing[3],
+  },
+  quietButtonPressed: { backgroundColor: c.surface3 },
+  quietButtonText: { ...text.body, fontFamily: font.semibold, color: c.ink },
+  quietButtonTinted: { backgroundColor: c.accentWash },
   secondaryButton: {
     alignItems: 'center',
     backgroundColor: c.surface,

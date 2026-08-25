@@ -243,14 +243,22 @@ export class MobileSessionController {
     return this.api.finalizeCountSession(sessionId, { idempotencyKey });
   }
 
-  async queueCountSubmission(
+  /**
+   * Record a count durably and return immediately. Uploading is deliberately
+   * *not* awaited here: the local write is what has to succeed before the
+   * counter moves to the next shelf, and blocking that on a round trip is the
+   * difference between an instrument and a form. Callers drain the queue with
+   * `syncOfflineCounts` in the background — the idempotency key makes a later
+   * upload of the same count safe.
+   */
+  async enqueueCountSubmission(
     sessionId: string,
     lineId: string,
     input: CreateCountSubmissionRequest,
   ): Promise<CountQueueSnapshot> {
     const queue = await this.getCountQueue();
     await queue.enqueue({ sessionId, lineId, ...input });
-    return syncPendingCountSubmissions(queue, this.api);
+    return getCountQueueSnapshot(queue);
   }
 
   async syncOfflineCounts(): Promise<CountQueueSnapshot> {

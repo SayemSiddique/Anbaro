@@ -30,6 +30,10 @@ export default function TabLayout() {
           headerStyle: { backgroundColor: c.surface },
           headerTitleStyle: { color: c.ink, fontFamily: font.bold },
           headerShadowVisible: false,
+          // React Navigation paints its own scene background — a hardcoded
+          // light grey — on top of the shell's `ground`. Unthemed, it stays
+          // light while the text below it turns near-white in dark mode.
+          sceneStyle: { backgroundColor: c.ground },
           tabBarActiveTintColor: c.accent,
           tabBarInactiveTintColor: c.inkMuted,
           tabBarLabelStyle: { fontSize: 11, fontFamily: font.semibold },

@@ -1,6 +1,6 @@
 # Anbaro — Design Overhaul Plan (Master Doc)
 
-**Owner:** Sam · **Created:** 2026-08-24 · **Status:** ACTIVE — D1 done, D2 next
+**Owner:** Sam · **Created:** 2026-08-24 · **Status:** ACTIVE — D1 and D2 done, D3 next
 **Relationship to the launch plan:** the production rollout
 ([`PRODUCTION_LAUNCH_PLAN.md`](../operations/PRODUCTION_LAUNCH_PLAN.md)) is **paused
 at Session 2** (Neon go-live, credential-gated). This overhaul runs first. Neither
@@ -46,7 +46,7 @@ session**. The point is that no session re-derives what this file already record
 | **Theming** | Light + dark, built together | Token architecture must support both from Phase 1 |
 | **Positioning** | Deliberately general-purpose | No vertical-specific UI. Nothing that assumes retail, food, or warehouse |
 | **Motion posture** | Serves speed and comprehension, never decoration | Set by `PROJECT_OVERVIEW.md`: "practical rather than flashy" |
-| **Running order** | D1 → **D2** → D3 → D4 → D5 → D6 | Mobile count loop ships before web polish (Sam, 2026-08-24) |
+| **Running order** | D1 → D2 → **D3** → D4 → D5 → D6 | Mobile count loop ships before web polish (Sam, 2026-08-24) |
 
 **Open question for Sam (not yet decided):** the brief says "practical rather than
 flashy," Sam's verbal direction was "flying to sky / buttery-smooth." This plan
@@ -439,7 +439,7 @@ changes as work proceeds.
 | # | Session | Status | Date | Notes |
 | --- | --- | --- | --- | --- |
 | 1 | D1 — Token foundation | **Done** | 2026-08-24 | Semantic light/dark on both platforms; mobile `ThemeProvider` + `makeStyles`; type scale applied. Gap: no small-body step below `body` 15px — see D2 handoff |
-| 2 | D2 — Count loop ⭐ | Not started | — | **Priority** — runs straight after D1 |
+| 2 | D2 — Count loop ⭐ | **Done** | 2026-08-24 | On-screen keypad, live delta, location gate, scan-to-jump, jump sheet, commit pulse + haptics, A3 fixed. 20-item count verified on device. Barcode scan-to-jump still needs a physical device (no simulator camera) |
 | 3 | D3 — Component library | Not started | — | |
 | 4 | D4 — Information architecture | Not started | — | |
 | 5 | D5 — Screen migration | Not started | — | Split into batches if needed |

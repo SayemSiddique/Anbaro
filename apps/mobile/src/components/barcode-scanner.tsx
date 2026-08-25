@@ -1,6 +1,6 @@
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import type { ComponentType } from 'react';
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
   Modal,
   Platform,
@@ -32,10 +32,13 @@ const Camera = CameraView as unknown as ComponentType<{
  * trigger there (Platform.OS === 'web').
  */
 export function BarcodeScannerModal({
+  hint = 'Point the camera at a barcode or QR code',
   onClose,
   onScanned,
   visible,
 }: {
+  /** What this particular scan will do — a lookup, a jump, a new-item fill. */
+  hint?: string;
   onClose: () => void;
   onScanned: (barcode: string) => void;
   visible: boolean;
@@ -44,6 +47,13 @@ export function BarcodeScannerModal({
   const [permission, requestPermission] = useCameraPermissions();
   const handled = useRef(false);
   const [torch, setTorch] = useState(false);
+
+  // The debounce that stops one barcode firing twice has to be re-armed each
+  // time the sheet opens. Without this the modal scans once per mount, which a
+  // count loop — twenty scans against a long-lived screen — notices immediately.
+  useEffect(() => {
+    if (visible) handled.current = false;
+  }, [visible]);
 
   if (!visible) return null;
   const grantNeeded = !permission?.granted;
@@ -91,7 +101,7 @@ export function BarcodeScannerModal({
             />
             <View pointerEvents="none" style={styles.frameWrap}>
               <View style={styles.frame} />
-              <Text style={styles.hint}>Point the camera at a barcode or QR code</Text>
+              <Text style={styles.hint}>{hint}</Text>
             </View>
             <View style={styles.actions}>
               {Platform.OS !== 'web' ? (
