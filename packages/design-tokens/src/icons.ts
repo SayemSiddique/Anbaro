@@ -18,8 +18,12 @@ export type CategoryVisual = {
   accent: string;
 };
 
-/** Tints/shades of the five brand hues (lobster, tangerine, seashell, graphite, shadow). */
-const palette: ReadonlyArray<{ background: string; accent: string }> = [
+/**
+ * Category tints, light scheme. Each pair is a tinted background plus an
+ * AA-contrast foreground. The dark-scheme pairs are derived from these (see
+ * `tintsDark`) so a category keeps its identity across themes.
+ */
+const tintsLight: ReadonlyArray<{ background: string; accent: string }> = [
   { background: '#FBDEDE', accent: '#A33232' },
   { background: '#FFE4D6', accent: '#A64A26' },
   { background: '#F7EBE8', accent: '#6D6663' },
@@ -31,6 +35,60 @@ const palette: ReadonlyArray<{ background: string; accent: string }> = [
   { background: '#F5E1DC', accent: '#8F3B3B' },
   { background: '#EFE9E7', accent: '#33302F' },
 ];
+
+function hexToHsl(hex: string): [number, number, number] {
+  const n = parseInt(hex.slice(1), 16);
+  const r = ((n >> 16) & 255) / 255;
+  const g = ((n >> 8) & 255) / 255;
+  const b = (n & 255) / 255;
+  const max = Math.max(r, g, b);
+  const min = Math.min(r, g, b);
+  const l = (max + min) / 2;
+  const d = max - min;
+  if (d === 0) return [0, 0, l];
+  const s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+  const h =
+    max === r ? ((g - b) / d + (g < b ? 6 : 0)) : max === g ? (b - r) / d + 2 : (r - g) / d + 4;
+  return [h * 60, s, l];
+}
+
+function hslToHex(h: number, s: number, l: number): string {
+  const c = (1 - Math.abs(2 * l - 1)) * s;
+  const x = c * (1 - Math.abs(((h / 60) % 2) - 1));
+  const m = l - c / 2;
+  const seg = Math.floor(((h % 360) + 360) % 360 / 60);
+  const [r, g, b] = (
+    [
+      [c, x, 0],
+      [x, c, 0],
+      [0, c, x],
+      [0, x, c],
+      [x, 0, c],
+      [c, 0, x],
+    ] as const
+  )[seg]!;
+  const hex = (v: number) =>
+    Math.round((v + m) * 255)
+      .toString(16)
+      .padStart(2, '0');
+  return `#${hex(r)}${hex(g)}${hex(b)}`;
+}
+
+/**
+ * Dark pairs, derived once at module load: same hue, lifted to a readable
+ * lightness for the glyph and dropped to a near-ground lightness for the tile.
+ * Deriving beats a second hand-written table — the two schemes can never drift.
+ */
+const tintsDark: ReadonlyArray<{ background: string; accent: string }> = tintsLight.map((pair) => {
+  const [h, s] = hexToHsl(pair.accent);
+  const saturation = Math.max(s, 0.12);
+  return {
+    background: hslToHex(h, Math.min(saturation, 0.3), 0.12),
+    accent: hslToHex(h, Math.min(saturation * 1.15, 0.72), 0.72),
+  };
+});
+
+const tints = { light: tintsLight, dark: tintsDark } as const;
 
 const keywordIcons: ReadonlyArray<[RegExp, string]> = [
   [/\b(produce|vegetable|veg|fruit|salad|greens)\b/i, 'Salad'],
@@ -110,11 +168,17 @@ const knownIcons = new Set(categoryIconNames);
 /**
  * Resolves the visual for a category. `storedIcon` (user override) wins when
  * it names a known icon; otherwise keyword match, then hash fallback. Colors
- * always come from the stable hash so overriding the icon keeps the tint.
+ * always come from the stable hash so overriding the icon keeps the tint, and
+ * from `scheme` so the tile follows the active theme.
  */
-export function categoryVisual(name: string, storedIcon?: string | null): CategoryVisual {
+export function categoryVisual(
+  name: string,
+  storedIcon?: string | null,
+  scheme: 'light' | 'dark' = 'light',
+): CategoryVisual {
   const normalized = name.trim();
-  const colors = palette[hashString(normalized.toLowerCase()) % palette.length]!;
+  const ramp = tints[scheme];
+  const colors = ramp[hashString(normalized.toLowerCase()) % ramp.length]!;
   const override = storedIcon ? normalizeIconName(storedIcon) : '';
   if (override && knownIcons.has(override)) return { icon: override, ...colors };
   for (const [pattern, icon] of keywordIcons) {

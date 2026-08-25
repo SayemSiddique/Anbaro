@@ -2,11 +2,12 @@ import { ApiClientError } from '@anbaro/contracts';
 import { tokens } from '@anbaro/design-tokens';
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
-import { ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { ScrollView, Text, TextInput, View } from 'react-native';
 
 import { useMobileSession } from '../../../src/components/app-shell';
 import { PrimaryButton, SecondaryButton, StatePanel } from '../../../src/components/ui';
 import { font } from '../../../src/lib/fonts';
+import { makeStyles, text } from '../../../src/lib/theme';
 
 /**
  * Required by App Store guideline 5.1.1(v): an account created in the app must be
@@ -14,6 +15,7 @@ import { font } from '../../../src/lib/fonts';
  * the confirmation is intentionally heavy — password re-entry plus typing DELETE.
  */
 export default function DeleteAccountScreen() {
+  const styles = useStyles();
   const { state, controller, reload } = useMobileSession();
   const router = useRouter();
   const [password, setPassword] = useState('');
@@ -103,29 +105,29 @@ export default function DeleteAccountScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles((c) => ({
   content: { gap: 12, marginHorizontal: 'auto', maxWidth: 640, padding: 16, width: '100%' },
-  detail: { fontFamily: font.regular, color: tokens.color.textMuted, fontSize: 16, lineHeight: 23 },
-  error: { fontFamily: font.regular, color: tokens.color.danger, fontSize: 15, lineHeight: 21 },
+  detail: { fontFamily: font.regular, color: c.inkMuted, fontSize: 16, lineHeight: 23 },
+  error: { ...text.body, color: c.bad },
   input: {
     fontFamily: font.regular,
-    backgroundColor: tokens.color.canvas,
-    borderColor: tokens.color.border,
+    backgroundColor: c.ground,
+    borderColor: c.hairline,
     borderRadius: 10,
     borderWidth: 1,
-    color: tokens.color.text,
+    color: c.ink,
     fontSize: 16,
     minHeight: tokens.touchTarget.minimum,
     paddingHorizontal: 12,
   },
-  label: { color: tokens.color.text, fontSize: 15, fontFamily: font.semibold },
+  label: { ...text.body, fontFamily: font.semibold, color: c.ink },
   panel: {
-    backgroundColor: tokens.color.surface,
-    borderColor: tokens.color.border,
+    backgroundColor: c.surface,
+    borderColor: c.hairline,
     borderRadius: 10,
     borderWidth: 1,
     gap: 10,
     padding: 16,
   },
-  title: { color: tokens.color.danger, fontSize: 20, fontFamily: font.bold },
-});
+  title: { ...text.title, color: c.bad },
+}));

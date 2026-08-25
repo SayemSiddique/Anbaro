@@ -2,9 +2,9 @@ import { Tabs } from 'expo-router';
 import { Bell, ClipboardList, House, Package, Menu, type LucideIcon } from 'lucide-react-native';
 import type { ColorValue } from 'react-native';
 
-import { tokens } from '@anbaro/design-tokens';
 import { MobileShell } from '../../src/components/app-shell';
 import { font } from '../../src/lib/fonts';
+import { useTheme } from '../../src/lib/theme';
 
 function tabIcon(Icon: LucideIcon) {
   function TabIcon({
@@ -22,19 +22,20 @@ function tabIcon(Icon: LucideIcon) {
 }
 
 export default function TabLayout() {
+  const { colors: c } = useTheme();
   return (
     <MobileShell>
       <Tabs
         screenOptions={{
-          headerStyle: { backgroundColor: tokens.color.surface },
-          headerTitleStyle: { color: tokens.color.text, fontFamily: font.bold },
+          headerStyle: { backgroundColor: c.surface },
+          headerTitleStyle: { color: c.ink, fontFamily: font.bold },
           headerShadowVisible: false,
-          tabBarActiveTintColor: tokens.color.primary,
-          tabBarInactiveTintColor: tokens.color.textMuted,
+          tabBarActiveTintColor: c.accent,
+          tabBarInactiveTintColor: c.inkMuted,
           tabBarLabelStyle: { fontSize: 11, fontFamily: font.semibold },
           tabBarStyle: {
-            backgroundColor: tokens.color.surface,
-            borderTopColor: tokens.color.border,
+            backgroundColor: c.surface,
+            borderTopColor: c.hairline,
             minHeight: 58,
           },
         }}

@@ -1,14 +1,17 @@
 import { ApiClientError, type Supplier } from '@anbaro/contracts';
-import { tokens } from '@anbaro/design-tokens';
+
 import { Mail, Phone, Truck } from 'lucide-react-native';
 import { useCallback, useEffect, useState } from 'react';
-import { ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { ScrollView, Text, TextInput, View } from 'react-native';
 
 import { useMobileSession } from '../../../src/components/app-shell';
 import { PrimaryButton, StatePanel } from '../../../src/components/ui';
 import { font } from '../../../src/lib/fonts';
+import { makeStyles, text, useTheme } from '../../../src/lib/theme';
 
 export default function SuppliersScreen() {
+  const { colors: c } = useTheme();
+  const styles = useStyles();
   const { controller, state } = useMobileSession();
   const [suppliers, setSuppliers] = useState<Supplier[] | null>(null);
   const [error, setError] = useState('');
@@ -65,7 +68,7 @@ export default function SuppliersScreen() {
 
       {suppliers?.length === 0 ? (
         <View style={styles.empty}>
-          <Truck color={tokens.color.textMuted} size={32} strokeWidth={1.6} />
+          <Truck color={c.inkMuted} size={32} strokeWidth={1.6} />
           <Text style={styles.emptyTitle}>No suppliers yet</Text>
           <Text style={styles.detail}>
             Add a supplier so reorder suggestions can reference who to order from.
@@ -78,13 +81,13 @@ export default function SuppliersScreen() {
           <Text style={styles.rowTitle}>{supplier.name}</Text>
           {supplier.contactEmail ? (
             <View style={styles.contactRow}>
-              <Mail color={tokens.color.textMuted} size={15} strokeWidth={2} />
+              <Mail color={c.inkMuted} size={15} strokeWidth={2} />
               <Text style={styles.detail}>{supplier.contactEmail}</Text>
             </View>
           ) : null}
           {supplier.contactPhone ? (
             <View style={styles.contactRow}>
-              <Phone color={tokens.color.textMuted} size={15} strokeWidth={2} />
+              <Phone color={c.inkMuted} size={15} strokeWidth={2} />
               <Text style={styles.detail}>{supplier.contactPhone}</Text>
             </View>
           ) : null}
@@ -104,7 +107,7 @@ export default function SuppliersScreen() {
           accessibilityLabel="Supplier name"
           onChangeText={setName}
           placeholder="Supplier name"
-          placeholderTextColor={tokens.color.textMuted}
+          placeholderTextColor={c.inkMuted}
           style={styles.input}
           value={name}
         />
@@ -114,7 +117,7 @@ export default function SuppliersScreen() {
           keyboardType="email-address"
           onChangeText={setEmail}
           placeholder="Contact email (optional)"
-          placeholderTextColor={tokens.color.textMuted}
+          placeholderTextColor={c.inkMuted}
           style={styles.input}
           value={email}
         />
@@ -123,7 +126,7 @@ export default function SuppliersScreen() {
           keyboardType="phone-pad"
           onChangeText={setPhone}
           placeholder="Contact phone (optional)"
-          placeholderTextColor={tokens.color.textMuted}
+          placeholderTextColor={c.inkMuted}
           style={styles.input}
           value={phone}
         />
@@ -135,32 +138,32 @@ export default function SuppliersScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles((c) => ({
   contactRow: { alignItems: 'center', flexDirection: 'row', gap: 6 },
   content: { gap: 12, marginHorizontal: 'auto', maxWidth: 640, padding: 16, width: '100%' },
-  detail: { fontFamily: font.regular, color: tokens.color.textMuted, fontSize: 15, lineHeight: 22 },
+  detail: { ...text.body, color: c.inkMuted },
   empty: { alignItems: 'center', gap: 8, padding: 32 },
-  emptyTitle: { color: tokens.color.text, fontSize: 17, fontFamily: font.bold },
+  emptyTitle: { ...text.heading, color: c.ink },
   input: {
     fontFamily: font.regular,
-    backgroundColor: tokens.color.surface,
-    borderColor: tokens.color.borderStrong,
+    backgroundColor: c.surface,
+    borderColor: c.hairlineFirm,
     borderRadius: 6,
     borderWidth: 1,
-    color: tokens.color.text,
+    color: c.ink,
     fontSize: 16,
     minHeight: 48,
     paddingHorizontal: 12,
   },
-  muted: { fontFamily: font.regular, color: tokens.color.textMuted, fontSize: 13 },
+  muted: { ...text.body, color: c.inkMuted },
   panel: {
-    backgroundColor: tokens.color.surface,
-    borderColor: tokens.color.border,
+    backgroundColor: c.surface,
+    borderColor: c.hairline,
     borderRadius: 10,
     borderWidth: 1,
     gap: 8,
     padding: 16,
   },
-  rowTitle: { color: tokens.color.text, fontSize: 16, fontFamily: font.bold },
-  section: { color: tokens.color.text, fontSize: 20, fontFamily: font.bold },
-});
+  rowTitle: { ...text.heading, color: c.ink },
+  section: { color: c.ink, fontSize: 20, fontFamily: font.bold },
+}));

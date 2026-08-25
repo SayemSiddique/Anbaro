@@ -4,9 +4,9 @@
     "slug": "anbaro",
     "version": "1.0.0",
     "orientation": "default",
-    "userInterfaceStyle": "light",
+    "userInterfaceStyle": "automatic",
     "scheme": "anbaro",
-    "backgroundColor": "#F7EBE8",
+    "backgroundColor": "#fbf9f8",
     "primaryColor": "#E85E5E",
     "icon": "./assets/icon.png",
     "plugins": [
@@ -17,7 +17,7 @@
         "expo-splash-screen",
         {
           "image": "./assets/splash-icon.png",
-          "backgroundColor": "#1E1E24",
+          "backgroundColor": "#151213",
           "resizeMode": "contain"
         }
       ],

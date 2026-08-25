@@ -9,14 +9,12 @@ import {
   useState,
   type ReactNode,
 } from 'react';
-import { AppState, StyleSheet, Text, TextInput, View } from 'react-native';
-
-import { tokens } from '@anbaro/design-tokens';
+import { AppState, Text, TextInput, View } from 'react-native';
 
 import { MobileSessionController } from '../lib/session';
 import { AnbaroWordmark } from './brand';
 import { LoadingPanel, PrimaryButton, SecondaryButton, StatePanel } from './ui';
-import { font } from '../lib/fonts';
+import { makeStyles, text } from '../lib/theme';
 
 type MobileSessionState =
   | { kind: 'loading' }
@@ -37,6 +35,7 @@ export function useMobileSession() {
 }
 
 export function MobileShell({ children }: { children: ReactNode }) {
+  const styles = useStyles();
   const controller = useMemo(() => new MobileSessionController(), []);
   const [state, setState] = useState<MobileSessionState>({ kind: 'loading' });
   const bootstrap = useCallback(async () => {
@@ -84,6 +83,7 @@ function MobileAccessForm({
   controller: MobileSessionController;
   onAuthenticated: () => Promise<void>;
 }) {
+  const styles = useStyles();
   const [mode, setMode] = useState<'sign-up' | 'sign-in'>('sign-up');
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
@@ -163,28 +163,27 @@ function MobileAccessForm({
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles((c) => ({
   brand: { alignItems: 'center', gap: 8, marginBottom: 16 },
   container: {
-    backgroundColor: tokens.color.canvas,
+    backgroundColor: c.ground,
     flex: 1,
     justifyContent: 'center',
     padding: 16,
   },
-  detail: { fontFamily: font.regular, color: tokens.color.textMuted, fontSize: 16, lineHeight: 24 },
-  error: { color: tokens.color.danger },
+  detail: { ...text.body, color: c.inkMuted },
+  error: { color: c.bad },
   form: { gap: 12, marginHorizontal: 'auto', maxWidth: 480, width: '100%' },
-  tagline: { fontFamily: font.regular, color: tokens.color.textMuted, fontSize: 15 },
+  tagline: { ...text.body, color: c.inkMuted },
   input: {
-    fontFamily: font.regular,
-    backgroundColor: tokens.color.surface,
-    borderColor: tokens.color.borderStrong,
+    ...text.body,
+    backgroundColor: c.surface,
+    borderColor: c.hairlineFirm,
     borderRadius: 6,
     borderWidth: 1,
-    color: tokens.color.text,
-    fontSize: 16,
+    color: c.ink,
     minHeight: 48,
     paddingHorizontal: 12,
   },
-  title: { color: tokens.color.text, fontSize: 28, fontFamily: font.bold },
-});
+  title: { ...text.display, color: c.ink },
+}));

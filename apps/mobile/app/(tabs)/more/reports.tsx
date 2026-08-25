@@ -1,5 +1,5 @@
 import { ApiClientError, type LossByReason } from '@anbaro/contracts';
-import { tokens } from '@anbaro/design-tokens';
+
 import {
   Calculator,
   CircleAlert,
@@ -10,11 +10,11 @@ import {
   type LucideIcon,
 } from 'lucide-react-native';
 import { useCallback, useEffect, useState } from 'react';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ScrollView, Text, View } from 'react-native';
 
 import { useMobileSession } from '../../../src/components/app-shell';
 import { PrimaryButton, StatePanel } from '../../../src/components/ui';
-import { font } from '../../../src/lib/fonts';
+import { makeStyles, text, useTheme } from '../../../src/lib/theme';
 
 const reasonVisuals: Record<string, { icon: LucideIcon; label: string }> = {
   spoilage: { icon: Leaf, label: 'Spoilage' },
@@ -24,6 +24,8 @@ const reasonVisuals: Record<string, { icon: LucideIcon; label: string }> = {
 };
 
 export default function ReportsScreen() {
+  const { colors: c } = useTheme();
+  const styles = useStyles();
   const { controller, state } = useMobileSession();
   const [rows, setRows] = useState<LossByReason[] | null>(null);
   const [error, setError] = useState('');
@@ -58,7 +60,7 @@ export default function ReportsScreen() {
 
       {rows?.length === 0 ? (
         <View style={styles.empty}>
-          <TrendingDown color={tokens.color.textMuted} size={32} strokeWidth={1.6} />
+          <TrendingDown color={c.inkMuted} size={32} strokeWidth={1.6} />
           <Text style={styles.emptyTitle}>No loss recorded</Text>
           <Text style={styles.detail}>
             Loss events logged against spoilage, theft, breakage, or miscount show up here.
@@ -75,7 +77,7 @@ export default function ReportsScreen() {
         return (
           <View key={row.reasonCode} style={styles.panel}>
             <View style={styles.reasonIcon}>
-              <Icon color={tokens.color.warning} size={20} strokeWidth={2} />
+              <Icon color={c.warn} size={20} strokeWidth={2} />
             </View>
             <View style={styles.copy}>
               <Text style={styles.rowTitle}>{visual.label}</Text>
@@ -91,31 +93,31 @@ export default function ReportsScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles((c) => ({
   content: { gap: 12, marginHorizontal: 'auto', maxWidth: 640, padding: 16, width: '100%' },
   copy: { flex: 1, gap: 2 },
-  detail: { fontFamily: font.regular, color: tokens.color.textMuted, fontSize: 14, lineHeight: 20 },
+  detail: { ...text.body, color: c.inkMuted },
   empty: { alignItems: 'center', gap: 8, padding: 32 },
-  emptyTitle: { color: tokens.color.text, fontSize: 17, fontFamily: font.bold },
-  lede: { fontFamily: font.regular, color: tokens.color.textMuted, fontSize: 15, lineHeight: 22 },
+  emptyTitle: { ...text.heading, color: c.ink },
+  lede: { ...text.body, color: c.inkMuted },
   panel: {
     alignItems: 'center',
-    backgroundColor: tokens.color.surface,
-    borderColor: tokens.color.border,
+    backgroundColor: c.surface,
+    borderColor: c.hairline,
     borderRadius: 10,
     borderWidth: 1,
     flexDirection: 'row',
     gap: 12,
     padding: 16,
   },
-  quantity: { color: tokens.color.text, fontSize: 20, fontFamily: font.bold },
+  quantity: { ...text.numeric, color: c.ink },
   reasonIcon: {
     alignItems: 'center',
-    backgroundColor: tokens.color.warningSurface,
+    backgroundColor: c.warnWash,
     borderRadius: 10,
     height: 38,
     justifyContent: 'center',
     width: 38,
   },
-  rowTitle: { color: tokens.color.text, fontSize: 16, fontFamily: font.bold },
-});
+  rowTitle: { ...text.heading, color: c.ink },
+}));

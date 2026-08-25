@@ -18,6 +18,8 @@ import {
   Users,
   type LucideIcon,
 } from 'lucide-react';
+
+import { ThemeToggle } from './theme-toggle';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import type { ReactNode } from 'react';
@@ -279,12 +281,13 @@ export function WebApplicationShell({
         <header className="topbar">
           <div style={{ alignItems: 'center', display: 'flex', gap: 12 }}>
             {organizationSwitcher ?? (
-              <p style={{ color: 'var(--text-muted)', fontWeight: 500, margin: 0 }}>
+              <p style={{ color: 'var(--ink-muted)', fontWeight: 500, margin: 0 }}>
                 {organizationName ?? 'Workspace'}
               </p>
             )}
           </div>
           <div className="topbar-user">
+            <ThemeToggle />
             <p aria-label={`Signed in as ${currentUser.name}`} style={{ fontWeight: 500 }}>
               {currentUser.name}
             </p>

@@ -11,11 +11,17 @@ import {
   type LucideIcon,
 } from 'lucide-react-native';
 import { useCallback, useEffect, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, Switch, Text, View } from 'react-native';
+import { Pressable, ScrollView, Switch, Text, View } from 'react-native';
 
 import { useMobileSession } from '../../../src/components/app-shell';
-import { PrimaryButton, SecondaryButton, StatePanel } from '../../../src/components/ui';
+import {
+  PrimaryButton,
+  SecondaryButton,
+  StatePanel,
+  ThemeToggle,
+} from '../../../src/components/ui';
 import { font } from '../../../src/lib/fonts';
+import { makeStyles, text, useTheme } from '../../../src/lib/theme';
 
 const channelLabels: Record<'in_app' | 'email' | 'push', string> = {
   in_app: 'In-app alerts',
@@ -64,6 +70,8 @@ const operationsLinks: {
 ];
 
 export default function MoreScreen() {
+  const { colors: c } = useTheme();
+  const styles = useStyles();
   const { state, controller, reload } = useMobileSession();
   const [preferences, setPreferences] = useState<NotificationPreference[]>([]);
   const [error, setError] = useState('');
@@ -129,13 +137,13 @@ export default function MoreScreen() {
               style={({ pressed }) => [styles.linkRow, pressed && styles.linkRowPressed]}
             >
               <View style={styles.linkIcon}>
-                <Icon color={tokens.color.primary} size={20} strokeWidth={2} />
+                <Icon color={c.accent} size={20} strokeWidth={2} />
               </View>
               <View style={styles.linkCopy}>
                 <Text style={styles.linkTitle}>{title}</Text>
                 <Text style={styles.linkDetail}>{detail}</Text>
               </View>
-              <ChevronRight color={tokens.color.textMuted} size={18} strokeWidth={2} />
+              <ChevronRight color={c.inkMuted} size={18} strokeWidth={2} />
             </Pressable>
           </Link>
         ))}
@@ -155,6 +163,16 @@ export default function MoreScreen() {
 
       <View style={styles.panel}>
         <Text accessibilityRole="header" style={styles.section}>
+          Appearance
+        </Text>
+        <Text style={styles.detail}>
+          Follows your device by default. Changing it applies across the app straight away.
+        </Text>
+        <ThemeToggle />
+      </View>
+
+      <View style={styles.panel}>
+        <Text accessibilityRole="header" style={styles.section}>
           Notifications
         </Text>
         <Text style={styles.detail}>
@@ -168,8 +186,8 @@ export default function MoreScreen() {
             <Switch
               accessibilityLabel={channelLabels[preference.channel] ?? preference.channel}
               onValueChange={(enabled) => void toggleChannel(preference.channel, enabled)}
-              thumbColor={tokens.color.surface}
-              trackColor={{ false: tokens.color.border, true: tokens.color.primary }}
+              thumbColor={c.surface}
+              trackColor={{ false: c.hairline, true: c.accent }}
               value={preference.enabled}
             />
           </View>
@@ -194,7 +212,7 @@ export default function MoreScreen() {
                 Permanently deletes your account and any workspace you own.
               </Text>
             </View>
-            <ChevronRight color={tokens.color.textMuted} size={18} strokeWidth={2} />
+            <ChevronRight color={c.inkMuted} size={18} strokeWidth={2} />
           </Pressable>
         </Link>
       </View>
@@ -211,19 +229,14 @@ export default function MoreScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles((c) => ({
   content: { gap: 12, marginHorizontal: 'auto', maxWidth: 640, padding: 16, width: '100%' },
-  detail: { fontFamily: font.regular, color: tokens.color.textMuted, fontSize: 16, lineHeight: 23 },
+  detail: { fontFamily: font.regular, color: c.inkMuted, fontSize: 16, lineHeight: 23 },
   linkCopy: { flex: 1, gap: 2 },
-  linkDetail: {
-    fontFamily: font.regular,
-    color: tokens.color.textMuted,
-    fontSize: 13,
-    lineHeight: 18,
-  },
+  linkDetail: { ...text.body, color: c.inkMuted },
   linkIcon: {
     alignItems: 'center',
-    backgroundColor: tokens.color.surfaceSubtle,
+    backgroundColor: c.surface2,
     borderRadius: 10,
     height: 38,
     justifyContent: 'center',
@@ -236,23 +249,23 @@ const styles = StyleSheet.create({
     minHeight: tokens.touchTarget.minimum + 4,
     paddingVertical: 6,
   },
-  destructiveTitle: { color: tokens.color.danger, fontSize: 16, fontFamily: font.semibold },
+  destructiveTitle: { ...text.heading, color: c.bad },
   linkRowPressed: { opacity: 0.6 },
-  linkTitle: { color: tokens.color.text, fontSize: 16, fontFamily: font.semibold },
+  linkTitle: { ...text.heading, color: c.ink },
   panel: {
-    backgroundColor: tokens.color.surface,
-    borderColor: tokens.color.border,
+    backgroundColor: c.surface,
+    borderColor: c.hairline,
     borderRadius: 10,
     borderWidth: 1,
     gap: 10,
     padding: 16,
   },
-  preferenceLabel: { color: tokens.color.text, fontSize: 16, fontFamily: font.semibold },
+  preferenceLabel: { ...text.heading, color: c.ink },
   preferenceRow: {
     alignItems: 'center',
     flexDirection: 'row',
     justifyContent: 'space-between',
     minHeight: 44,
   },
-  section: { color: tokens.color.text, fontSize: 20, fontFamily: font.bold },
-});
+  section: { ...text.title, color: c.ink },
+}));

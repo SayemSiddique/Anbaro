@@ -1,14 +1,15 @@
 import type { Notification, NotificationPreference, ReorderSuggestion } from '@anbaro/contracts';
 import { ApiClientError } from '@anbaro/contracts';
-import { tokens } from '@anbaro/design-tokens';
+
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ScrollView, Text, View } from 'react-native';
 
 import { useMobileSession } from '../../src/components/app-shell';
 import { PrimaryButton, StatePanel } from '../../src/components/ui';
-import { font } from '../../src/lib/fonts';
+import { makeStyles, text } from '../../src/lib/theme';
 
 export default function AlertsScreen() {
+  const styles = useStyles();
   const { controller, state } = useMobileSession();
   const [alerts, setAlerts] = useState<Notification[]>([]);
   const [preferences, setPreferences] = useState<NotificationPreference[]>([]);
@@ -168,13 +169,13 @@ export default function AlertsScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles((c) => ({
   content: { gap: 12, padding: 16 },
-  detail: { fontFamily: font.regular, color: tokens.color.textMuted, fontSize: 15, lineHeight: 22 },
-  muted: { fontFamily: font.regular, color: tokens.color.textMuted, fontSize: 13, lineHeight: 18 },
+  detail: { ...text.body, color: c.inkMuted },
+  muted: { ...text.body, color: c.inkMuted },
   panel: {
-    backgroundColor: tokens.color.surface,
-    borderColor: tokens.color.border,
+    backgroundColor: c.surface,
+    borderColor: c.hairline,
     borderRadius: 8,
     borderWidth: 1,
     gap: 10,
@@ -182,14 +183,14 @@ const styles = StyleSheet.create({
   },
   preference: {
     alignItems: 'center',
-    borderTopColor: tokens.color.border,
+    borderTopColor: c.hairline,
     borderTopWidth: 1,
     flexDirection: 'row',
     justifyContent: 'space-between',
     paddingTop: 10,
   },
-  row: { borderTopColor: tokens.color.border, borderTopWidth: 1, gap: 6, paddingTop: 10 },
-  rowTitle: { color: tokens.color.text, fontSize: 16, fontFamily: font.bold },
-  section: { color: tokens.color.text, fontSize: 20, fontFamily: font.bold },
-  title: { color: tokens.color.text, fontSize: 28, fontFamily: font.bold },
-});
+  row: { borderTopColor: c.hairline, borderTopWidth: 1, gap: 6, paddingTop: 10 },
+  rowTitle: { ...text.heading, color: c.ink },
+  section: { ...text.title, color: c.ink },
+  title: { ...text.display, color: c.ink },
+}));

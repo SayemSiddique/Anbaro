@@ -15,8 +15,8 @@ const rows = [
   },
   {
     icon: Droplets,
-    tint: 'rgb(40 200 64 / 10%)',
-    color: 'var(--mkt-decorative-green, #28c840)',
+    tint: 'var(--mkt-decorative-green-tint)',
+    color: 'var(--mkt-decorative-green)',
     name: 'Hand Soap',
     location: 'Supply Closet',
     qty: 156,
@@ -88,7 +88,7 @@ export function HeroMockupCard() {
       <div className="float-card float-card-2">
         <div
           className="float-card-icon"
-          style={{ background: 'var(--mkt-decorative-green, #28c840)' }}
+          style={{ background: 'var(--mkt-decorative-green)' }}
         >
           <Barcode aria-hidden="true" size={16} />
         </div>

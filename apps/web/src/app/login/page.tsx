@@ -73,7 +73,9 @@ function LoginForm() {
             </li>
           </ul>
         </div>
-        <small style={{ color: '#9b918d' }}>Anbaro · stock management for operators</small>
+        <small style={{ color: 'var(--brand-on-night-muted)' }}>
+          Anbaro · stock management for operators
+        </small>
       </aside>
       <main className="auth-panel">
         <div className="auth-card">

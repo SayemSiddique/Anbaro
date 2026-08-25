@@ -150,7 +150,7 @@ export function BillingFeature() {
         role="tablist"
         style={{
           alignSelf: 'center',
-          background: 'var(--surface-muted, rgba(0,0,0,0.04))',
+          background: 'var(--surface-2)',
           borderRadius: 999,
           display: 'inline-flex',
           gap: 4,
@@ -170,7 +170,7 @@ export function BillingFeature() {
                 background: active ? 'var(--primary)' : 'transparent',
                 border: 'none',
                 borderRadius: 999,
-                color: active ? 'var(--on-primary, #fff)' : 'var(--text)',
+                color: active ? 'var(--on-accent)' : 'var(--ink)',
                 cursor: 'pointer',
                 display: 'inline-flex',
                 fontSize: 14,
@@ -186,10 +186,10 @@ export function BillingFeature() {
                 <span
                   style={{
                     background: active
-                      ? 'rgba(255,255,255,0.22)'
-                      : 'var(--success-soft, rgba(22,163,74,0.14))',
+                      ? 'color-mix(in srgb, var(--on-accent) 22%, transparent)'
+                      : 'var(--good-wash)',
                     borderRadius: 999,
-                    color: active ? 'var(--on-primary, #fff)' : 'var(--success)',
+                    color: active ? 'var(--on-accent)' : 'var(--good)',
                     fontSize: 11,
                     fontWeight: 700,
                     padding: '2px 7px',
@@ -252,7 +252,7 @@ export function BillingFeature() {
         {/* Pro */}
         <div
           style={{
-            background: 'var(--surface-raised, rgba(0,0,0,0.015))',
+            background: 'var(--surface)',
             border: '2px solid var(--primary)',
             borderRadius: 16,
             boxShadow: '0 12px 32px -18px var(--primary)',

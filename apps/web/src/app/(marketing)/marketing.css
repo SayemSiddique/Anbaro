@@ -13,7 +13,59 @@ html {
   }
 }
 
+/* The marketing site is pinned to the light ramp. Its hero gradients, glass
+   panels, and tinted illustrations are composed against a light ground, and
+   re-cutting them for dark is D5's job, not the token session's.
+
+   Both the semantic tokens AND the compatibility aliases are redeclared here
+   with literal values. A custom property whose value contains var() is
+   substituted where it is *declared*, not where it is used — the aliases live
+   on :root, so redefining only --ink here would leave --text-muted holding the
+   dark ramp's value. The ancestors are pinned too, or the themed <body> shows
+   a dark band above and below the light content. */
+html:has(.marketing-scope),
+body:has(.marketing-scope),
 .marketing-scope {
+  color-scheme: light;
+
+  --ground: #fbf9f8;
+  --surface: #ffffff;
+  --surface-2: #f6f2f1;
+  --surface-3: #efe9e7;
+  --hairline: #e8e0dd;
+  --hairline-firm: #d6c9c5;
+  --ink: #1a1719;
+  --ink-muted: #6b615e;
+  --ink-faint: #9a8f8b;
+  --accent: #e85e5e;
+  --accent-strong: #d34848;
+  --accent-wash: #fbdedd;
+  --on-accent: #ffffff;
+  --good: #2f8f5b;
+  --warn: #b4732a;
+  --bad: #c4183c;
+
+  --canvas: #fbf9f8;
+  --surface-subtle: #f6f2f1;
+  --text: #1a1719;
+  --text-muted: #6b615e;
+  --text-soft: #9a8f8b;
+  --border: #e8e0dd;
+  --border-strong: #d6c9c5;
+  --primary: #e85e5e;
+  --primary-hover: #d34848;
+  --primary-soft: #fbdedd;
+  --primary-text: #ffffff;
+  --success: #2f8f5b;
+  --warning: #b4732a;
+  --danger: #c4183c;
+
+  background: var(--ground);
+}
+
+.marketing-scope {
+  min-height: 100vh;
+
   /* Derived tint tokens the app's globals.css doesn't define — layered on top of
      its --primary/--accent tokens, not a duplicate palette. */
   --mkt-primary-tint-05: rgb(232 94 94 / 5%);
@@ -25,6 +77,7 @@ html {
      fake macOS window chrome and a "stock level" bar illustration, never used to
      represent real app data. */
   --mkt-decorative-green: #28c840;
+  --mkt-decorative-green-tint: rgb(40 200 64 / 10%);
   --mkt-decorative-red-dot: #ff5f57;
   --mkt-decorative-yellow-dot: #febc2e;
 
@@ -236,7 +289,7 @@ html {
 .marketing-scope .hero-bg-shapes .shape-2 {
   width: 300px;
   height: 300px;
-  background: var(--accent);
+  background: var(--brand-tangerine);
   bottom: -80px;
   left: -60px;
   animation-delay: -5s;
@@ -309,7 +362,7 @@ html {
 }
 
 .marketing-scope .hero-title .highlight {
-  background: linear-gradient(135deg, var(--primary), var(--accent));
+  background: linear-gradient(135deg, var(--primary), var(--brand-tangerine));
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -504,7 +557,7 @@ html {
   background: var(--primary);
 }
 .marketing-scope .stock-med {
-  background: var(--accent);
+  background: var(--brand-tangerine);
 }
 .marketing-scope .stock-high {
   background: var(--mkt-decorative-green);
@@ -686,7 +739,7 @@ html {
   left: 0;
   right: 0;
   height: 3px;
-  background: linear-gradient(90deg, var(--primary), var(--accent));
+  background: linear-gradient(90deg, var(--primary), var(--brand-tangerine));
   opacity: 0;
   transition: opacity 0.4s;
 }
@@ -755,7 +808,7 @@ html {
   left: 12%;
   right: 12%;
   height: 2px;
-  background: linear-gradient(90deg, var(--primary), var(--accent), var(--primary));
+  background: linear-gradient(90deg, var(--primary), var(--brand-tangerine), var(--primary));
   opacity: 0.3;
 }
 
@@ -768,7 +821,7 @@ html {
   width: 56px;
   height: 56px;
   border-radius: 50%;
-  background: linear-gradient(135deg, var(--primary), var(--accent));
+  background: linear-gradient(135deg, var(--primary), var(--brand-tangerine));
   color: #fff;
   display: flex;
   align-items: center;
@@ -1032,7 +1085,7 @@ html {
 
 .marketing-scope .low-stock-row.tone-accent {
   background: var(--mkt-accent-tint-10);
-  border-left: 3px solid var(--accent);
+  border-left: 3px solid var(--brand-tangerine);
 }
 .marketing-scope .low-stock-row.tone-accent .low-stock-row-figures,
 .marketing-scope .low-stock-row.tone-accent .low-stock-row-reorder {
@@ -1054,7 +1107,7 @@ html {
   display: inline-flex;
   align-items: center;
   gap: 0.5rem;
-  background: linear-gradient(135deg, var(--primary), var(--accent));
+  background: linear-gradient(135deg, var(--primary), var(--brand-tangerine));
   color: #fff;
   padding: 0.6rem 1.5rem;
   border-radius: 50px;
@@ -1192,7 +1245,7 @@ html {
 }
 
 .marketing-scope .footer-col ul li a:hover {
-  color: var(--accent);
+  color: var(--brand-tangerine);
 }
 
 .marketing-scope .footer-col ul li .footer-link-inert {

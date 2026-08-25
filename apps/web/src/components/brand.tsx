@@ -122,7 +122,7 @@ export function AnbaroWordmark({
       style={{ alignItems: 'center', display: 'inline-flex', gap: size * 0.36 }}
     >
       <AnbaroMark gradientId={gradientId} size={size} />
-      <AnbaroLetters color={dark ? '#FFFFFF' : 'var(--text)'} size={size * 0.6} />
+      <AnbaroLetters color={dark ? 'var(--brand-on-night)' : 'var(--ink)'} size={size * 0.6} />
     </span>
   );
 }

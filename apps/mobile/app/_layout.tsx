@@ -6,6 +6,7 @@ import { useEffect } from 'react';
 
 import { fontAssets } from '../src/lib/fonts';
 import { initObservability } from '../src/lib/observability';
+import { ThemeProvider, useTheme } from '../src/lib/theme';
 
 // Error tracking (Sentry). Dormant until EXPO_PUBLIC_SENTRY_DSN is set, so this
 // is a no-op in local dev and any build without the DSN.
@@ -29,9 +30,27 @@ export default function RootLayout() {
   if (!fontsLoaded && !fontError) return null;
 
   return (
+    <ThemeProvider>
+      <ThemedRoot />
+    </ThemeProvider>
+  );
+}
+
+/**
+ * Inside the provider so the status bar and the stack background follow the
+ * active scheme live — a theme change re-renders this, no reload involved.
+ */
+function ThemedRoot() {
+  const { scheme, colors } = useTheme();
+  return (
     <>
-      <StatusBar style="dark" />
-      <Stack screenOptions={{ headerShown: false }} />
+      <StatusBar style={scheme === 'dark' ? 'light' : 'dark'} />
+      <Stack
+        screenOptions={{
+          headerShown: false,
+          contentStyle: { backgroundColor: colors.ground },
+        }}
+      />
     </>
   );
 }

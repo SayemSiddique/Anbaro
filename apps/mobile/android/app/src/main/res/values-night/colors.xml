@@ -1,1 +1,4 @@
-<resources/>
+<resources>
+  <color name="activityBackground">#0d0b0c</color>
+  <color name="statusBarBackground">#0d0b0c</color>
+</resources>

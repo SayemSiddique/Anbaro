@@ -1,8 +1,8 @@
 import type { Category, ItemWithStock, Location, StockEvent } from '@anbaro/contracts';
 import { ApiClientError, fitsStockQuantity } from '@anbaro/contracts';
-import { formatQuantity, packDescription, tokens, unitShortLabel } from '@anbaro/design-tokens';
+import { formatQuantity, packDescription, unitShortLabel } from '@anbaro/design-tokens';
 import { useCallback, useEffect, useState } from 'react';
-import { Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Platform, Pressable, ScrollView, Text, TextInput, View } from 'react-native';
 
 import { useMobileSession } from '../../src/components/app-shell';
 import { BarcodeScannerModal } from '../../src/components/barcode-scanner';
@@ -15,7 +15,7 @@ import {
   StockConditionBadge,
   UnitPicker,
 } from '../../src/components/ui';
-import { font } from '../../src/lib/fonts';
+import { makeStyles, text } from '../../src/lib/theme';
 
 type ScanTarget = 'lookup' | 'new-item';
 
@@ -27,6 +27,7 @@ function uuid() {
 }
 
 export default function ItemsScreen() {
+  const styles = useStyles();
   const { state, controller } = useMobileSession();
   const [categories, setCategories] = useState<Category[]>([]);
   const [locations, setLocations] = useState<Location[]>([]);
@@ -452,49 +453,48 @@ export default function ItemsScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles((c) => ({
   chipRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   content: { gap: 12, padding: 16 },
-  detail: { fontFamily: font.regular, color: tokens.color.textMuted, fontSize: 16, lineHeight: 23 },
+  detail: { ...text.body, color: c.inkMuted },
   detailHeader: { alignItems: 'center', flexDirection: 'row', gap: 10 },
-  history: { fontFamily: font.regular, color: tokens.color.text, lineHeight: 22 },
+  history: { ...text.body, color: c.ink },
   input: {
-    fontFamily: font.regular,
-    backgroundColor: tokens.color.surface,
-    borderColor: tokens.color.borderStrong,
+    ...text.body,
+    backgroundColor: c.surface,
+    borderColor: c.hairlineFirm,
     borderRadius: 6,
     borderWidth: 1,
-    fontSize: 16,
     minHeight: 48,
     paddingHorizontal: 12,
   },
   itemBody: { flex: 1, gap: 2 },
   itemCard: {
     alignItems: 'center',
-    backgroundColor: tokens.color.surface,
-    borderColor: tokens.color.border,
+    backgroundColor: c.surface,
+    borderColor: c.hairline,
     borderRadius: 10,
     borderWidth: 1,
     flexDirection: 'row',
     gap: 12,
     padding: 12,
   },
-  itemCardPressed: { backgroundColor: tokens.color.surfaceSubtle },
-  itemMeta: { fontFamily: font.regular, color: tokens.color.textMuted, fontSize: 13 },
-  itemName: { color: tokens.color.text, fontSize: 16, fontFamily: font.semibold },
-  itemQuantity: { color: tokens.color.text, fontSize: 16, fontFamily: font.bold },
+  itemCardPressed: { backgroundColor: c.surface2 },
+  itemMeta: { ...text.body, color: c.inkMuted },
+  itemName: { ...text.heading, color: c.ink },
+  itemQuantity: { ...text.numeric, color: c.ink },
   itemRight: { alignItems: 'flex-end', gap: 6 },
-  itemUnit: { color: tokens.color.textMuted, fontSize: 13, fontFamily: font.regular },
-  label: { color: tokens.color.text, fontFamily: font.bold },
+  itemUnit: { ...text.body, color: c.inkMuted },
+  label: { ...text.label, color: c.inkMuted },
   packInput: { flex: 1 },
   packRow: { alignItems: 'center', flexDirection: 'row', gap: 8 },
   panel: {
-    borderColor: tokens.color.border,
+    borderColor: c.hairline,
     borderRadius: 10,
     borderWidth: 1,
     gap: 10,
     padding: 12,
   },
-  section: { color: tokens.color.text, fontSize: 20, fontFamily: font.bold },
-  title: { color: tokens.color.text, fontSize: 28, fontFamily: font.bold },
-});
+  section: { ...text.title, color: c.ink },
+  title: { ...text.display, color: c.ink },
+}));

@@ -16,8 +16,8 @@ import { Reveal } from './reveal';
 const tints = {
   primary: { background: 'var(--mkt-primary-tint-10)', color: 'var(--primary)' },
   accent: { background: 'var(--mkt-accent-tint-15)', color: 'var(--accent)' },
-  green: { background: 'rgb(40 200 64 / 10%)', color: 'var(--mkt-decorative-green, #28c840)' },
-  muted: { background: 'rgb(68 65 64 / 10%)', color: 'var(--text-muted)' },
+  green: { background: 'var(--mkt-decorative-green-tint)', color: 'var(--mkt-decorative-green)' },
+  muted: { background: 'var(--surface-3)', color: 'var(--ink-muted)' },
 } as const;
 
 const features = [

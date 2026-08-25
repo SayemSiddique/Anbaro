@@ -2,11 +2,12 @@ import { ApiClientError, type Location, type TeamMembership } from '@anbaro/cont
 import { tokens } from '@anbaro/design-tokens';
 import { Users } from 'lucide-react-native';
 import { useCallback, useEffect, useState } from 'react';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ScrollView, Text, View } from 'react-native';
 
 import { useMobileSession } from '../../../src/components/app-shell';
 import { PrimaryButton, StatePanel } from '../../../src/components/ui';
 import { font } from '../../../src/lib/fonts';
+import { makeStyles, text, useTheme } from '../../../src/lib/theme';
 
 function scopeLabel(member: TeamMembership, locations: Location[]): string {
   if (member.allLocations) return 'All locations';
@@ -17,6 +18,8 @@ function scopeLabel(member: TeamMembership, locations: Location[]): string {
 }
 
 export default function TeamScreen() {
+  const { colors: c } = useTheme();
+  const styles = useStyles();
   const { controller, state } = useMobileSession();
   const [members, setMembers] = useState<TeamMembership[] | null>(null);
   const [locations, setLocations] = useState<Location[]>([]);
@@ -59,7 +62,7 @@ export default function TeamScreen() {
 
       {members?.length === 0 ? (
         <View style={styles.empty}>
-          <Users color={tokens.color.textMuted} size={32} strokeWidth={1.6} />
+          <Users color={c.inkMuted} size={32} strokeWidth={1.6} />
           <Text style={styles.emptyTitle}>No members found</Text>
           <Text style={styles.detail}>Invite teammates from the web app to see them here.</Text>
         </View>
@@ -85,17 +88,17 @@ export default function TeamScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles((c) => ({
   content: { gap: 12, marginHorizontal: 'auto', maxWidth: 640, padding: 16, width: '100%' },
   copy: { flex: 1, gap: 2 },
-  detail: { fontFamily: font.regular, color: tokens.color.textMuted, fontSize: 14, lineHeight: 20 },
+  detail: { ...text.body, color: c.inkMuted },
   empty: { alignItems: 'center', gap: 8, padding: 32 },
-  emptyTitle: { color: tokens.color.text, fontSize: 17, fontFamily: font.bold },
-  lede: { fontFamily: font.regular, color: tokens.color.textMuted, fontSize: 15, lineHeight: 22 },
+  emptyTitle: { ...text.heading, color: c.ink },
+  lede: { fontFamily: font.regular, color: c.inkMuted, fontSize: 15, lineHeight: 22 },
   panel: {
     alignItems: 'center',
-    backgroundColor: tokens.color.surface,
-    borderColor: tokens.color.border,
+    backgroundColor: c.surface,
+    borderColor: c.hairline,
     borderRadius: 10,
     borderWidth: 1,
     flexDirection: 'row',
@@ -103,14 +106,14 @@ const styles = StyleSheet.create({
     padding: 16,
   },
   roleBadge: {
-    backgroundColor: tokens.color.successSurface,
+    backgroundColor: c.goodWash,
     borderRadius: tokens.radius.full,
     paddingHorizontal: 10,
     paddingVertical: 4,
   },
-  roleBadgeRevoked: { backgroundColor: tokens.color.dangerSurface },
-  roleLabel: { color: tokens.color.success, fontSize: 13, fontFamily: font.semibold },
-  roleLabelRevoked: { color: tokens.color.danger },
-  rowTitle: { color: tokens.color.text, fontSize: 16, fontFamily: font.bold },
-  scope: { fontFamily: font.regular, color: tokens.color.textMuted, fontSize: 13, lineHeight: 18 },
-});
+  roleBadgeRevoked: { backgroundColor: c.badWash },
+  roleLabel: { ...text.label, color: c.good },
+  roleLabelRevoked: { color: c.bad },
+  rowTitle: { ...text.heading, color: c.ink },
+  scope: { ...text.label, color: c.inkMuted },
+}));

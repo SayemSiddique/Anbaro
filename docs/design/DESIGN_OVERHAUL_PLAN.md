@@ -1,6 +1,6 @@
 # Anbaro — Design Overhaul Plan (Master Doc)
 
-**Owner:** Sam · **Created:** 2026-08-24 · **Status:** ACTIVE — no sessions run yet
+**Owner:** Sam · **Created:** 2026-08-24 · **Status:** ACTIVE — D1 done, D2 next
 **Relationship to the launch plan:** the production rollout
 ([`PRODUCTION_LAUNCH_PLAN.md`](../operations/PRODUCTION_LAUNCH_PLAN.md)) is **paused
 at Session 2** (Neon go-live, credential-gated). This overhaul runs first. Neither
@@ -438,7 +438,7 @@ changes as work proceeds.
 
 | # | Session | Status | Date | Notes |
 | --- | --- | --- | --- | --- |
-| 1 | D1 — Token foundation | Not started | — | Gates everything |
+| 1 | D1 — Token foundation | **Done** | 2026-08-24 | Semantic light/dark on both platforms; mobile `ThemeProvider` + `makeStyles`; type scale applied. Gap: no small-body step below `body` 15px — see D2 handoff |
 | 2 | D2 — Count loop ⭐ | Not started | — | **Priority** — runs straight after D1 |
 | 3 | D3 — Component library | Not started | — | |
 | 4 | D4 — Information architecture | Not started | — | |

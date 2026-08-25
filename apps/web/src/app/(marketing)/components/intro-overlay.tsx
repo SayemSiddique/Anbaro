@@ -55,7 +55,7 @@ export function IntroOverlay() {
     >
       <div className="mkt-intro-lockup">
         <AnbaroMark animated gradientId="anbaro-intro" size={96} />
-        <AnbaroLetters className="mkt-intro-letters" color="#F7EBE8" size={44} />
+        <AnbaroLetters className="mkt-intro-letters" color="var(--brand-on-night)" size={44} />
       </div>
       <p className="mkt-intro-tagline">{brandTagline}</p>
     </div>

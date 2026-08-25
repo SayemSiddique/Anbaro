@@ -22,8 +22,8 @@ const items = [
   },
   {
     icon: Droplets,
-    tint: 'rgb(40 200 64 / 10%)',
-    color: 'var(--mkt-decorative-green, #28c840)',
+    tint: 'var(--mkt-decorative-green-tint)',
+    color: 'var(--mkt-decorative-green)',
     name: 'Hand Soap',
     qty: 156,
     low: false,
@@ -46,8 +46,8 @@ const items = [
   },
   {
     icon: SoapDispenserDroplet,
-    tint: 'rgb(40 200 64 / 10%)',
-    color: 'var(--mkt-decorative-green, #28c840)',
+    tint: 'var(--mkt-decorative-green-tint)',
+    color: 'var(--mkt-decorative-green)',
     name: 'Sanitizer',
     qty: 42,
     low: false,

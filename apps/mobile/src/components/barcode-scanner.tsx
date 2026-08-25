@@ -14,7 +14,7 @@ import {
 import { tokens } from '@anbaro/design-tokens';
 
 import { PrimaryButton, SecondaryButton } from './ui';
-import { font } from '../lib/fonts';
+import { alwaysDark, makeStyles, text } from '../lib/theme';
 
 // pnpm resolves a second @types/react for expo-camera, which breaks class-component
 // JSX checking. Re-typing the view with the props we use keeps checking sound here.
@@ -40,6 +40,7 @@ export function BarcodeScannerModal({
   onScanned: (barcode: string) => void;
   visible: boolean;
 }) {
+  const styles = useStyles();
   const [permission, requestPermission] = useCameraPermissions();
   const handled = useRef(false);
   const [torch, setTorch] = useState(false);
@@ -107,7 +108,7 @@ export function BarcodeScannerModal({
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles((c) => ({
   actions: {
     bottom: 40,
     flexDirection: 'row',
@@ -117,35 +118,25 @@ const styles = StyleSheet.create({
     position: 'absolute',
     right: 0,
   },
-  container: { backgroundColor: '#1E1E24', flex: 1 },
-  detail: {
-    fontFamily: font.regular,
-    color: tokens.color.textMuted,
-    fontSize: tokens.typography.fontSize.md,
-    lineHeight: 24,
-    textAlign: 'center',
-  },
+  // The viewfinder is a live camera feed — dark in both schemes.
+  container: { backgroundColor: alwaysDark.ground, flex: 1 },
+  detail: { ...text.body, color: c.inkMuted, textAlign: 'center' },
   frame: {
-    borderColor: '#FFFFFF',
+    borderColor: alwaysDark.ink,
     borderRadius: tokens.radius.lg,
     borderWidth: 3,
     height: 220,
     width: 280,
   },
   frameWrap: { alignItems: 'center', flex: 1, gap: tokens.spacing[4], justifyContent: 'center' },
-  hint: { color: '#FFFFFF', fontSize: tokens.typography.fontSize.md, fontFamily: font.semibold },
+  hint: { ...text.heading, color: alwaysDark.ink },
   permission: {
     alignItems: 'stretch',
-    backgroundColor: tokens.color.canvas,
+    backgroundColor: c.ground,
     flex: 1,
     gap: tokens.spacing[4],
     justifyContent: 'center',
     padding: tokens.spacing[6],
   },
-  title: {
-    color: tokens.color.text,
-    fontSize: tokens.typography.fontSize.xl,
-    fontFamily: font.bold,
-    textAlign: 'center',
-  },
-});
+  title: { ...text.title, color: c.ink, textAlign: 'center' },
+}));

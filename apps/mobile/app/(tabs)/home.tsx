@@ -1,14 +1,15 @@
 import { ApiClientError, type Location } from '@anbaro/contracts';
-import { tokens } from '@anbaro/design-tokens';
+
 import * as SecureStore from 'expo-secure-store';
 import { useCallback, useEffect, useState } from 'react';
-import { Alert, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Alert, Text, TextInput, View } from 'react-native';
 
 import { useMobileSession } from '../../src/components/app-shell';
 import { PrimaryButton, StatePanel } from '../../src/components/ui';
-import { font } from '../../src/lib/fonts';
+import { makeStyles, text } from '../../src/lib/theme';
 
 export default function HomeScreen() {
+  const styles = useStyles();
   const { state, controller, reload } = useMobileSession();
   const [locations, setLocations] = useState<Location[]>([]);
   // capacity === null means unlimited, which is always the case while Anbaro is free.
@@ -226,30 +227,29 @@ export default function HomeScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles((c) => ({
   actions: { flexDirection: 'row', gap: 8, marginTop: 8 },
-  detail: { fontFamily: font.regular, color: tokens.color.textMuted, fontSize: 16, lineHeight: 24 },
-  error: { color: tokens.color.danger },
+  detail: { ...text.body, color: c.inkMuted },
+  error: { color: c.bad },
   form: { gap: 12 },
   input: {
-    fontFamily: font.regular,
-    backgroundColor: tokens.color.surface,
-    borderColor: tokens.color.borderStrong,
+    ...text.body,
+    backgroundColor: c.surface,
+    borderColor: c.hairlineFirm,
     borderRadius: 6,
     borderWidth: 1,
-    fontSize: 16,
     minHeight: 48,
     paddingHorizontal: 12,
   },
   location: {
-    backgroundColor: tokens.color.surface,
-    borderColor: tokens.color.border,
+    backgroundColor: c.surface,
+    borderColor: c.hairline,
     borderRadius: 6,
     borderWidth: 1,
     padding: 12,
   },
-  locationTitle: { color: tokens.color.text, fontSize: 18, fontFamily: font.bold },
-  section: { color: tokens.color.text, fontSize: 20, fontFamily: font.bold, marginTop: 12 },
+  locationTitle: { ...text.title, color: c.ink },
+  section: { ...text.title, color: c.ink, marginTop: 12 },
   switcher: { gap: 8 },
-  title: { color: tokens.color.text, fontSize: 28, fontFamily: font.bold },
-});
+  title: { ...text.display, color: c.ink },
+}));

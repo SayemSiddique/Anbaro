@@ -1,12 +1,13 @@
 import { ApiClientError, type StockProposal } from '@anbaro/contracts';
-import { tokens } from '@anbaro/design-tokens';
+
 import { Check } from 'lucide-react-native';
 import { useCallback, useEffect, useState } from 'react';
-import { ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { ScrollView, Text, TextInput, View } from 'react-native';
 
 import { useMobileSession } from '../../../src/components/app-shell';
 import { Chip, PrimaryButton, SecondaryButton, StatePanel } from '../../../src/components/ui';
 import { font } from '../../../src/lib/fonts';
+import { makeStyles, text, useTheme } from '../../../src/lib/theme';
 
 type ProposedMovement = StockProposal['movements'][number];
 type RowState =
@@ -23,6 +24,8 @@ function uuid() {
 }
 
 export default function AssistantScreen() {
+  const { colors: c } = useTheme();
+  const styles = useStyles();
   const { state, controller } = useMobileSession();
   const [locations, setLocations] = useState<{ id: string; name: string }[]>([]);
   const [locationId, setLocationId] = useState('');
@@ -159,7 +162,7 @@ export default function AssistantScreen() {
         multiline
         onChangeText={setMessage}
         placeholder="e.g. we’re out of 15 limes, they spoiled"
-        placeholderTextColor={tokens.color.textMuted}
+        placeholderTextColor={c.inkMuted}
         style={[styles.input, styles.textArea]}
         value={message}
       />
@@ -211,7 +214,7 @@ export default function AssistantScreen() {
                 </View>
                 {applied ? (
                   <View style={styles.appliedRow}>
-                    <Check color={tokens.color.success} size={18} strokeWidth={2.2} />
+                    <Check color={c.good} size={18} strokeWidth={2.2} />
                     <Text style={styles.appliedText}>Applied · now {row.resultingQuantity}</Text>
                   </View>
                 ) : (
@@ -239,11 +242,11 @@ export default function AssistantScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles((c) => ({
   appliedRow: { alignItems: 'center', flexDirection: 'row', gap: 6 },
-  appliedText: { color: tokens.color.success, fontFamily: font.semibold, fontSize: 15 },
+  appliedText: { ...text.body, fontFamily: font.semibold, color: c.good },
   card: {
-    borderColor: tokens.color.border,
+    borderColor: c.hairline,
     borderRadius: 10,
     borderWidth: 1,
     gap: 8,
@@ -251,19 +254,18 @@ const styles = StyleSheet.create({
   },
   chipRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   content: { gap: 12, padding: 16 },
-  detail: { color: tokens.color.textMuted, fontFamily: font.regular, fontSize: 16, lineHeight: 23 },
-  errorText: { color: tokens.color.danger, fontFamily: font.regular },
+  detail: { ...text.body, color: c.inkMuted },
+  errorText: { ...text.body, color: c.bad },
   input: {
-    backgroundColor: tokens.color.surface,
-    borderColor: tokens.color.borderStrong,
+    ...text.body,
+    backgroundColor: c.surface,
+    borderColor: c.hairlineFirm,
     borderRadius: 6,
     borderWidth: 1,
-    fontFamily: font.regular,
-    fontSize: 16,
     minHeight: 48,
     paddingHorizontal: 12,
   },
-  label: { color: tokens.color.text, fontFamily: font.bold },
-  movementTitle: { color: tokens.color.text, fontFamily: font.bold, fontSize: 17 },
+  label: { ...text.label, color: c.inkMuted },
+  movementTitle: { ...text.heading, color: c.ink },
   textArea: { minHeight: 88, paddingTop: 12, textAlignVertical: 'top' },
-});
+}));

@@ -2,6 +2,8 @@ import type { Metadata, Viewport } from 'next';
 import localFont from 'next/font/local';
 import type { ReactNode } from 'react';
 
+import { themePrePaintScript } from '../lib/theme';
+
 import './globals.css';
 
 /**
@@ -27,12 +29,23 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: '#1E1E24',
+  // The browser chrome follows the theme: --ground from each ramp.
+  themeColor: [
+    { media: '(prefers-color-scheme: light)', color: '#fbf9f8' },
+    { media: '(prefers-color-scheme: dark)', color: '#0d0b0c' },
+  ],
 };
 
 export default function RootLayout({ children }: Readonly<{ children: ReactNode }>) {
   return (
-    <html className={snPro.variable} lang="en">
+    <html className={snPro.variable} lang="en" suppressHydrationWarning>
+      <head>
+        {/* Stamps data-theme before first paint so an explicitly chosen theme
+            never flashes the other one. Must run synchronously, ahead of the
+            stylesheet applying, which is why it is inlined rather than a
+            component effect. */}
+        <script dangerouslySetInnerHTML={{ __html: themePrePaintScript }} />
+      </head>
       <body>{children}</body>
     </html>
   );

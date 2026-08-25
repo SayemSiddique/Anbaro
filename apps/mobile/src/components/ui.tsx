@@ -1,11 +1,12 @@
 import { CircleAlert, Info, Package } from 'lucide-react-native';
 import type { PropsWithChildren, ReactNode } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, Text, View } from 'react-native';
 
 import { categoryIcons } from './category-icons';
 
 import {
   categoryVisual,
+  stockConditionColors,
   stockConditionLabels,
   tokens,
   unitsByKind,
@@ -14,12 +15,14 @@ import {
 
 import { AnbaroSplash } from './brand';
 import { font } from '../lib/fonts';
+import { makeStyles, text, useTheme, type ThemePreference } from '../lib/theme';
 
 export function PrimaryButton({
   children,
   disabled = false,
   onPress,
 }: PropsWithChildren<{ disabled?: boolean; onPress: () => void }>) {
+  const styles = useStyles();
   return (
     <Pressable
       accessibilityRole="button"
@@ -42,6 +45,7 @@ export function SecondaryButton({
   disabled = false,
   onPress,
 }: PropsWithChildren<{ disabled?: boolean; onPress: () => void }>) {
+  const styles = useStyles();
   return (
     <Pressable
       accessibilityRole="button"
@@ -70,6 +74,8 @@ export function StatePanel({
   title: string;
   tone?: 'error' | 'info';
 }) {
+  const { colors: c } = useTheme();
+  const styles = useStyles();
   const isError = tone === 'error';
   return (
     <View
@@ -79,9 +85,9 @@ export function StatePanel({
     >
       <View accessibilityElementsHidden>
         {isError ? (
-          <CircleAlert color={tokens.color.danger} size={22} strokeWidth={2.2} />
+          <CircleAlert color={c.bad} size={22} strokeWidth={2.2} />
         ) : (
-          <Info color={tokens.color.info} size={22} strokeWidth={2.2} />
+          <Info color={c.inkMuted} size={22} strokeWidth={2.2} />
         )}
       </View>
       <View style={styles.panelCopy}>
@@ -93,23 +99,23 @@ export function StatePanel({
   );
 }
 
-const conditionStyles: Record<StockCondition, { background: string; color: string }> = {
-  in_stock: { background: tokens.color.successSurface, color: tokens.color.success },
-  low_stock: { background: tokens.color.warningSurface, color: tokens.color.warning },
-  out_of_stock: { background: tokens.color.dangerSurface, color: tokens.color.danger },
-};
-
+/**
+ * The hue is the dot; the word stays in `ink`. A status colour on its own wash
+ * is a graphic, not text — see the contrast note in the token tests.
+ */
 export function StockConditionBadge({ condition }: { condition: StockCondition }) {
+  const { colors } = useTheme();
+  const styles = useStyles();
   const label = stockConditionLabels[condition];
-  const palette = conditionStyles[condition];
+  const status = stockConditionColors(condition, colors);
   return (
     <View
       accessibilityLabel={label}
       accessibilityRole="text"
-      style={[styles.badge, { backgroundColor: palette.background }]}
+      style={[styles.badge, { backgroundColor: status.background }]}
     >
-      <View style={[styles.badgeDot, { backgroundColor: palette.color }]} />
-      <Text style={[styles.badgeLabel, { color: palette.color }]}>{label}</Text>
+      <View style={[styles.badgeDot, { backgroundColor: status.foreground }]} />
+      <Text style={styles.badgeLabel}>{label}</Text>
     </View>
   );
 }
@@ -124,7 +130,8 @@ export function CategoryTile({
   name: string;
   size?: number;
 }) {
-  const visual = categoryVisual(name, icon);
+  const { scheme } = useTheme();
+  const visual = categoryVisual(name, icon, scheme);
   const Glyph = categoryIcons[visual.icon] ?? Package;
   return (
     <View
@@ -153,6 +160,7 @@ export function Chip({
   onPress: () => void;
   selected?: boolean;
 }) {
+  const styles = useStyles();
   return (
     <Pressable
       accessibilityRole="button"
@@ -165,6 +173,33 @@ export function Chip({
   );
 }
 
+const themePreferenceLabels: Record<ThemePreference, string> = {
+  light: 'Light',
+  dark: 'Dark',
+  system: 'System',
+};
+
+/**
+ * Light · Dark · System. Every themed screen re-renders on change — the whole
+ * point of routing colour through `makeStyles` rather than a frozen sheet.
+ */
+export function ThemeToggle() {
+  const { preference, setPreference } = useTheme();
+  const styles = useStyles();
+  return (
+    <View style={styles.chipRow}>
+      {(['light', 'dark', 'system'] as const).map((option) => (
+        <Chip
+          key={option}
+          label={themePreferenceLabels[option]}
+          onPress={() => setPreference(option)}
+          selected={preference === option}
+        />
+      ))}
+    </View>
+  );
+}
+
 /** Curated unit picker: kind headers with wrapping chips, shared catalog with web. */
 export function UnitPicker({
   onSelect,
@@ -173,6 +208,7 @@ export function UnitPicker({
   onSelect: (code: string) => void;
   selected: string;
 }) {
+  const styles = useStyles();
   return (
     <View style={{ gap: tokens.spacing[2] }}>
       {unitsByKind().map((group) => (
@@ -196,6 +232,7 @@ export function UnitPicker({
 
 /** Branded load screen shown while the secure session bootstraps. */
 export function LoadingPanel() {
+  const styles = useStyles();
   return (
     <View
       accessibilityLabel="Loading your Anbaro workspace"
@@ -207,7 +244,7 @@ export function LoadingPanel() {
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles((c) => ({
   action: { marginTop: tokens.spacing[4] },
   badge: {
     alignItems: 'center',
@@ -218,13 +255,10 @@ const styles = StyleSheet.create({
     paddingVertical: tokens.spacing[1],
   },
   badgeDot: { borderRadius: tokens.radius.full, height: 7, width: 7 },
-  badgeLabel: {
-    fontSize: tokens.typography.fontSize.sm,
-    fontFamily: font.semibold,
-  },
+  badgeLabel: { ...text.label, color: c.ink },
   button: {
     alignItems: 'center',
-    backgroundColor: tokens.color.primary,
+    backgroundColor: c.accent,
     borderRadius: tokens.radius.sm,
     justifyContent: 'center',
     minHeight: tokens.touchTarget.minimum,
@@ -232,15 +266,11 @@ const styles = StyleSheet.create({
     paddingVertical: tokens.spacing[2],
   },
   buttonDisabled: { opacity: 0.55 },
-  buttonPressed: { backgroundColor: tokens.color.primaryHover },
-  buttonText: {
-    color: tokens.color.primaryText,
-    fontSize: tokens.typography.fontSize.md,
-    fontFamily: font.semibold,
-  },
+  buttonPressed: { backgroundColor: c.accentStrong },
+  buttonText: { ...text.body, fontFamily: font.semibold, color: c.onAccent },
   chip: {
-    backgroundColor: tokens.color.surface,
-    borderColor: tokens.color.border,
+    backgroundColor: c.surface,
+    borderColor: c.hairline,
     borderRadius: tokens.radius.full,
     borderWidth: 1,
     minHeight: 36,
@@ -248,22 +278,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: tokens.spacing[3],
     paddingVertical: tokens.spacing[1],
   },
-  chipLabel: {
-    fontFamily: font.regular,
-    color: tokens.color.text,
-    fontSize: tokens.typography.fontSize.sm,
-  },
-  chipLabelSelected: { color: tokens.color.primaryText, fontFamily: font.semibold },
+  chipLabel: { ...text.body, color: c.ink },
+  chipLabelSelected: { fontFamily: font.semibold, color: c.onAccent },
   chipRow: { flexDirection: 'row', flexWrap: 'wrap', gap: tokens.spacing[2] },
-  chipSelected: { backgroundColor: tokens.color.primary, borderColor: tokens.color.primary },
-  unitKind: {
-    color: tokens.color.textMuted,
-    fontSize: tokens.typography.fontSize.xs,
-    fontFamily: font.bold,
-    letterSpacing: 0.4,
-    textTransform: 'uppercase',
-  },
-  errorPanel: { backgroundColor: tokens.color.dangerSurface },
+  chipSelected: { backgroundColor: c.accent, borderColor: c.accent },
+  unitKind: { ...text.label, color: c.inkMuted },
+  errorPanel: { backgroundColor: c.badWash },
   loading: {
     alignItems: 'center',
     flex: 1,
@@ -273,29 +293,19 @@ const styles = StyleSheet.create({
   },
   panel: {
     alignItems: 'flex-start',
-    backgroundColor: tokens.color.infoSurface,
+    backgroundColor: c.surface2,
     borderRadius: tokens.radius.md,
     flexDirection: 'row',
     gap: tokens.spacing[3],
     padding: tokens.spacing[4],
   },
   panelCopy: { flex: 1 },
-  panelDetail: {
-    fontFamily: font.regular,
-    color: tokens.color.textMuted,
-    fontSize: tokens.typography.fontSize.md,
-    lineHeight: 24,
-    marginTop: tokens.spacing[1],
-  },
-  panelTitle: {
-    color: tokens.color.text,
-    fontSize: tokens.typography.fontSize.lg,
-    fontFamily: font.bold,
-  },
+  panelDetail: { ...text.body, color: c.inkMuted, marginTop: tokens.spacing[1] },
+  panelTitle: { ...text.heading, color: c.ink },
   secondaryButton: {
     alignItems: 'center',
-    backgroundColor: tokens.color.surface,
-    borderColor: tokens.color.borderStrong,
+    backgroundColor: c.surface,
+    borderColor: c.hairlineFirm,
     borderRadius: tokens.radius.sm,
     borderWidth: 1,
     justifyContent: 'center',
@@ -303,10 +313,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: tokens.spacing[4],
     paddingVertical: tokens.spacing[2],
   },
-  secondaryButtonPressed: { backgroundColor: tokens.color.surfaceSubtle },
-  secondaryButtonText: {
-    color: tokens.color.text,
-    fontSize: tokens.typography.fontSize.md,
-    fontFamily: font.semibold,
-  },
-});
+  secondaryButtonPressed: { backgroundColor: c.surface2 },
+  secondaryButtonText: { ...text.body, fontFamily: font.semibold, color: c.ink },
+}));

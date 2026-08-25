@@ -1,17 +1,18 @@
 import { Stack } from 'expo-router';
 
-import { tokens } from '@anbaro/design-tokens';
 import { font } from '../../../src/lib/fonts';
+import { useTheme } from '../../../src/lib/theme';
 
 export default function MoreLayout() {
+  const { colors: c } = useTheme();
   return (
     <Stack
       screenOptions={{
-        contentStyle: { backgroundColor: tokens.color.canvas },
+        contentStyle: { backgroundColor: c.ground },
         headerShadowVisible: false,
-        headerStyle: { backgroundColor: tokens.color.surface },
-        headerTintColor: tokens.color.primary,
-        headerTitleStyle: { color: tokens.color.text, fontFamily: font.bold },
+        headerStyle: { backgroundColor: c.surface },
+        headerTintColor: c.accent,
+        headerTitleStyle: { color: c.ink, fontFamily: font.bold },
       }}
     >
       <Stack.Screen name="index" options={{ title: 'More' }} />

@@ -35,6 +35,16 @@ describe('categoryVisual', () => {
     expect(visual.accent).toMatch(/^#/);
   });
 
+  it('derives a dark tile for the same category without changing the icon', () => {
+    const light = categoryVisual('Fresh Produce');
+    const dark = categoryVisual('Fresh Produce', null, 'dark');
+    expect(dark.icon).toBe(light.icon);
+    expect(dark.background).not.toBe(light.background);
+    // The dark tile must sit near the dark ground, not glow like the light one.
+    const lightness = (hex: string) => parseInt(hex.slice(1, 3), 16) + parseInt(hex.slice(5, 7), 16);
+    expect(lightness(dark.background)).toBeLessThan(lightness(light.background));
+  });
+
   it('never emits emoji anywhere in the icon vocabulary', () => {
     for (const name of categoryIconNames) {
       expect(name).toMatch(/^[A-Za-z0-9]+$/);

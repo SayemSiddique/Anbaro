@@ -2,12 +2,12 @@ import type { CountSession, CountSessionSummary, Location } from '@anbaro/contra
 import { ApiClientError, fitsStockQuantity } from '@anbaro/contracts';
 import { tokens } from '@anbaro/design-tokens';
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { ScrollView, Text, TextInput, View } from 'react-native';
 
 import { useMobileSession } from '../../src/components/app-shell';
 import { PrimaryButton, StatePanel } from '../../src/components/ui';
 import type { CountQueueSnapshot } from '../../src/lib/count-offline-queue';
-import { font } from '../../src/lib/fonts';
+import { makeStyles, numericText, text } from '../../src/lib/theme';
 
 const emptyQueue: CountQueueSnapshot = { pending: [], conflicts: [] };
 
@@ -23,6 +23,7 @@ function userMessage(error: unknown) {
 }
 
 export default function CountsShellScreen() {
+  const styles = useStyles();
   const { controller, state } = useMobileSession();
   const [sessions, setSessions] = useState<CountSessionSummary[]>([]);
   const [locations, setLocations] = useState<Location[]>([]);
@@ -206,6 +207,7 @@ function CountWorkspace({
   queue: CountQueueSnapshot;
   session: CountSession;
 }) {
+  const styles = useStyles();
   const [index, setIndex] = useState(() =>
     Math.max(
       0,
@@ -336,6 +338,7 @@ function CountSummary({
   session: CountSession;
   setError: (value: string) => void;
 }) {
+  const styles = useStyles();
   const unresolved = session.lineCount - session.acceptedCount;
   const isInProgress = session.status === 'in_progress';
   async function resolve(action: () => Promise<{ data: CountSession }>) {
@@ -443,6 +446,7 @@ function OfflineWriteStatus({
   onQueueChanged: (queue: CountQueueSnapshot) => void;
   queue: CountQueueSnapshot;
 }) {
+  const styles = useStyles();
   return (
     <>
       {queue.pending.length ? (
@@ -475,91 +479,61 @@ function OfflineWriteStatus({
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles((c) => ({
   card: {
-    backgroundColor: tokens.color.surface,
-    borderColor: tokens.color.border,
+    backgroundColor: c.surface,
+    borderColor: c.hairline,
     borderRadius: tokens.radius.md,
     borderWidth: 1,
     gap: tokens.spacing[2],
     padding: tokens.spacing[4],
   },
-  cardTitle: {
-    color: tokens.color.text,
-    fontSize: tokens.typography.fontSize.lg,
-    fontFamily: font.bold,
-  },
+  cardTitle: { ...text.heading, color: c.ink },
   conflictCard: {
-    backgroundColor: tokens.color.warningSurface,
-    borderColor: tokens.color.warning,
+    backgroundColor: c.warnWash,
+    borderColor: c.warn,
     borderRadius: tokens.radius.md,
     borderWidth: 1,
     gap: tokens.spacing[3],
     padding: tokens.spacing[4],
   },
   container: { gap: tokens.spacing[4], paddingBottom: tokens.spacing[8] },
-  detail: {
-    fontFamily: font.regular,
-    color: tokens.color.textMuted,
-    fontSize: tokens.typography.fontSize.md,
-    lineHeight: 24,
-  },
-  error: {
-    fontFamily: font.regular,
-    color: tokens.color.danger,
-    fontSize: tokens.typography.fontSize.sm,
-  },
+  detail: { ...text.body, color: c.inkMuted },
+  error: { ...text.body, color: c.bad },
   focusCard: {
-    backgroundColor: tokens.color.surface,
-    borderColor: tokens.color.border,
+    backgroundColor: c.surface,
+    borderColor: c.hairline,
     borderRadius: tokens.radius.lg,
     borderWidth: 1,
     gap: tokens.spacing[4],
     padding: tokens.spacing[6],
   },
-  focusTitle: {
-    color: tokens.color.text,
-    fontSize: tokens.typography.fontSize['2xl'],
-    fontFamily: font.bold,
-  },
+  focusTitle: { ...text.display, color: c.ink },
   header: { alignItems: 'flex-start', gap: tokens.spacing[3] },
   headerCopy: { gap: tokens.spacing[1] },
-  notice: {
-    fontFamily: font.regular,
-    color: tokens.color.success,
-    fontSize: tokens.typography.fontSize.sm,
-  },
-  progressFill: { backgroundColor: tokens.color.primary, height: 8 },
+  notice: { ...text.body, color: c.good },
+  progressFill: { backgroundColor: c.accent, height: 8 },
   progressTrack: {
-    backgroundColor: tokens.color.surfaceSubtle,
+    backgroundColor: c.surface2,
     borderRadius: tokens.radius.full,
     overflow: 'hidden',
   },
   quantityInput: {
-    borderColor: tokens.color.primary,
+    ...numericText(40),
+    borderColor: c.accent,
     borderRadius: tokens.radius.md,
     borderWidth: 2,
-    color: tokens.color.text,
-    fontSize: 40,
-    fontFamily: font.bold,
+    color: c.ink,
     minHeight: 96,
     paddingHorizontal: tokens.spacing[4],
     textAlign: 'center',
   },
-  sectionTitle: {
-    color: tokens.color.text,
-    fontSize: tokens.typography.fontSize.xl,
-    fontFamily: font.bold,
-  },
+  sectionTitle: { ...text.title, color: c.ink },
   submission: {
-    borderColor: tokens.color.border,
+    borderColor: c.hairline,
     borderTopWidth: 1,
     gap: tokens.spacing[2],
     paddingTop: tokens.spacing[2],
   },
-  title: {
-    color: tokens.color.text,
-    fontSize: tokens.typography.fontSize['2xl'],
-    fontFamily: font.bold,
-  },
-});
+  title: { ...text.display, color: c.ink },
+}));

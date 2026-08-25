@@ -1,14 +1,16 @@
 import { ApiClientError, type ReorderSuggestion } from '@anbaro/contracts';
-import { formatQuantity, tokens, unitShortLabel } from '@anbaro/design-tokens';
+import { formatQuantity, unitShortLabel } from '@anbaro/design-tokens';
 import { ClipboardCheck, Truck } from 'lucide-react-native';
 import { useCallback, useEffect, useState } from 'react';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ScrollView, Text, View } from 'react-native';
 
 import { useMobileSession } from '../../../src/components/app-shell';
 import { PrimaryButton, SecondaryButton, StatePanel } from '../../../src/components/ui';
-import { font } from '../../../src/lib/fonts';
+import { makeStyles, text, useTheme } from '../../../src/lib/theme';
 
 export default function ReorderScreen() {
+  const { colors: c } = useTheme();
+  const styles = useStyles();
   const { controller, state } = useMobileSession();
   const [suggestions, setSuggestions] = useState<ReorderSuggestion[] | null>(null);
   const [error, setError] = useState('');
@@ -64,7 +66,7 @@ export default function ReorderScreen() {
 
       {suggestions?.length === 0 ? (
         <View style={styles.empty}>
-          <ClipboardCheck color={tokens.color.textMuted} size={32} strokeWidth={1.6} />
+          <ClipboardCheck color={c.inkMuted} size={32} strokeWidth={1.6} />
           <Text style={styles.emptyTitle}>Nothing to review</Text>
           <Text style={styles.detail}>
             All items are above their par levels. New suggestions appear here when stock runs low.
@@ -81,7 +83,7 @@ export default function ReorderScreen() {
           </Text>
           {suggestion.primarySupplierName ? (
             <View style={styles.supplierRow}>
-              <Truck color={tokens.color.textMuted} size={15} strokeWidth={2} />
+              <Truck color={c.inkMuted} size={15} strokeWidth={2} />
               <Text style={styles.detail}>{suggestion.primarySupplierName}</Text>
             </View>
           ) : null}
@@ -109,22 +111,22 @@ export default function ReorderScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles((c) => ({
   actionButton: { flex: 1 },
   actions: { flexDirection: 'row', gap: 10, marginTop: 4 },
   content: { gap: 12, marginHorizontal: 'auto', maxWidth: 640, padding: 16, width: '100%' },
-  detail: { fontFamily: font.regular, color: tokens.color.textMuted, fontSize: 15, lineHeight: 22 },
+  detail: { ...text.body, color: c.inkMuted },
   empty: { alignItems: 'center', gap: 8, padding: 32 },
-  emptyTitle: { color: tokens.color.text, fontSize: 17, fontFamily: font.bold },
-  lede: { fontFamily: font.regular, color: tokens.color.textMuted, fontSize: 15, lineHeight: 22 },
+  emptyTitle: { ...text.heading, color: c.ink },
+  lede: { ...text.body, color: c.inkMuted },
   panel: {
-    backgroundColor: tokens.color.surface,
-    borderColor: tokens.color.border,
+    backgroundColor: c.surface,
+    borderColor: c.hairline,
     borderRadius: 10,
     borderWidth: 1,
     gap: 6,
     padding: 16,
   },
-  rowTitle: { color: tokens.color.text, fontSize: 16, fontFamily: font.bold },
+  rowTitle: { ...text.heading, color: c.ink },
   supplierRow: { alignItems: 'center', flexDirection: 'row', gap: 6 },
-});
+}));

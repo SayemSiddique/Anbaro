@@ -3,9 +3,17 @@ import {
   type LinearGradientProps,
 } from 'expo-linear-gradient';
 import { useEffect, useRef, type ComponentType } from 'react';
-import { Animated, StyleSheet, Text, View } from 'react-native';
-import { brandTagline, markBoxes, markGradient, markViewBox } from '@anbaro/design-tokens';
+import { Animated, Text, View } from 'react-native';
+import {
+  brandTagline,
+  markBoxes,
+  markBoxFill,
+  markBoxStroke,
+  markGradient,
+  markViewBox,
+} from '@anbaro/design-tokens';
 import { font } from '../lib/fonts';
+import { alwaysDark, makeStyles, text, useTheme } from '../lib/theme';
 
 /**
  * Class components from node_modules trip TS2786 under this app's React 19
@@ -22,6 +30,7 @@ const LinearGradient = LinearGradientClass as unknown as ComponentType<LinearGra
  * from the shared 130-unit geometry so the proportions match the web mark.
  */
 export function AnbaroMark({ size = 48 }: { size?: number }) {
+  const styles = useStyles();
   const unit = size / markViewBox.width;
   const stroke = Math.max(1.5, size * 0.035);
   return (
@@ -35,8 +44,8 @@ export function AnbaroMark({ size = 48 }: { size?: number }) {
         <View
           key={index}
           style={{
-            backgroundColor: 'rgba(255,255,255,0.16)',
-            borderColor: '#FFFFFF',
+            backgroundColor: markBoxFill,
+            borderColor: markBoxStroke,
             borderRadius: box.rx * unit,
             borderWidth: stroke,
             height: box.height * unit,
@@ -56,13 +65,17 @@ export function AnbaroMark({ size = 48 }: { size?: number }) {
  * ExtraBold — the same cut the web's wordmark paths are generated from
  * (see tools/generate-wordmark.mjs) — so the lockup matches across platforms.
  */
-export function AnbaroWordmark({ size = 40, dark = false }: { size?: number; dark?: boolean }) {
+export function AnbaroWordmark({ size = 40, onDark = false }: { size?: number; onDark?: boolean }) {
+  const { colors } = useTheme();
+  const styles = useStyles();
   return (
     <View style={styles.wordmark}>
       <AnbaroMark size={size} />
       <Text
         style={{
-          color: dark ? '#FFFFFF' : '#1E1E24',
+          // `onDark` is for a wordmark sitting on the brand plate or another
+          // permanently dark surface; everywhere else it follows the theme.
+          color: onDark ? alwaysDark.ink : colors.ink,
           fontSize: size * 0.6,
           fontFamily: font.extrabold,
           letterSpacing: size * 0.02,
@@ -79,6 +92,7 @@ export function AnbaroWordmark({ size = 40, dark = false }: { size?: number; dar
  * rise beneath it. Shown while the secure session bootstraps.
  */
 export function AnbaroSplash({ tagline = brandTagline }: { tagline?: string }) {
+  const styles = useStyles();
   const markScale = useRef(new Animated.Value(0.7)).current;
   const markOpacity = useRef(new Animated.Value(0)).current;
   const nameShift = useRef(new Animated.Value(10)).current;
@@ -128,7 +142,7 @@ export function AnbaroSplash({ tagline = brandTagline }: { tagline?: string }) {
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles((c) => ({
   plate: {
     alignItems: 'flex-start',
     justifyContent: 'flex-start',
@@ -141,19 +155,17 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   splashName: {
-    color: '#1E1E24',
-    fontSize: 32,
-    fontFamily: font.extrabold,
+    ...text.display,
+    color: c.ink,
     // All-caps wordmark breathes with slight positive tracking (matches the
     // generated logo paths' tracking rather than lowercase-style tightening).
     letterSpacing: 0.6,
   },
   tagline: {
-    color: '#6D6663',
+    ...text.label,
+    color: c.inkMuted,
     fontSize: 13,
-    fontFamily: font.semibold,
     letterSpacing: 3,
-    textTransform: 'uppercase',
   },
   wordmark: {
     alignItems: 'center',
@@ -161,4 +173,4 @@ const styles = StyleSheet.create({
     gap: 12,
     justifyContent: 'center',
   },
-});
+}));
