@@ -1,6 +1,6 @@
 # Anbaro — Design Overhaul Plan (Master Doc)
 
-**Owner:** Sam · **Created:** 2026-08-24 · **Status:** ACTIVE — D1, D2 and D3 done, D4 next
+**Owner:** Sam · **Created:** 2026-08-24 · **Status:** ACTIVE — D1–D4 done, D5 next
 **Relationship to the launch plan:** the production rollout
 ([`PRODUCTION_LAUNCH_PLAN.md`](../operations/PRODUCTION_LAUNCH_PLAN.md)) is **paused
 at Session 2** (Neon go-live, credential-gated). This overhaul runs first. Neither
@@ -251,11 +251,20 @@ paired elements share identical curve and duration.
 | Inventory: Assistant, Items, Counts, Locations | **Stock:** Items · Counts · Locations |
 | Purchasing: Suppliers, Reorder | **Purchasing:** Suppliers · Reorder |
 | Insights: Reports, Notifications | Reports → command palette; Notifications → **topbar badge + panel** |
-| Workspace: Team, Billing, Help, Settings | → **account menu** (avatar, bottom-left) |
+| Workspace: Team, Help, Settings | → **account menu** (avatar, bottom-left) |
+| Workspace: Billing | **dropped from navigation** — Anbaro is free (Sam, 2026-08-24) |
 | — | **Assistant** → a mode via ⌘K, not a destination |
 
 Everything removed from the sidebar stays reachable in one keystroke via the
 command palette, which also searches items, locations, and actions.
+
+**Billing** is the one exception, resolved in D4: `navigation.test.tsx` asserts
+that nothing links to `/billing` while Anbaro is free, and Sam ruled the test
+authoritative over this table's original Workspace row. The route still exists
+and still answers on a direct URL — only the links are gone. Restoring it is a
+one-line change to `destinations` in `navigation.tsx` if plans ever ship.
+
+**Help** is labelled **Support Anbaro** in the account menu, per the same test.
 
 **Mobile — kill the junk drawer.** Tab bar becomes
 `Today · Items · [Scan] · Counts · Menu`, with **Scan promoted to the centre**
@@ -450,6 +459,6 @@ changes as work proceeds.
 | 1 | D1 — Token foundation | **Done** | 2026-08-24 | Semantic light/dark on both platforms; mobile `ThemeProvider` + `makeStyles`; type scale applied. Gap: no small-body step below `body` 15px — see D2 handoff |
 | 2 | D2 — Count loop ⭐ | **Done** | 2026-08-24 | On-screen keypad, live delta, location gate, scan-to-jump, jump sheet, commit pulse + haptics, A3 fixed. 20-item count verified on device. Barcode scan-to-jump still needs a physical device (no simulator camera) |
 | 3 | D3 — Component library | **Done** | 2026-08-24 | 14 new primitives + DataTable; `compact` added to §5.2 (Sam's call); prose loading gone from every feature; 37 tests green. Two pre-existing `navigation.test.tsx` failures assert D4's target IA — D4 fixes them |
-| 4 | D4 — Information architecture | Not started | — | |
+| 4 | D4 — Information architecture | **Done** | 2026-08-24 | Sidebar 13 → 6; command palette (⌘K / `/`); account menu bottom-left; notifications as topbar badge + panel; Billing dropped (Sam's call). Mobile: Scan promoted to tab-bar centre, Alerts folded out of the bar, `more/` regrouped into three headed groups. `compact`/`compactStrong` landed in the shared tokens — D3 had added them to §5.2 and web CSS only. Both `navigation.test.tsx` failures fixed without editing the test; 57 web tests green |
 | 5 | D5 — Screen migration | Not started | — | Split into batches if needed |
 | 6 | D6 — Motion and finish | Not started | — | |

@@ -1,16 +1,33 @@
 'use client';
 
+/**
+ * The web application shell and its information architecture.
+ *
+ * Thirteen sidebar destinations became six. The other seven did not disappear —
+ * they moved to the surface that fits them:
+ *
+ *   · six real destinations   → the sidebar (Today, Stock, Purchasing)
+ *   · Notifications           → a topbar badge and panel
+ *   · Settings, Team, Support → the account menu, bottom-left
+ *   · Reports, Assistant      → the command palette (⌘K)
+ *
+ * `getWebNavigation` still returns every destination a person may reach, gated
+ * by permission exactly as before; the `slot` on each item says which surface
+ * renders it. Keeping one gated list rather than three means a permission
+ * change can never leave one surface out of step with another.
+ */
+
 import type { CurrentUser } from '@anbaro/contracts';
 import {
   Bell,
   ClipboardCheck,
-  CreditCard,
   FileSpreadsheet,
   LayoutDashboard,
   LifeBuoy,
   LogOut,
   MapPin,
   Package,
+  Search,
   Settings,
   ShoppingCart,
   Sparkles,
@@ -18,13 +35,15 @@ import {
   Users,
   type LucideIcon,
 } from 'lucide-react';
-
-import { ThemeToggle } from './theme-toggle';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import type { ReactNode } from 'react';
+import { useMemo, type ReactNode } from 'react';
 
 import { AnbaroWordmark } from './brand';
+import { CommandPalette, useCommandPalette, type CommandItem } from './command-palette';
+import { NotificationBell } from './notifications';
+import { Menu } from './overlay';
+import { ThemeToggle } from './theme-toggle';
 
 export type ShellRole = 'owner' | 'manager' | 'server' | 'custom';
 export type ShellPermission =
@@ -37,6 +56,8 @@ export type ShellPermission =
   | 'reports:read'
   | 'notification:read'
   | 'user:manage'
+  // Still a real server-side permission; no longer a navigation one. Anbaro is
+  // free, so nothing links to billing (navigation.test.tsx pins this).
   | 'billing:manage'
   | 'assistant:use'
   | 'settings:read';
@@ -46,63 +67,51 @@ export type ShellAccess = {
   permissions: ReadonlySet<ShellPermission>;
 };
 
-export type NavigationItem = { id: string; label: string; href: string; section?: string };
+/** Which surface renders an item. Absent means the sidebar. */
+export type NavigationSlot = 'primary' | 'topbar' | 'account';
+
+export type NavigationItem = {
+  id: string;
+  label: string;
+  href: string;
+  section?: string;
+  slot?: NavigationSlot;
+};
 
 const icons: Record<string, LucideIcon> = {
-  dashboard: LayoutDashboard,
+  today: LayoutDashboard,
   assistant: Sparkles,
   locations: MapPin,
   items: Package,
-  imports: FileSpreadsheet,
   counts: ClipboardCheck,
   suppliers: Truck,
   reorder: ShoppingCart,
   reports: FileSpreadsheet,
   notifications: Bell,
   team: Users,
-  billing: CreditCard,
   support: LifeBuoy,
   settings: Settings,
 };
 
-const primaryNavigation: Array<
-  NavigationItem & { permission?: ShellPermission; ownerOnly?: boolean }
-> = [
-  {
-    id: 'dashboard',
-    label: 'Dashboard',
-    href: '/dashboard',
-    permission: 'dashboard:read',
-    section: 'Overview',
-  },
-  {
-    id: 'assistant',
-    label: 'Assistant',
-    href: '/assistant',
-    permission: 'assistant:use',
-    section: 'Inventory',
-  },
-  {
-    id: 'items',
-    label: 'Items',
-    href: '/items',
-    permission: 'item:read',
-    section: 'Inventory',
-  },
-  {
-    id: 'counts',
-    label: 'Counts',
-    href: '/counts',
-    permission: 'count:read',
-    section: 'Inventory',
-  },
+/**
+ * Order matters twice over: it is the sidebar's reading order, and it is the
+ * order `getWebNavigation` returns, which navigation.test.tsx asserts.
+ */
+const destinations: Array<NavigationItem & { permission?: ShellPermission }> = [
+  // The route keeps its `/dashboard` path; only the label changes. "Today"
+  // answers the question the screen actually answers — what needs me now.
+  { id: 'today', label: 'Today', href: '/dashboard', permission: 'dashboard:read' },
+
+  { id: 'items', label: 'Items', href: '/items', permission: 'item:read', section: 'Stock' },
+  { id: 'counts', label: 'Counts', href: '/counts', permission: 'count:read', section: 'Stock' },
   {
     id: 'locations',
     label: 'Locations',
     href: '/locations',
     permission: 'location:read',
-    section: 'Inventory',
+    section: 'Stock',
   },
+
   {
     id: 'suppliers',
     label: 'Suppliers',
@@ -112,57 +121,28 @@ const primaryNavigation: Array<
   },
   {
     id: 'reorder',
-    label: 'Reorder suggestions',
+    label: 'Reorder',
     href: '/reorder',
     permission: 'reorder:read',
     section: 'Purchasing',
   },
-  {
-    id: 'reports',
-    label: 'Reports',
-    href: '/reports',
-    permission: 'reports:read',
-    section: 'Insights',
-  },
+
   {
     id: 'notifications',
     label: 'Notifications',
     href: '/alerts',
     permission: 'notification:read',
-    section: 'Insights',
+    slot: 'topbar',
   },
-  {
-    id: 'team',
-    label: 'Team',
-    href: '/team',
-    permission: 'user:manage',
-    section: 'Workspace',
-  },
-  {
-    id: 'billing',
-    label: 'Plans & billing',
-    href: '/billing',
-    permission: 'billing:manage',
-    ownerOnly: true,
-    section: 'Workspace',
-  },
-  {
-    id: 'support',
-    label: 'Help',
-    href: '/support',
-    section: 'Workspace',
-  },
-  {
-    id: 'settings',
-    label: 'Settings',
-    href: '/settings',
-    permission: 'settings:read',
-    section: 'Workspace',
-  },
+
+  // Support carries no permission: Anbaro is free and anyone may support it.
+  { id: 'support', label: 'Support Anbaro', href: '/support', slot: 'account' },
+  { id: 'settings', label: 'Settings', href: '/settings', permission: 'settings:read', slot: 'account' },
+  { id: 'team', label: 'Team', href: '/team', permission: 'user:manage', slot: 'account' },
 ];
 
 const roleDefaults: Record<ShellRole, ReadonlySet<ShellPermission>> = {
-  owner: new Set(primaryNavigation.flatMap((item) => (item.permission ? [item.permission] : []))),
+  owner: new Set(destinations.flatMap((item) => (item.permission ? [item.permission] : []))),
   manager: new Set([
     'dashboard:read',
     'location:read',
@@ -182,18 +162,58 @@ const roleDefaults: Record<ShellRole, ReadonlySet<ShellPermission>> = {
 /** Presentation-only gate. The server remains the authority for every route. */
 export function getWebNavigation(access: ShellAccess): NavigationItem[] {
   const permissions = access.role === 'custom' ? access.permissions : roleDefaults[access.role];
-  return primaryNavigation
-    .filter(
-      (item) =>
-        !item.ownerOnly || access.role === 'owner' || access.permissions.has('billing:manage'),
-    )
+  return destinations
     .filter(
       (item) =>
         !item.permission ||
         permissions.has(item.permission) ||
         access.permissions.has(item.permission),
     )
-    .map(({ id, label, href, section }) => ({ id, label, href, ...(section ? { section } : {}) }));
+    .map(({ id, label, href, section, slot }) => ({
+      id,
+      label,
+      href,
+      ...(section ? { section } : {}),
+      ...(slot ? { slot } : {}),
+    }));
+}
+
+/**
+ * The palette's static half: every destination the person may reach, plus the
+ * two things that lost their sidebar slot and live here alone.
+ */
+export function getCommandItems(
+  navigation: NavigationItem[],
+  access: { permissions: ReadonlySet<string> },
+): CommandItem[] {
+  const destinationCommands = navigation.map<CommandItem>((item) => ({
+    group: item.slot === 'account' ? 'Account' : 'Go to',
+    href: item.href,
+    icon: icons[item.id] ?? Package,
+    id: `go-${item.id}`,
+    label: item.label,
+    ...(item.section ? { hint: item.section } : {}),
+  }));
+  const extras: CommandItem[] = [];
+  if (access.permissions.has('reports:read'))
+    extras.push({
+      group: 'Go to',
+      href: '/reports',
+      icon: FileSpreadsheet,
+      id: 'go-reports',
+      keywords: 'loss spoilage shrinkage insights analytics',
+      label: 'Reports',
+    });
+  if (access.permissions.has('assistant:use'))
+    extras.push({
+      group: 'Actions',
+      href: '/assistant',
+      icon: Sparkles,
+      id: 'open-assistant',
+      keywords: 'ai natural language stock movement',
+      label: 'Open the assistant',
+    });
+  return [...destinationCommands, ...extras];
 }
 
 function initials(name: string): string {
@@ -210,19 +230,56 @@ function initials(name: string): string {
 export function WebApplicationShell({
   children,
   currentUser,
+  loadNotifications,
+  markNotificationRead,
   navigation,
+  onNavigate,
   onSignOut,
+  permissions,
   organizationName,
   organizationSwitcher,
+  searchWorkspace,
 }: {
   children: ReactNode;
   currentUser: CurrentUser;
+  loadNotifications?: (() => Promise<import('@anbaro/contracts').Notification[]>) | undefined;
+  markNotificationRead?: ((id: string) => Promise<unknown>) | undefined;
   navigation: NavigationItem[];
+  /**
+   * Client-side routing, injected rather than imported. The shell holds no
+   * router of its own, which keeps it renderable in a test with nothing but
+   * `usePathname` mocked.
+   */
+  onNavigate?: ((href: string) => void) | undefined;
+  /**
+   * The person's real permissions, for the two palette entries that have no
+   * sidebar item to be inferred from (Reports and the assistant).
+   */
+  permissions?: ReadonlySet<string> | undefined;
   onSignOut?: (() => void) | undefined;
   organizationName?: string | undefined;
   organizationSwitcher?: ReactNode | undefined;
+  searchWorkspace?: ((query: string) => Promise<CommandItem[]>) | undefined;
 }) {
   const pathname = usePathname();
+  const palette = useCommandPalette();
+
+  const primary = navigation.filter((item) => (item.slot ?? 'primary') === 'primary');
+  const accountItems = navigation.filter((item) => item.slot === 'account');
+  const notifications = navigation.find((item) => item.slot === 'topbar');
+
+  const granted = useMemo(() => permissions ?? new Set<string>(), [permissions]);
+  const commands = useMemo(
+    () => getCommandItems(navigation, { permissions: granted }),
+    [granted, navigation],
+  );
+
+  const navigate =
+    onNavigate ??
+    ((href: string) => {
+      window.location.href = href;
+    });
+
   let lastSection: string | undefined;
   return (
     <div className="app-frame">
@@ -235,7 +292,7 @@ export function WebApplicationShell({
         </Link>
         <nav aria-label="Primary navigation" style={{ display: 'contents' }}>
           <ul className="sidebar-nav" style={{ listStyle: 'none', margin: 0, padding: 0 }}>
-            {navigation.map((item) => {
+            {primary.map((item) => {
               const Icon = icons[item.id] ?? Package;
               const heading =
                 item.section && item.section !== lastSection ? (
@@ -264,17 +321,41 @@ export function WebApplicationShell({
           </ul>
         </nav>
         <div className="sidebar-footer">
-          {onSignOut ? (
-            <button
-              className="nav-link"
-              onClick={onSignOut}
-              style={{ background: 'none', border: 0, cursor: 'pointer', width: '100%' }}
-              type="button"
-            >
-              <LogOut size={17} />
-              <span>Sign out</span>
-            </button>
-          ) : null}
+          <Menu
+            actions={[
+              ...accountItems.map((item) => ({
+                icon: (() => {
+                  const Icon = icons[item.id] ?? Package;
+                  return <Icon size={16} strokeWidth={2} />;
+                })(),
+                label: item.label,
+                onSelect: () => navigate(item.href),
+              })),
+              ...(onSignOut
+                ? [
+                    'separator' as const,
+                    {
+                      icon: <LogOut size={16} strokeWidth={2} />,
+                      label: 'Sign out',
+                      onSelect: onSignOut,
+                    },
+                  ]
+                : []),
+            ]}
+            align="start"
+            label={`Signed in as ${currentUser.name}`}
+            trigger={
+              <span className="account-trigger">
+                <span aria-hidden="true" className="avatar">
+                  {initials(currentUser.name)}
+                </span>
+                <span className="account-trigger-copy">
+                  <span className="account-trigger-name">{currentUser.name}</span>
+                  <span className="account-trigger-org">{organizationName ?? 'Workspace'}</span>
+                </span>
+              </span>
+            }
+          />
         </div>
       </aside>
       <div style={{ minWidth: 0 }}>
@@ -287,19 +368,38 @@ export function WebApplicationShell({
             )}
           </div>
           <div className="topbar-user">
+            <button
+              className="topbar-search"
+              onClick={() => palette.setOpen(true)}
+              type="button"
+            >
+              <Search aria-hidden="true" size={16} />
+              <span>Search</span>
+              <kbd className="palette-kbd">⌘K</kbd>
+            </button>
+            {notifications ? (
+              <NotificationBell
+                href={notifications.href}
+                load={loadNotifications}
+                markRead={markNotificationRead}
+                onNavigate={navigate}
+              />
+            ) : null}
             <ThemeToggle />
-            <p aria-label={`Signed in as ${currentUser.name}`} style={{ fontWeight: 500 }}>
-              {currentUser.name}
-            </p>
-            <span aria-hidden="true" className="avatar">
-              {initials(currentUser.name)}
-            </span>
           </div>
         </header>
         <main className="page" id="main-content">
           {children}
         </main>
       </div>
+      <CommandPalette
+        assistantHref={commands.some((item) => item.id === 'open-assistant') ? '/assistant' : undefined}
+        commands={commands}
+        onClose={() => palette.setOpen(false)}
+        onNavigate={navigate}
+        open={palette.open}
+        searchWorkspace={searchWorkspace}
+      />
     </div>
   );
 }

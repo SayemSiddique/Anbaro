@@ -30,7 +30,7 @@ import { createPortal } from 'react-dom';
 const FOCUSABLE =
   'a[href],button:not([disabled]),input:not([disabled]),select:not([disabled]),textarea:not([disabled]),[tabindex]:not([tabindex="-1"])';
 
-function focusableWithin(root: HTMLElement | null): HTMLElement[] {
+export function focusableWithin(root: HTMLElement | null): HTMLElement[] {
   if (!root) return [];
   // Deliberately not an `offsetParent` check: that reads as null for everything
   // in an environment without layout, which would silently switch the trap off.
@@ -45,7 +45,7 @@ function focusableWithin(root: HTMLElement | null): HTMLElement[] {
  * to whatever held it before. Without the restore, closing a dialog drops focus
  * on <body> and a keyboard user starts the page over.
  */
-function useFocusScope(ref: RefObject<HTMLElement | null>, active: boolean) {
+export function useFocusScope(ref: RefObject<HTMLElement | null>, active: boolean) {
   useEffect(() => {
     if (!active) return;
     const previous = document.activeElement as HTMLElement | null;
@@ -79,7 +79,7 @@ function useFocusScope(ref: RefObject<HTMLElement | null>, active: boolean) {
 }
 
 /** Escape anywhere, or a pointer outside `ref`, closes. */
-function useDismissable(
+export function useDismissable(
   ref: RefObject<HTMLElement | null>,
   active: boolean,
   onDismiss: () => void,
@@ -107,7 +107,7 @@ function useDismissable(
 }
 
 /** Freezes the page behind a modal so the scrim doesn't scroll with a wheel. */
-function useScrollLock(active: boolean) {
+export function useScrollLock(active: boolean) {
   useEffect(() => {
     if (!active) return;
     const previous = document.body.style.overflow;
@@ -124,7 +124,7 @@ function useScrollLock(active: boolean) {
  * render that opened it — so the focus scope has to wait for this rather than
  * reaching for a ref that is still null.
  */
-function useMounted(): boolean {
+export function useMounted(): boolean {
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
   return mounted;

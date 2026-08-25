@@ -157,6 +157,10 @@ export const typeScale = {
   heading: { fontSize: 16, fontWeight: 700, letterSpacing: 0, lineHeight: 1.35 },
   /** Running text. */
   body: { fontSize: 15, fontWeight: 400, letterSpacing: 0, lineHeight: 1.6 },
+  /** Dense rows, table cells, secondary meta. */
+  compact: { fontSize: 13, fontWeight: 400, letterSpacing: 0, lineHeight: 1.45 },
+  /** The emphasised cell in a dense row — the item name. */
+  compactStrong: { fontSize: 13, fontWeight: 600, letterSpacing: 0, lineHeight: 1.45 },
   /** Field and column labels. */
   label: { fontSize: 11, fontWeight: 700, letterSpacing: 0.1, lineHeight: 1.3, uppercase: true },
   /** All quantities. */

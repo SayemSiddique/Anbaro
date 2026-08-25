@@ -181,7 +181,7 @@ function nativeTextStyle(step: TypeStep): TextStyle {
 }
 
 /**
- * The six type steps from the plan's §5.2, as React Native text styles.
+ * The seven type steps from the plan's §5.2, as React Native text styles.
  * Colourless on purpose — spread one in, then set `color` from `c`:
  *   title: { ...text.title, color: c.ink }
  */
@@ -190,6 +190,8 @@ export const text = {
   title: nativeTextStyle(typeScale.title),
   heading: nativeTextStyle(typeScale.heading),
   body: nativeTextStyle(typeScale.body),
+  compact: nativeTextStyle(typeScale.compact),
+  compactStrong: nativeTextStyle(typeScale.compactStrong),
   label: nativeTextStyle(typeScale.label),
   numeric: nativeTextStyle(typeScale.numeric),
 } as const;

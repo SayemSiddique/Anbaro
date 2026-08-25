@@ -111,7 +111,7 @@ describe('design tokens', () => {
     expect(contrast(colorSchemes.light.bad, colorSchemes.light.accent)).toBeGreaterThan(1.4);
   });
 
-  it('fixes A9 — six distinct type steps with real separation', () => {
+  it('fixes A9 — seven distinct type steps with real separation', () => {
     const sizes = Object.values(typeScale).map((step) => step.fontSize);
     expect(new Set(sizes).size).toBeGreaterThanOrEqual(5);
     expect(typeScale.display.fontSize).toBe(32);
@@ -122,6 +122,17 @@ describe('design tokens', () => {
     expect(typeScale.label.uppercase).toBe(true);
     // Every quantity goes through the mono/tabular step.
     expect(typeScale.numeric.numeric).toBe(true);
+  });
+
+  it('gives dense rows a step of their own between label and body', () => {
+    // Without this, anything denser than running text has to fake a size —
+    // which is what D2's mobile rows and web's .data-table both did.
+    expect(typeScale.compact.fontSize).toBe(13);
+    expect(typeScale.compactStrong.fontSize).toBe(13);
+    expect(typeScale.compact.fontWeight).toBe(400);
+    expect(typeScale.compactStrong.fontWeight).toBe(600);
+    expect(typeScale.compact.fontSize).toBeGreaterThan(typeScale.label.fontSize);
+    expect(typeScale.compact.fontSize).toBeLessThan(typeScale.body.fontSize);
   });
 
   it('pairs each stock condition with text rather than color alone', () => {

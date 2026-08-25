@@ -2,6 +2,7 @@ import { ApiClientError, type NotificationPreference } from '@anbaro/contracts';
 import { tokens } from '@anbaro/design-tokens';
 import { Link, type Href } from 'expo-router';
 import {
+  Bell,
   ChevronRight,
   ClipboardCheck,
   Sparkles,
@@ -20,7 +21,6 @@ import {
   StatePanel,
   ThemeToggle,
 } from '../../../src/components/ui';
-import { font } from '../../../src/lib/fonts';
 import { makeStyles, text, useTheme } from '../../../src/lib/theme';
 
 const channelLabels: Record<'in_app' | 'email' | 'push', string> = {
@@ -29,43 +29,72 @@ const channelLabels: Record<'in_app' | 'email' | 'push', string> = {
   push: 'Push notifications',
 };
 
-const operationsLinks: {
+type MenuLink = {
   href: Href;
   icon: LucideIcon;
   title: string;
   detail: string;
   permission?: string;
-}[] = [
+};
+
+/**
+ * Six unlabelled rows in one list is a junk drawer: nothing tells you where to
+ * look, so you read all of it every time. The same rows under three headings
+ * are three short lists, and you only read the one you need.
+ */
+const menuGroups: { title: string; links: MenuLink[] }[] = [
   {
-    href: '/more/assistant',
-    icon: Sparkles,
-    title: 'Assistant',
-    detail: 'Turn a plain-language update into stock movements.',
-    permission: 'assistant:use',
+    title: 'Purchasing',
+    links: [
+      {
+        href: '/more/reorder',
+        icon: ClipboardCheck,
+        title: 'Reorder review',
+        detail: 'Approve or dismiss suggested orders.',
+      },
+      {
+        href: '/more/suppliers',
+        icon: Truck,
+        title: 'Suppliers',
+        detail: 'Reference contacts for ordering.',
+      },
+    ],
   },
   {
-    href: '/more/reorder',
-    icon: ClipboardCheck,
-    title: 'Reorder review',
-    detail: 'Approve or dismiss suggested orders.',
+    title: 'Insights',
+    links: [
+      {
+        // Alerts gave up its tab to Today; this is where the full history lives.
+        href: '/alerts',
+        icon: Bell,
+        title: 'Alerts',
+        detail: 'Every low-stock and count alert, oldest to newest.',
+      },
+      {
+        href: '/more/reports',
+        icon: TrendingDown,
+        title: 'Loss reports',
+        detail: 'Spoilage, theft, breakage, miscount.',
+      },
+      {
+        href: '/more/assistant',
+        icon: Sparkles,
+        title: 'Assistant',
+        detail: 'Turn a plain-language update into stock movements.',
+        permission: 'assistant:use',
+      },
+    ],
   },
   {
-    href: '/more/suppliers',
-    icon: Truck,
-    title: 'Suppliers',
-    detail: 'Reference contacts for ordering.',
-  },
-  {
-    href: '/more/reports',
-    icon: TrendingDown,
-    title: 'Loss reports',
-    detail: 'Spoilage, theft, breakage, miscount.',
-  },
-  {
-    href: '/more/team',
-    icon: Users,
-    title: 'Team',
-    detail: 'Members and their roles.',
+    title: 'People',
+    links: [
+      {
+        href: '/more/team',
+        icon: Users,
+        title: 'Team',
+        detail: 'Members and their roles.',
+      },
+    ],
   },
 ];
 
@@ -121,33 +150,39 @@ export default function MoreScreen() {
     (candidate) => candidate.organizationId === state.user.activeOrganizationId,
   );
   const permissions = new Set(membership?.permissions ?? []);
-  const visibleOperationsLinks = operationsLinks.filter(
-    (link) => !link.permission || permissions.has(link.permission),
-  );
+  const visibleGroups = menuGroups
+    .map((group) => ({
+      ...group,
+      links: group.links.filter((link) => !link.permission || permissions.has(link.permission)),
+    }))
+    // A heading with nothing under it is worse than no heading.
+    .filter((group) => group.links.length > 0);
   return (
     <ScrollView contentContainerStyle={styles.content}>
-      <View style={styles.panel}>
-        <Text accessibilityRole="header" style={styles.section}>
-          Operations
-        </Text>
-        {visibleOperationsLinks.map(({ href, icon: Icon, title, detail }) => (
-          <Link asChild href={href} key={title}>
-            <Pressable
-              accessibilityRole="button"
-              style={({ pressed }) => [styles.linkRow, pressed && styles.linkRowPressed]}
-            >
-              <View style={styles.linkIcon}>
-                <Icon color={c.accent} size={20} strokeWidth={2} />
-              </View>
-              <View style={styles.linkCopy}>
-                <Text style={styles.linkTitle}>{title}</Text>
-                <Text style={styles.linkDetail}>{detail}</Text>
-              </View>
-              <ChevronRight color={c.inkMuted} size={18} strokeWidth={2} />
-            </Pressable>
-          </Link>
-        ))}
-      </View>
+      {visibleGroups.map((group) => (
+        <View key={group.title} style={styles.panel}>
+          <Text accessibilityRole="header" style={styles.section}>
+            {group.title}
+          </Text>
+          {group.links.map(({ href, icon: Icon, title, detail }) => (
+            <Link asChild href={href} key={title}>
+              <Pressable
+                accessibilityRole="button"
+                style={({ pressed }) => [styles.linkRow, pressed && styles.linkRowPressed]}
+              >
+                <View style={styles.linkIcon}>
+                  <Icon color={c.accent} size={20} strokeWidth={2} />
+                </View>
+                <View style={styles.linkCopy}>
+                  <Text style={styles.linkTitle}>{title}</Text>
+                  <Text style={styles.linkDetail}>{detail}</Text>
+                </View>
+                <ChevronRight color={c.inkMuted} size={18} strokeWidth={2} />
+              </Pressable>
+            </Link>
+          ))}
+        </View>
+      ))}
 
       <View style={styles.panel}>
         <Text accessibilityRole="header" style={styles.section}>
@@ -231,9 +266,9 @@ export default function MoreScreen() {
 
 const useStyles = makeStyles((c) => ({
   content: { gap: 12, marginHorizontal: 'auto', maxWidth: 640, padding: 16, width: '100%' },
-  detail: { fontFamily: font.regular, color: c.inkMuted, fontSize: 16, lineHeight: 23 },
+  detail: { ...text.body, color: c.inkMuted },
   linkCopy: { flex: 1, gap: 2 },
-  linkDetail: { ...text.body, color: c.inkMuted },
+  linkDetail: { ...text.compact, color: c.inkMuted },
   linkIcon: {
     alignItems: 'center',
     backgroundColor: c.surface2,

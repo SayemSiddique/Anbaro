@@ -1,9 +1,10 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { useEffect, type ReactNode } from 'react';
+import { useCallback, useEffect, useMemo, type ReactNode } from 'react';
 
 import { SplashScreen } from '../../components/brand';
+import { workspaceSearcher } from '../../components/command-palette';
 import {
   getWebNavigation,
   WebApplicationShell,
@@ -15,7 +16,16 @@ import { SessionProvider, useSession } from '../../lib/session';
 
 function AppShell({ children }: { children: ReactNode }) {
   const router = useRouter();
-  const { state, reload, signOut, activeMembership } = useSession();
+  const { state, reload, signOut, activeMembership, api, permissions } = useSession();
+
+  // The palette searches the workspace; the bell reads notifications. Both are
+  // injected so the shell itself stays free of the API client.
+  const searchWorkspace = useMemo(() => workspaceSearcher(api), [api]);
+  const loadNotifications = useCallback(
+    () => api.getNotifications().then((response) => response.data),
+    [api],
+  );
+  const markNotificationRead = useCallback((id: string) => api.markNotificationRead(id), [api]);
 
   useEffect(() => {
     if (state.kind === 'signed-out') router.replace('/login');
@@ -52,8 +62,13 @@ function AppShell({ children }: { children: ReactNode }) {
   return (
     <WebApplicationShell
       currentUser={state.user}
+      loadNotifications={loadNotifications}
+      markNotificationRead={markNotificationRead}
       navigation={navigation}
+      onNavigate={(href) => router.push(href)}
       onSignOut={() => void signOut().then(() => router.replace('/login'))}
+      permissions={permissions}
+      searchWorkspace={searchWorkspace}
       organizationName={activeMembership?.organizationName}
       organizationSwitcher={
         state.user.memberships.length > 1 ? <OrganizationSwitcher /> : undefined
