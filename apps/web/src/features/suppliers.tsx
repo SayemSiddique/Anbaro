@@ -13,6 +13,8 @@ import {
   Field,
   Input,
   Select,
+  LoadingAnnouncement,
+  PageSkeleton,
   StatePanel,
 } from '../components/ui';
 import { apiErrorMessage, useSession } from '../lib/session';
@@ -95,7 +97,12 @@ export function SuppliersFeature() {
   }
 
   if (loading)
-    return <StatePanel title="Loading suppliers">Loading suppliers and mappings…</StatePanel>;
+    return (
+      <>
+        <LoadingAnnouncement label="Loading suppliers and mappings" />
+        <PageSkeleton body="list" />
+      </>
+    );
 
   return (
     <div className="stack">

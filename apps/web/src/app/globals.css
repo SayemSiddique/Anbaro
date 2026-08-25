@@ -44,7 +44,7 @@
 
   --scrim: rgb(26 23 25 / 0.55);
 
-  /* Type scale — six steps (plan §5.2). Quantities go through --type-numeric-*
+  /* Type scale — seven steps (plan §5.2). Quantities go through --type-numeric
      so decimals align down a column. */
   --type-display: 800 32px/1.15 var(--font-sans);
   --type-display-tracking: -0.04em;
@@ -52,6 +52,11 @@
   --type-title-tracking: -0.03em;
   --type-heading: 700 16px/1.35 var(--font-sans);
   --type-body: 400 15px/1.6 var(--font-sans);
+  /* The dense step (plan §5.2, added D3). Table cells, list rows, secondary
+     meta — anything tighter than running text. `-strong` is the same size at
+     600 for the one emphasised cell in a row. */
+  --type-compact: 400 13px/1.45 var(--font-sans);
+  --type-compact-strong: 600 13px/1.45 var(--font-sans);
   --type-label: 700 11px/1.3 var(--font-sans);
   --type-label-tracking: 0.1em;
   --type-numeric: 600 15px/1.4 var(--font-mono);
@@ -64,9 +69,15 @@
   --shadow-lg: 0 20px 40px -12px rgb(16 24 40 / 0.18);
   --sidebar-width: 252px;
   /* SN Pro is the only brand typeface; the system stack is fallback-only.
-     --font-sn-pro is injected by next/font in the root layout. */
+     --font-sn-pro is injected by next/font in the root layout.
+     The inner fallback is load-bearing: a bare `var(--font-sn-pro)` makes the
+     whole declaration invalid whenever that variable is missing, which cascades
+     into every `--type-*` token that names --font-sans and silently drops the
+     entire scale to 16 px Times. With the fallback, a missing brand face costs
+     the brand face and nothing else. */
   --font-sans:
-    var(--font-sn-pro), system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    var(--font-sn-pro, ui-sans-serif), system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI',
+    sans-serif;
   --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
 
   /* The five locked brand shades. Only the logo, the marketing surfaces, and
@@ -217,6 +228,14 @@ small {
   font: var(--type-label);
   letter-spacing: var(--type-label-tracking);
   text-transform: uppercase;
+}
+
+/* Dense rows and secondary meta. */
+.compact {
+  font: var(--type-compact);
+}
+.compact-strong {
+  font: var(--type-compact-strong);
 }
 
 /* Every quantity. Tabular figures so decimals line up down a column — the
@@ -460,6 +479,63 @@ a {
   font-variant-numeric: tabular-nums;
   letter-spacing: -0.02em;
 }
+/* A tile's value takes the status hue directly: it is a number at 26 px, not a
+   label on a wash, so it clears AA on its own. */
+.stat-tile-good {
+  color: var(--good);
+}
+.stat-tile-warn {
+  color: var(--warn);
+}
+.stat-tile-bad {
+  color: var(--bad);
+}
+
+/* ---------- Page header, panels, avatars ---------- */
+
+.page-header-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.state-panel {
+  align-items: flex-start;
+  display: flex;
+  gap: 12px;
+}
+.state-panel-mark {
+  flex-shrink: 0;
+  height: 26px;
+  justify-content: center;
+  padding: 0;
+  width: 26px;
+}
+.state-panel-title {
+  font: var(--type-heading);
+}
+.state-panel-detail {
+  color: var(--ink-muted);
+  margin-top: 4px;
+}
+.state-panel-action {
+  margin-top: 14px;
+}
+
+.category-avatar {
+  align-items: center;
+  border-radius: var(--radius-sm);
+  display: inline-flex;
+  flex-shrink: 0;
+  justify-content: center;
+}
+.category-avatar-sm {
+  height: 30px;
+  width: 30px;
+}
+.category-avatar-md {
+  height: 40px;
+  width: 40px;
+}
 
 /* ---------- Buttons ---------- */
 
@@ -473,6 +549,7 @@ a {
   font-size: 14px;
   gap: 8px;
   justify-content: center;
+  min-height: 44px;
   padding: 9px 16px;
   text-decoration: none;
   transition:
@@ -611,7 +688,7 @@ a {
 }
 .data-table {
   border-collapse: collapse;
-  font-size: 13.5px;
+  font: var(--type-compact);
   min-width: 640px;
   width: 100%;
 }
@@ -887,6 +964,838 @@ a {
   .page {
     padding: 18px;
   }
+}
+
+/* ==========================================================================
+   D3 — component library.
+   Every class below is part of a component's contract: the primitive owns the
+   class, the feature owns nothing. No feature should set `style` to reach any
+   of this. Motion here is transform/opacity only, ≤180 ms, and yields to the
+   prefers-reduced-motion block at the foot of this file (plan §5.3).
+   ========================================================================== */
+
+/* ---------- Quiet button ----------
+   The escape hatch for the "exactly one filled primary per view" rule. Its
+   mobile twin is QuietButton in apps/mobile/src/components/ui.tsx — same name,
+   same two emphases, same job: a real action that does not compete. */
+
+.quiet-btn {
+  align-items: center;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  color: var(--ink-muted);
+  cursor: pointer;
+  display: inline-flex;
+  font: var(--type-compact-strong);
+  gap: 6px;
+  justify-content: center;
+  min-height: 34px;
+  padding: 6px 10px;
+  transition:
+    background 140ms cubic-bezier(0.4, 0, 0.2, 1),
+    color 140ms cubic-bezier(0.4, 0, 0.2, 1);
+  white-space: nowrap;
+}
+.quiet-btn:hover:not(:disabled) {
+  background: var(--surface-2);
+  color: var(--ink);
+}
+.quiet-btn:active:not(:disabled) {
+  background: var(--surface-3);
+}
+.quiet-btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+.quiet-btn-tinted {
+  background: var(--accent-wash);
+  color: var(--accent);
+}
+.quiet-btn-tinted:hover:not(:disabled) {
+  background: var(--accent-wash);
+  color: var(--accent-strong);
+}
+
+/* ---------- Overlay layer (Dialog, Sheet) ---------- */
+
+.scrim {
+  position: fixed;
+  inset: 0;
+  background: var(--scrim);
+  animation: overlay-fade 180ms cubic-bezier(0.32, 0.72, 0, 1);
+  z-index: 60;
+}
+@keyframes overlay-fade {
+  from {
+    opacity: 0;
+  }
+}
+
+.overlay-positioner {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  z-index: 61;
+  pointer-events: none;
+}
+.overlay-positioner > * {
+  pointer-events: auto;
+}
+.overlay-center {
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+.overlay-right {
+  justify-content: flex-end;
+}
+.overlay-bottom {
+  align-items: flex-end;
+}
+
+.dialog-panel {
+  background: var(--surface);
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+  display: flex;
+  flex-direction: column;
+  max-height: min(84vh, 720px);
+  width: min(100%, 520px);
+  animation: dialog-in 180ms cubic-bezier(0.32, 0.72, 0, 1);
+}
+.dialog-panel-sm {
+  width: min(100%, 400px);
+}
+.dialog-panel-lg {
+  width: min(100%, 760px);
+}
+@keyframes dialog-in {
+  from {
+    opacity: 0;
+    transform: scale(0.97);
+  }
+}
+
+.sheet-panel {
+  background: var(--surface);
+  border: 1px solid var(--hairline);
+  box-shadow: var(--shadow-lg);
+  display: flex;
+  flex-direction: column;
+}
+.sheet-right {
+  border-radius: var(--radius-lg) 0 0 var(--radius-lg);
+  height: 100%;
+  width: min(100%, 440px);
+  animation: sheet-in-right 180ms cubic-bezier(0.32, 0.72, 0, 1);
+}
+.sheet-bottom {
+  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+  max-height: 86vh;
+  width: 100%;
+  animation: sheet-in-bottom 180ms cubic-bezier(0.32, 0.72, 0, 1);
+}
+@keyframes sheet-in-right {
+  from {
+    transform: translateX(100%);
+  }
+}
+@keyframes sheet-in-bottom {
+  from {
+    transform: translateY(100%);
+  }
+}
+.sheet-grip {
+  align-self: center;
+  background: var(--hairline-firm);
+  border-radius: 999px;
+  height: 4px;
+  margin-top: 8px;
+  width: 36px;
+}
+
+.overlay-header {
+  align-items: flex-start;
+  border-bottom: 1px solid var(--hairline);
+  display: flex;
+  gap: 16px;
+  justify-content: space-between;
+  padding: 18px 20px 14px;
+}
+.overlay-header p {
+  color: var(--ink-muted);
+  font: var(--type-compact);
+  margin-top: 4px;
+}
+.overlay-body {
+  overflow-y: auto;
+  padding: 20px;
+}
+.overlay-footer {
+  align-items: center;
+  border-top: 1px solid var(--hairline);
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+  padding: 14px 20px;
+}
+.overlay-close {
+  align-items: center;
+  background: transparent;
+  border: none;
+  border-radius: var(--radius-sm);
+  color: var(--ink-muted);
+  cursor: pointer;
+  display: inline-flex;
+  height: 32px;
+  justify-content: center;
+  transition: background 140ms cubic-bezier(0.4, 0, 0.2, 1);
+  width: 32px;
+}
+.overlay-close:hover {
+  background: var(--surface-2);
+  color: var(--ink);
+}
+
+/* ---------- Toast ----------
+   Bottom-right on desktop, full width above the thumb on a phone. */
+
+.toast-region {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: min(360px, calc(100vw - 40px));
+  z-index: 70;
+}
+@media (max-width: 640px) {
+  .toast-region {
+    left: 16px;
+    right: 16px;
+    width: auto;
+  }
+}
+.toast {
+  align-items: flex-start;
+  background: var(--surface);
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-lg);
+  display: flex;
+  gap: 10px;
+  padding: 12px 12px 12px 14px;
+  animation: toast-in 180ms cubic-bezier(0.32, 0.72, 0, 1);
+}
+@keyframes toast-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+}
+.toast-dot {
+  border-radius: 999px;
+  flex-shrink: 0;
+  height: 8px;
+  margin-top: 6px;
+  width: 8px;
+  background: var(--ink-faint);
+}
+.toast-success .toast-dot {
+  background: var(--good);
+}
+.toast-error .toast-dot {
+  background: var(--bad);
+}
+.toast-body {
+  flex: 1;
+  min-width: 0;
+}
+.toast-title {
+  font: var(--type-compact-strong);
+}
+.toast-detail {
+  color: var(--ink-muted);
+  font: var(--type-compact);
+  margin-top: 2px;
+}
+
+/* ---------- Tooltip ----------
+   Supplementary only. Nothing a person must read to act lives in here. */
+
+.tooltip-anchor {
+  display: inline-flex;
+  position: relative;
+}
+.tooltip-bubble {
+  background: var(--ink);
+  border-radius: var(--radius-sm);
+  bottom: calc(100% + 8px);
+  color: var(--ground);
+  font: var(--type-compact);
+  left: 50%;
+  padding: 6px 9px;
+  pointer-events: none;
+  position: absolute;
+  transform: translateX(-50%);
+  white-space: nowrap;
+  z-index: 65;
+  animation: tooltip-in 140ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+@keyframes tooltip-in {
+  from {
+    opacity: 0;
+  }
+}
+
+/* ---------- Menu & popover ---------- */
+
+.popover-anchor {
+  display: inline-flex;
+  position: relative;
+}
+.menu-surface {
+  background: var(--surface);
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-lg);
+  min-width: 190px;
+  padding: 5px;
+  position: absolute;
+  top: calc(100% + 6px);
+  z-index: 65;
+  animation: menu-in 140ms cubic-bezier(0.32, 0.72, 0, 1);
+}
+.menu-start {
+  left: 0;
+}
+.menu-end {
+  right: 0;
+}
+@keyframes menu-in {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+}
+.menu-item {
+  align-items: center;
+  background: transparent;
+  border: none;
+  border-radius: var(--radius-sm);
+  color: var(--ink);
+  cursor: pointer;
+  display: flex;
+  font: var(--type-compact);
+  gap: 9px;
+  padding: 8px 10px;
+  text-align: left;
+  width: 100%;
+}
+.menu-item:hover:not(:disabled),
+.menu-item:focus-visible {
+  background: var(--surface-2);
+}
+.menu-item:disabled {
+  color: var(--ink-faint);
+  cursor: not-allowed;
+}
+.menu-item-danger {
+  color: var(--bad);
+}
+.menu-separator {
+  background: var(--hairline);
+  border: none;
+  height: 1px;
+  margin: 5px 0;
+}
+
+/* ---------- Tabs ---------- */
+
+.tabs-list {
+  border-bottom: 1px solid var(--hairline);
+  display: flex;
+  gap: 2px;
+  overflow-x: auto;
+}
+.tab {
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;
+  color: var(--ink-muted);
+  cursor: pointer;
+  font: var(--type-compact-strong);
+  margin-bottom: -1px;
+  padding: 10px 12px;
+  transition: color 140ms cubic-bezier(0.4, 0, 0.2, 1);
+  white-space: nowrap;
+}
+.tab:hover {
+  color: var(--ink);
+}
+.tab[aria-selected='true'] {
+  border-bottom-color: var(--accent);
+  color: var(--ink);
+}
+.tab-panel {
+  padding-top: 16px;
+}
+
+/* ---------- Segmented control ---------- */
+
+.segmented {
+  background: var(--surface-2);
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-sm);
+  display: inline-flex;
+  gap: 2px;
+  padding: 3px;
+}
+.segment {
+  background: transparent;
+  border: none;
+  border-radius: 6px;
+  color: var(--ink-muted);
+  cursor: pointer;
+  font: var(--type-compact-strong);
+  min-height: 30px;
+  padding: 5px 12px;
+  transition:
+    background 140ms cubic-bezier(0.4, 0, 0.2, 1),
+    color 140ms cubic-bezier(0.4, 0, 0.2, 1);
+  white-space: nowrap;
+}
+.segment[aria-checked='true'] {
+  background: var(--surface);
+  box-shadow: var(--shadow-sm);
+  color: var(--ink);
+}
+
+/* ---------- Switch & checkbox ---------- */
+
+.switch {
+  align-items: center;
+  cursor: pointer;
+  display: inline-flex;
+  gap: 10px;
+}
+.switch-track {
+  background: var(--hairline-firm);
+  border: none;
+  border-radius: 999px;
+  cursor: pointer;
+  flex-shrink: 0;
+  height: 24px;
+  padding: 0;
+  position: relative;
+  transition: background 140ms cubic-bezier(0.4, 0, 0.2, 1);
+  width: 42px;
+}
+.switch-track[aria-checked='true'] {
+  background: var(--accent);
+}
+.switch-track:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+.switch-thumb {
+  background: #fff;
+  border-radius: 999px;
+  height: 18px;
+  left: 3px;
+  position: absolute;
+  top: 3px;
+  transition: transform 140ms cubic-bezier(0.4, 0, 0.2, 1);
+  width: 18px;
+}
+.switch-track[aria-checked='true'] .switch-thumb {
+  transform: translateX(18px);
+}
+.switch-label {
+  font: var(--type-body);
+}
+
+.checkbox {
+  align-items: center;
+  cursor: pointer;
+  display: inline-flex;
+  gap: 9px;
+  min-height: 24px;
+}
+.checkbox input[type='checkbox'] {
+  accent-color: var(--accent);
+  cursor: pointer;
+  height: 17px;
+  margin: 0;
+  width: 17px;
+}
+.checkbox-label {
+  font: var(--type-body);
+}
+.checkbox-bare {
+  gap: 0;
+}
+
+/* ---------- Combobox ---------- */
+
+.combobox {
+  position: relative;
+}
+.combobox-chevron {
+  color: var(--ink-faint);
+  pointer-events: none;
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+}
+.combobox .input {
+  padding-right: 32px;
+}
+.combobox-listbox {
+  background: var(--surface);
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-lg);
+  left: 0;
+  list-style: none;
+  margin: 6px 0 0;
+  max-height: 264px;
+  overflow-y: auto;
+  padding: 5px;
+  position: absolute;
+  right: 0;
+  z-index: 65;
+}
+.combobox-option {
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  font: var(--type-compact);
+  padding: 8px 10px;
+}
+.combobox-option[aria-selected='true'],
+.combobox-option.is-active {
+  background: var(--surface-2);
+}
+.combobox-option-hint {
+  color: var(--ink-muted);
+  display: block;
+  font: var(--type-label);
+  letter-spacing: var(--type-label-tracking);
+  margin-top: 2px;
+  text-transform: uppercase;
+}
+.combobox-empty {
+  color: var(--ink-muted);
+  font: var(--type-compact);
+  padding: 10px;
+}
+
+/* ---------- Skeleton ----------
+   Geometry first: a skeleton stands in the exact box its content will occupy,
+   so nothing shifts when the data lands (fixes A6). The shimmer is opacity
+   only — a width or height animation would relayout every frame. */
+
+.skeleton {
+  background: var(--surface-3);
+  border-radius: var(--radius-sm);
+  display: block;
+  animation: skeleton-pulse 1500ms ease-in-out infinite;
+}
+@keyframes skeleton-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.55;
+  }
+}
+.skeleton-text-line {
+  height: 15px;
+  margin-bottom: 8px;
+}
+.skeleton-text-line:last-child {
+  margin-bottom: 0;
+}
+.skeleton-row {
+  align-items: center;
+  border-bottom: 1px solid var(--hairline);
+  display: flex;
+  gap: 14px;
+  padding: 12px 14px;
+}
+.skeleton-row-cell {
+  flex: 1;
+  height: 13px;
+}
+.skeleton-head {
+  background: var(--surface-2);
+  border-bottom: 1px solid var(--hairline);
+  padding: 10px 14px;
+}
+
+/* ---------- Inline error ----------
+   A failed panel retries where it stands. It never replaces the page, so the
+   half of the screen that loaded fine stays on the screen (fixes A6). */
+
+.inline-error {
+  align-items: center;
+  background: var(--bad-wash);
+  border: 1px solid var(--bad-wash);
+  border-radius: var(--radius-md);
+  color: var(--ink);
+  display: flex;
+  gap: 12px;
+  padding: 12px 14px;
+}
+.inline-error-dot {
+  background: var(--bad);
+  border-radius: 999px;
+  flex-shrink: 0;
+  height: 8px;
+  width: 8px;
+}
+.inline-error-body {
+  flex: 1;
+  font: var(--type-compact);
+  min-width: 0;
+}
+.inline-error-title {
+  font: var(--type-compact-strong);
+}
+.inline-error-stacked {
+  margin-bottom: 12px;
+}
+
+/* A heading that opens a section inside a card. */
+.section-heading {
+  margin: 18px 0 10px;
+}
+
+/* ---------- DataTable ---------- */
+
+.dt {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.dt-views {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: space-between;
+}
+.dt-controls {
+  align-items: flex-end;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.dt-search {
+  flex: 1;
+  min-width: 200px;
+}
+.dt-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.dt-chip {
+  align-items: center;
+  background: var(--surface);
+  border: 1px solid var(--hairline-firm);
+  border-radius: 999px;
+  color: var(--ink-muted);
+  cursor: pointer;
+  display: inline-flex;
+  font: var(--type-compact-strong);
+  gap: 6px;
+  min-height: 30px;
+  padding: 4px 12px;
+  transition:
+    background 140ms cubic-bezier(0.4, 0, 0.2, 1),
+    color 140ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+.dt-chip:hover {
+  background: var(--surface-2);
+}
+.dt-chip[aria-pressed='true'] {
+  background: var(--accent-wash);
+  border-color: var(--accent-wash);
+  color: var(--accent);
+}
+.dt-chip-count {
+  font-variant-numeric: tabular-nums;
+  opacity: 0.75;
+}
+
+/* The bulk bar takes the place of the header row rather than stacking on top
+   of it, so selecting rows never moves the table. */
+.dt-bulkbar {
+  align-items: center;
+  background: var(--accent-wash);
+  border: 1px solid var(--accent-wash);
+  border-radius: var(--radius-md);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  min-height: 46px;
+  padding: 6px 12px;
+}
+.dt-bulkbar-count {
+  font: var(--type-compact-strong);
+  margin-right: auto;
+}
+
+.dt-scroll {
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-md);
+  max-height: 68vh;
+  overflow: auto;
+}
+.dt-table {
+  border-collapse: separate;
+  border-spacing: 0;
+  font: var(--type-compact);
+  width: 100%;
+}
+.dt-table th {
+  background: var(--surface-2);
+  border-bottom: 1px solid var(--hairline);
+  color: var(--ink-muted);
+  font: var(--type-label);
+  letter-spacing: var(--type-label-tracking);
+  padding: 0;
+  position: sticky;
+  text-align: left;
+  text-transform: uppercase;
+  top: 0;
+  white-space: nowrap;
+  z-index: 2;
+}
+.dt-th-inner {
+  display: block;
+  padding: 10px 14px;
+}
+.dt-sort {
+  align-items: center;
+  background: transparent;
+  border: none;
+  color: inherit;
+  cursor: pointer;
+  display: inline-flex;
+  font: inherit;
+  gap: 5px;
+  letter-spacing: inherit;
+  padding: 10px 14px;
+  text-transform: inherit;
+  width: 100%;
+}
+.dt-sort:hover {
+  color: var(--ink);
+}
+.dt-sort svg {
+  flex-shrink: 0;
+  opacity: 0.5;
+}
+.dt-sort[aria-sort='ascending'] svg,
+.dt-sort[aria-sort='descending'] svg {
+  opacity: 1;
+}
+.dt-table td {
+  border-bottom: 1px solid var(--hairline);
+  padding: 10px 14px;
+  vertical-align: middle;
+}
+.dt-table tbody tr:last-child td {
+  border-bottom: none;
+}
+.dt-table tbody tr {
+  transition: background 140ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+.dt-table tbody tr:hover {
+  background: var(--surface-2);
+}
+.dt-table tbody tr[aria-selected='true'] {
+  background: var(--accent-wash);
+}
+.dt-cell-end {
+  text-align: right;
+}
+.dt-cell-select {
+  width: 44px;
+}
+.dt-row-clickable {
+  cursor: pointer;
+}
+
+.dt-foot {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  justify-content: space-between;
+}
+.dt-count {
+  color: var(--ink-muted);
+  font: var(--type-compact);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---------- Pagination ---------- */
+
+.pagination {
+  align-items: center;
+  display: flex;
+  gap: 4px;
+}
+.pagination-page {
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  color: var(--ink-muted);
+  cursor: pointer;
+  font: var(--type-compact-strong);
+  font-variant-numeric: tabular-nums;
+  min-height: 32px;
+  min-width: 32px;
+  padding: 4px 8px;
+  transition: background 140ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+.pagination-page:hover:not(:disabled) {
+  background: var(--surface-2);
+  color: var(--ink);
+}
+.pagination-page:disabled {
+  cursor: not-allowed;
+  opacity: 0.4;
+}
+.pagination-page[aria-current='page'] {
+  background: var(--surface-3);
+  color: var(--ink);
+}
+.pagination-gap {
+  color: var(--ink-faint);
+  padding: 0 2px;
+}
+
+/* Screen-reader-only, for the live regions the skeletons and the table use to
+   announce what sighted people can see happening. */
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
 }
 
 @media (prefers-reduced-motion: reduce) {

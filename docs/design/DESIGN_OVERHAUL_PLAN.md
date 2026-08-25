@@ -1,6 +1,6 @@
 # Anbaro — Design Overhaul Plan (Master Doc)
 
-**Owner:** Sam · **Created:** 2026-08-24 · **Status:** ACTIVE — D1 and D2 done, D3 next
+**Owner:** Sam · **Created:** 2026-08-24 · **Status:** ACTIVE — D1, D2 and D3 done, D4 next
 **Relationship to the launch plan:** the production rollout
 ([`PRODUCTION_LAUNCH_PLAN.md`](../operations/PRODUCTION_LAUNCH_PLAN.md)) is **paused
 at Session 2** (Neon go-live, credential-gated). This overhaul runs first. Neither
@@ -46,7 +46,7 @@ session**. The point is that no session re-derives what this file already record
 | **Theming** | Light + dark, built together | Token architecture must support both from Phase 1 |
 | **Positioning** | Deliberately general-purpose | No vertical-specific UI. Nothing that assumes retail, food, or warehouse |
 | **Motion posture** | Serves speed and comprehension, never decoration | Set by `PROJECT_OVERVIEW.md`: "practical rather than flashy" |
-| **Running order** | D1 → D2 → **D3** → D4 → D5 → D6 | Mobile count loop ships before web polish (Sam, 2026-08-24) |
+| **Running order** | D1 → D2 → D3 → **D4** → D5 → D6 | Mobile count loop ships before web polish (Sam, 2026-08-24) |
 
 **Open question for Sam (not yet decided):** the brief says "practical rather than
 flashy," Sam's verbal direction was "flying to sky / buttery-smooth." This plan
@@ -211,12 +211,21 @@ a bluer crimson so it separates cleanly from the coral accent.
 | title | 22 | 700 | −.03em | Section / location names |
 | heading | 16 | 700 | — | Card headings |
 | body | 15 | 400 | — | Running text (line-height 1.6) |
+| compact | 13 | 400 | — | Dense rows, table cells, secondary meta |
 | label | 11 | 700 | +.1em, uppercase | Field and column labels |
 | numeric | mono | 600 | `tabular-nums` | **All quantities** |
 
-Six distinct steps replacing today's three-that-are-really-two. Quantities move to
+Seven distinct steps replacing today's three-that-are-really-two. Quantities move to
 a mono face with tabular figures so decimals align down a column — the highest-value
 typographic change for an app whose main job is numbers in rows.
+
+`compact` was added in D3 (Sam, 2026-08-24). The original six had nothing between
+`label` (11) and `body` (15), so anything denser than running text had to fake it:
+D2's mobile list rows borrowed `heading`/`body`, and web's `.data-table` carried a
+hardcoded 13.5 px that belonged to no step. Two workarounds is a missing step, not a
+coincidence. `compact` at 400 is the plain form; `compact-strong` at 600 is the same
+size for the emphasised cell in a row (the item name). Dense rows bind to it on both
+platforms; the hardcoded 13.5 px is retired.
 
 ### 5.3 Motion spec (fixes A8)
 
@@ -440,7 +449,7 @@ changes as work proceeds.
 | --- | --- | --- | --- | --- |
 | 1 | D1 — Token foundation | **Done** | 2026-08-24 | Semantic light/dark on both platforms; mobile `ThemeProvider` + `makeStyles`; type scale applied. Gap: no small-body step below `body` 15px — see D2 handoff |
 | 2 | D2 — Count loop ⭐ | **Done** | 2026-08-24 | On-screen keypad, live delta, location gate, scan-to-jump, jump sheet, commit pulse + haptics, A3 fixed. 20-item count verified on device. Barcode scan-to-jump still needs a physical device (no simulator camera) |
-| 3 | D3 — Component library | Not started | — | |
+| 3 | D3 — Component library | **Done** | 2026-08-24 | 14 new primitives + DataTable; `compact` added to §5.2 (Sam's call); prose loading gone from every feature; 37 tests green. Two pre-existing `navigation.test.tsx` failures assert D4's target IA — D4 fixes them |
 | 4 | D4 — Information architecture | Not started | — | |
 | 5 | D5 — Screen migration | Not started | — | Split into batches if needed |
 | 6 | D6 — Motion and finish | Not started | — | |

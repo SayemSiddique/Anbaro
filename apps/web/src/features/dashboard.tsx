@@ -4,7 +4,17 @@ import type { DashboardReport } from '@anbaro/contracts';
 import { AlertTriangle, ClipboardCheck, MapPin, PackageSearch } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
 
-import { Badge, Button, Card, CardTitle, EmptyState, StatePanel, StatTile } from '../components/ui';
+import {
+  Badge,
+  Button,
+  Card,
+  CardTitle,
+  EmptyState,
+  LoadingAnnouncement,
+  PageSkeleton,
+  StatePanel,
+  StatTile,
+} from '../components/ui';
 import { apiErrorMessage, useSession } from '../lib/session';
 
 export function DashboardFeature() {
@@ -32,7 +42,12 @@ export function DashboardFeature() {
       </StatePanel>
     );
   if (!report)
-    return <StatePanel title="Loading dashboard">Preparing your cross-location view…</StatePanel>;
+    return (
+      <>
+        <LoadingAnnouncement label="Loading the dashboard" />
+        <PageSkeleton body="list" tiles={4} />
+      </>
+    );
 
   const lowStockTotal = report.locations.reduce((sum, location) => sum + location.lowStockCount, 0);
   const conflictTotal = report.locations.reduce(

@@ -12,6 +12,8 @@ import {
   EmptyState,
   Field,
   Input,
+  LoadingAnnouncement,
+  SkeletonList,
   StatePanel,
 } from '../components/ui';
 import { apiErrorMessage, useSession } from '../lib/session';
@@ -125,7 +127,10 @@ export function LocationsFeature() {
           title="Locations"
         />
         {loading ? (
-          <p>Loading locations…</p>
+          <>
+            <LoadingAnnouncement label="Loading locations" />
+            <SkeletonList rows={4} />
+          </>
         ) : locations.length === 0 ? (
           <EmptyState
             hint="Your first location makes your workspace ready for inventory setup."

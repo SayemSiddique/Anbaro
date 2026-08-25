@@ -13,6 +13,8 @@ import {
   Field,
   Input,
   Select,
+  LoadingAnnouncement,
+  PageSkeleton,
   StatePanel,
 } from '../components/ui';
 import { apiErrorMessage, useSession } from '../lib/session';
@@ -85,7 +87,12 @@ export function ReorderFeature() {
   }
 
   if (loading)
-    return <StatePanel title="Loading recommendations">Preparing reorder suggestions…</StatePanel>;
+    return (
+      <>
+        <LoadingAnnouncement label="Loading reorder suggestions" />
+        <PageSkeleton body="list" />
+      </>
+    );
 
   const selectedItem = items.find((item) => item.id === selectedItemId);
 

@@ -17,11 +17,16 @@ import {
   Card,
   CardTitle,
   CategoryAvatar,
+  type Column,
+  DataTable,
   EmptyState,
   Field,
+  InlineError,
   Input,
+  LoadingAnnouncement,
   Select,
-  StatePanel,
+  type SavedView,
+  SkeletonTable,
   StockBadge,
   UnitSelect,
 } from '../components/ui';
@@ -57,6 +62,46 @@ function groupByCategory(items: ItemWithStock[]): CategoryGroup[] {
   return [...groups.values()].sort((a, b) => a.categoryName.localeCompare(b.categoryName));
 }
 
+type MovementEvent = Awaited<ReturnType<SessionApiClient['getStockEvents']>>['data'][number];
+
+const movementColumns: Column<MovementEvent>[] = [
+  {
+    id: 'when',
+    header: 'When',
+    cell: (event) => new Date(event.createdAt).toLocaleString(),
+    sortValue: (event) => event.createdAt,
+  },
+  { id: 'type', header: 'Type', cell: (event) => event.eventType, sortValue: (event) => event.eventType },
+  {
+    id: 'change',
+    header: 'Change',
+    align: 'end',
+    numeric: true,
+    cell: (event) => event.quantityDelta,
+    sortValue: (event) => event.quantityDelta,
+  },
+  {
+    id: 'resulting',
+    header: 'Resulting',
+    align: 'end',
+    numeric: true,
+    cell: (event) => event.resultingQuantity,
+    sortValue: (event) => event.resultingQuantity,
+  },
+  { id: 'reason', header: 'Reason', cell: (event) => event.reasonCode ?? '—' },
+  { id: 'by', header: 'By', cell: (event) => event.actorName ?? event.actorUserId },
+];
+
+const movementViews: SavedView<MovementEvent>[] = [
+  { id: 'all', label: 'All', sort: { columnId: 'when', direction: 'descending' } },
+  {
+    id: 'losses',
+    label: 'Losses',
+    predicate: (event) => event.eventType === 'loss',
+    sort: { columnId: 'when', direction: 'descending' },
+  },
+];
+
 export function CatalogFeature() {
   const { api, permissions } = useSession();
   const canWrite = permissions.has('item:write');
@@ -71,9 +116,7 @@ export function CatalogFeature() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(true);
   const [selected, setSelected] = useState<ItemWithStock | null>(null);
-  const [history, setHistory] = useState<
-    Awaited<ReturnType<SessionApiClient['getStockEvents']>>['data']
-  >([]);
+  const [history, setHistory] = useState<MovementEvent[]>([]);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -236,7 +279,10 @@ export function CatalogFeature() {
           </Button>
         </div>
         {loading ? (
-          <p>Loading items…</p>
+          <>
+            <LoadingAnnouncement label="Loading items" />
+            <SkeletonTable columns={locationId ? 5 : 3} rows={6} />
+          </>
         ) : items.length === 0 ? (
           <EmptyState
             hint="Add a category and your first item to start tracking stock."
@@ -358,37 +404,20 @@ export function CatalogFeature() {
               </div>
             </form>
           ) : null}
-          <h3 style={{ margin: '18px 0 10px' }}>Movement history</h3>
-          {history.length ? (
-            <div className="table-wrap">
-              <table className="data-table">
-                <thead>
-                  <tr>
-                    <th>When</th>
-                    <th>Type</th>
-                    <th>Change</th>
-                    <th>Resulting</th>
-                    <th>Reason</th>
-                    <th>By</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {history.map((event) => (
-                    <tr key={event.id}>
-                      <td>{new Date(event.createdAt).toLocaleString()}</td>
-                      <td>{event.eventType}</td>
-                      <td>{event.quantityDelta}</td>
-                      <td>{event.resultingQuantity}</td>
-                      <td>{event.reasonCode ?? '—'}</td>
-                      <td>{event.actorName ?? event.actorUserId}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          ) : (
-            <p style={{ color: 'var(--text-muted)' }}>No movements recorded at this location.</p>
-          )}
+          <h3 className="section-heading">Movement history</h3>
+          <DataTable
+            caption={`Movement history for ${selected.name}`}
+            columns={movementColumns}
+            emptyHint="No movements recorded at this location."
+            emptyTitle="No movements yet"
+            getRowId={(event) => event.id}
+            rows={history}
+            searchPlaceholder="Reason, type, or person"
+            searchValue={(event) =>
+              `${event.eventType} ${event.reasonCode ?? ''} ${event.actorName ?? event.actorUserId}`
+            }
+            views={movementViews}
+          />
         </Card>
       ) : null}
 
@@ -474,9 +503,12 @@ export function CatalogFeature() {
       ) : null}
 
       {error ? (
-        <StatePanel title="Couldn’t update catalog or stock" tone="error">
-          {error}
-        </StatePanel>
+        <InlineError
+          detail={error}
+          onRetry={() => void load()}
+          retrying={loading}
+          title="Couldn’t update catalog or stock"
+        />
       ) : null}
     </div>
   );

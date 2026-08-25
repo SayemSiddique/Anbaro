@@ -4,7 +4,15 @@ import type { Notification, NotificationPreference } from '@anbaro/contracts';
 import { Bell, BellOff, Check } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
 
-import { Button, Card, CardTitle, EmptyState, StatePanel } from '../components/ui';
+import {
+  Button,
+  Card,
+  CardTitle,
+  EmptyState,
+  LoadingAnnouncement,
+  PageSkeleton,
+  StatePanel,
+} from '../components/ui';
 import { apiErrorMessage, useSession } from '../lib/session';
 
 const channelLabels: Record<string, string> = {
@@ -57,7 +65,12 @@ export function AlertsFeature() {
   }
 
   if (loading)
-    return <StatePanel title="Loading alerts">Loading preferences and alerts…</StatePanel>;
+    return (
+      <>
+        <LoadingAnnouncement label="Loading preferences and alerts" />
+        <PageSkeleton body="list" />
+      </>
+    );
 
   return (
     <div className="stack">
