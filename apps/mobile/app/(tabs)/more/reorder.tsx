@@ -5,7 +5,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { ScrollView, Text, View } from 'react-native';
 
 import { useMobileSession } from '../../../src/components/app-shell';
-import { PrimaryButton, SecondaryButton, StatePanel } from '../../../src/components/ui';
+import { SecondaryButton, SkeletonRows, StatePanel } from '../../../src/components/ui';
 import { makeStyles, text, useTheme } from '../../../src/lib/theme';
 
 export default function ReorderScreen() {
@@ -53,16 +53,14 @@ export default function ReorderScreen() {
 
       {error ? (
         <StatePanel
-          action={<PrimaryButton onPress={() => void load()}>Try again</PrimaryButton>}
+          action={<SecondaryButton onPress={() => void load()}>Try again</SecondaryButton>}
           detail={error}
           title="Something didn’t load"
           tone="error"
         />
       ) : null}
 
-      {suggestions === null && !error ? (
-        <Text style={styles.detail}>Loading suggestions…</Text>
-      ) : null}
+      {suggestions === null && !error ? <SkeletonRows label="Loading reorder suggestions" /> : null}
 
       {suggestions?.length === 0 ? (
         <View style={styles.empty}>
@@ -88,13 +86,16 @@ export default function ReorderScreen() {
             </View>
           ) : null}
           <View style={styles.actions}>
+            {/* Both outcomes are a review, and there is one pair per card — a
+                filled button repeated down a list is a list of primaries, which
+                is the same as none. */}
             <View style={styles.actionButton}>
-              <PrimaryButton
+              <SecondaryButton
                 disabled={workingId === suggestion.id}
                 onPress={() => void review(suggestion.id, 'reviewed_sent')}
               >
                 Mark ordered
-              </PrimaryButton>
+              </SecondaryButton>
             </View>
             <View style={styles.actionButton}>
               <SecondaryButton

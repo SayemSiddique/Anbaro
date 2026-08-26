@@ -1,6 +1,6 @@
 'use client';
 
-import { Card, CardTitle } from '../components/ui';
+import { Card, CardTitle, Meta } from '../components/ui';
 
 export function SupportFeature() {
   return (
@@ -11,10 +11,10 @@ export function SupportFeature() {
           subtitle="Found a bug, or need help with your workspace?"
           title="Get help"
         />
-        <p style={{ color: 'var(--text-muted)', marginTop: 0 }}>
+        <Meta>
           Email <a href="mailto:support@anbaro.com">support@anbaro.com</a> and you will hear back
           directly from the person who builds Anbaro.
-        </p>
+        </Meta>
       </Card>
     </div>
   );

@@ -14,40 +14,35 @@ import {
 const items = [
   {
     icon: Coffee,
-    tint: 'var(--mkt-primary-tint-10)',
-    color: 'var(--primary)',
+    swatch: 'primary',
     name: 'Paper Cups',
     qty: 24,
     low: true,
   },
   {
     icon: Droplets,
-    tint: 'var(--mkt-decorative-green-tint)',
-    color: 'var(--mkt-decorative-green)',
+    swatch: 'green',
     name: 'Hand Soap',
     qty: 156,
     low: false,
   },
   {
     icon: Package,
-    tint: 'var(--mkt-accent-tint-15)',
-    color: 'var(--accent)',
+    swatch: 'accent',
     name: 'Shipping Boxes',
     qty: 89,
     low: false,
   },
   {
     icon: Printer,
-    tint: 'var(--mkt-primary-tint-10)',
-    color: 'var(--primary)',
+    swatch: 'primary',
     name: 'Printer Paper',
     qty: 8,
     low: true,
   },
   {
     icon: SoapDispenserDroplet,
-    tint: 'var(--mkt-decorative-green-tint)',
-    color: 'var(--mkt-decorative-green)',
+    swatch: 'green',
     name: 'Sanitizer',
     qty: 42,
     low: false,
@@ -73,11 +68,15 @@ export function ShowcasePhoneMockup() {
           </div>
           {items.map((item) => (
             <div className="phone-item" key={item.name}>
-              <div className="phone-item-icon" style={{ background: item.tint, color: item.color }}>
+              <div className={`phone-item-icon mkt-swatch-${item.swatch}`}>
                 <item.icon aria-hidden="true" size={14} />
               </div>
               <div className="phone-item-name">{item.name}</div>
-              <div className="phone-item-qty" style={item.low ? undefined : { color: item.color }}>
+              {/* A low item keeps the rule's warning colour; the rest take
+                  their own swatch's hue. */}
+              <div
+                className={item.low ? 'phone-item-qty' : `phone-item-qty mkt-ink-${item.swatch}`}
+              >
                 {item.qty}
                 {item.low ? <AlertCircle aria-hidden="true" size={10} /> : null}
               </div>

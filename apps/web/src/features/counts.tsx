@@ -253,8 +253,11 @@ function CountSummary({
   return (
     <section aria-live="polite" className="stack">
       <div className="tile-grid">
+        {/* The one figure on this screen that moves as you resolve lines, so it
+            is the one that earns the commit pulse. */}
         <StatTile
           label="Accepted"
+          pulse
           {...(session.acceptedCount === session.lineCount ? ({ tone: 'success' } as const) : {})}
           value={`${session.acceptedCount} of ${session.lineCount}`}
         />

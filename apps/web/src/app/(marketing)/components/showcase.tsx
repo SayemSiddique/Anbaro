@@ -21,11 +21,7 @@ export function Showcase({
   bullets: string[];
 }) {
   return (
-    <section
-      className="showcase"
-      id={id}
-      style={canvasBackground ? { background: 'var(--canvas)' } : undefined}
-    >
+    <section className={canvasBackground ? 'showcase showcase-on-ground' : 'showcase'} id={id}>
       <div className={`showcase-grid${reverse ? ' reverse' : ''}`}>
         <Reveal className="showcase-visual">{visual}</Reveal>
         <Reveal className="showcase-text" delay={2}>

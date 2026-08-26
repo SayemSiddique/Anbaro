@@ -5,7 +5,15 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { Suspense, useMemo, useState, type FormEvent } from 'react';
 
 import { AnbaroWordmark } from '../../components/brand';
-import { Button, Card, Field, Input } from '../../components/ui';
+import {
+  Button,
+  Card,
+  CardIntro,
+  Field,
+  FormSection,
+  InlineError,
+  Input,
+} from '../../components/ui';
 import { apiErrorMessage, createSessionApi } from '../../lib/session';
 
 export default function ResetPasswordPage() {
@@ -49,54 +57,50 @@ function ResetPasswordForm() {
     <main className="auth-panel">
       <div className="auth-card">
         <Card>
-          <div style={{ display: 'grid', gap: 6, marginBottom: 18 }}>
-            <AnbaroWordmark size={30} />
-            <h1>Choose a new password</h1>
-          </div>
-          {!token ? (
-            <p role="alert" style={{ color: 'var(--danger)' }}>
-              This reset link is missing its token. Request a new one.
-            </p>
-          ) : done ? (
-            <div className="stack">
-              <p role="status">Your password has been reset. You can sign in with it now.</p>
-              <Button onClick={() => router.replace('/login')}>Go to sign in</Button>
+          <div className="stack">
+            <CardIntro icon={<AnbaroWordmark size={30} />} title="Choose a new password" />
+            {!token ? (
+              <InlineError
+                detail="Request a new one from the sign-in screen."
+                title="This reset link is missing its token"
+              />
+            ) : done ? (
+              <div className="stack">
+                <p role="status">Your password has been reset. You can sign in with it now.</p>
+                <Button onClick={() => router.replace('/login')}>Go to sign in</Button>
+              </div>
+            ) : (
+              <FormSection onSubmit={submit} standalone>
+                <Field hint="At least 8 characters." label="New password">
+                  <Input
+                    autoComplete="new-password"
+                    minLength={8}
+                    name="password"
+                    required
+                    type="password"
+                  />
+                </Field>
+                <Field label="Confirm password">
+                  <Input
+                    autoComplete="new-password"
+                    minLength={8}
+                    name="confirm"
+                    required
+                    type="password"
+                  />
+                </Field>
+                {error ? <InlineError detail={error} title="Couldn’t reset your password" /> : null}
+                <Button loading={working} type="submit">
+                  Reset password
+                </Button>
+              </FormSection>
+            )}
+            <div className="auth-actions">
+              <Link className="btn btn-ghost btn-sm" href="/forgot-password">
+                Request a new link
+              </Link>
             </div>
-          ) : (
-            <form className="form-grid" onSubmit={submit} style={{ maxWidth: 'none' }}>
-              <Field hint="At least 8 characters." label="New password">
-                <Input
-                  autoComplete="new-password"
-                  minLength={8}
-                  name="password"
-                  required
-                  type="password"
-                />
-              </Field>
-              <Field label="Confirm password">
-                <Input
-                  autoComplete="new-password"
-                  minLength={8}
-                  name="confirm"
-                  required
-                  type="password"
-                />
-              </Field>
-              {error ? (
-                <p role="alert" style={{ color: 'var(--danger)', margin: 0 }}>
-                  {error}
-                </p>
-              ) : null}
-              <Button loading={working} type="submit">
-                Reset password
-              </Button>
-            </form>
-          )}
-          <p style={{ marginTop: 16, textAlign: 'center' }}>
-            <Link className="btn btn-ghost btn-sm" href="/forgot-password">
-              Request a new link
-            </Link>
-          </p>
+          </div>
         </Card>
       </div>
     </main>

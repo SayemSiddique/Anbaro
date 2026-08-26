@@ -106,7 +106,7 @@ export function Checkbox({
 
 /* ---------- Segmented control ---------- */
 
-export type Segment<Value extends string> = { label: string; value: Value };
+export type Segment<Value extends string> = { label: ReactNode; value: Value };
 
 /**
  * A small set of mutually exclusive options, all visible at once. A radiogroup

@@ -4,7 +4,16 @@ import Link from 'next/link';
 import { useMemo, useState, type FormEvent } from 'react';
 
 import { AnbaroWordmark } from '../../components/brand';
-import { Button, Card, Field, Input } from '../../components/ui';
+import {
+  Button,
+  Card,
+  CardIntro,
+  Field,
+  FormSection,
+  InlineError,
+  Input,
+  Meta,
+} from '../../components/ui';
 import { apiErrorMessage, createSessionApi } from '../../lib/session';
 
 export default function ForgotPasswordPage() {
@@ -32,38 +41,32 @@ export default function ForgotPasswordPage() {
     <main className="auth-panel">
       <div className="auth-card">
         <Card>
-          <div style={{ display: 'grid', gap: 6, marginBottom: 18 }}>
-            <AnbaroWordmark size={30} />
-            <h1>Reset your password</h1>
-            <p style={{ color: 'var(--text-muted)' }}>
-              Enter your email and we’ll send a link to set a new password.
-            </p>
+          <div className="stack">
+            <CardIntro icon={<AnbaroWordmark size={30} />} title="Reset your password">
+              <Meta>Enter your email and we’ll send a link to set a new password.</Meta>
+            </CardIntro>
+            {sent ? (
+              <p role="status">
+                If an account exists for that email, a reset link is on its way. The link expires in
+                an hour.
+              </p>
+            ) : (
+              <FormSection onSubmit={submit} standalone>
+                <Field label="Email">
+                  <Input autoComplete="email" name="email" required type="email" />
+                </Field>
+                {error ? <InlineError detail={error} title="Couldn’t send that link" /> : null}
+                <Button loading={working} type="submit">
+                  Send reset link
+                </Button>
+              </FormSection>
+            )}
+            <div className="auth-actions">
+              <Link className="btn btn-ghost btn-sm" href="/login">
+                Back to sign in
+              </Link>
+            </div>
           </div>
-          {sent ? (
-            <p role="status">
-              If an account exists for that email, a reset link is on its way. The link expires in
-              an hour.
-            </p>
-          ) : (
-            <form className="form-grid" onSubmit={submit} style={{ maxWidth: 'none' }}>
-              <Field label="Email">
-                <Input autoComplete="email" name="email" required type="email" />
-              </Field>
-              {error ? (
-                <p role="alert" style={{ color: 'var(--danger)', margin: 0 }}>
-                  {error}
-                </p>
-              ) : null}
-              <Button loading={working} type="submit">
-                Send reset link
-              </Button>
-            </form>
-          )}
-          <p style={{ marginTop: 16, textAlign: 'center' }}>
-            <Link className="btn btn-ghost btn-sm" href="/login">
-              Back to sign in
-            </Link>
-          </p>
         </Card>
       </div>
     </main>

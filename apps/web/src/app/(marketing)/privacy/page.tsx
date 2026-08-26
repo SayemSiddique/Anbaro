@@ -82,37 +82,6 @@ function Section({
 export default function PrivacyPage() {
   return (
     <div className="legal-page">
-      <style>{`
-        .legal-page { background: var(--surface); color: var(--text); min-height: 100vh; }
-        .legal-topbar {
-          display: flex; align-items: center; justify-content: space-between;
-          max-width: 820px; margin: 0 auto; padding: 28px 24px 0;
-        }
-        .legal-topbar a { text-decoration: none; color: var(--text-muted); font-size: 15px; }
-        .legal-topbar a:hover { color: var(--text); }
-        .legal-body { max-width: 820px; margin: 0 auto; padding: 32px 24px 72px; }
-        .legal-body h1 { font-size: 40px; line-height: 1.1; margin: 24px 0 8px; }
-        .legal-effective { color: var(--text-soft); font-size: 15px; margin: 0 0 8px; }
-        .legal-draft-note {
-          background: var(--surface-subtle); border: 1px solid var(--border);
-          border-radius: 12px; padding: 14px 16px; color: var(--text-muted);
-          font-size: 14px; margin: 20px 0 8px;
-        }
-        .legal-lead { color: var(--text-muted); font-size: 18px; line-height: 1.6; }
-        .legal-section { margin-top: 36px; }
-        .legal-section h2 { font-size: 22px; margin: 0 0 10px; }
-        .legal-section p, .legal-section li { color: var(--text-muted); font-size: 16px; line-height: 1.65; }
-        .legal-section ul { margin: 8px 0 0; padding-left: 20px; }
-        .legal-section li { margin-bottom: 6px; }
-        .legal-section a { color: var(--primary); }
-        .legal-proc { width: 100%; border-collapse: collapse; margin-top: 8px; }
-        .legal-proc th, .legal-proc td {
-          text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--border);
-          font-size: 15px; color: var(--text-muted); vertical-align: top;
-        }
-        .legal-proc th { color: var(--text); font-weight: 600; }
-      `}</style>
-
       <div className="legal-topbar">
         <Link aria-label="Anbaro home" href="/">
           <AnbaroWordmark size={28} />

@@ -16,13 +16,7 @@
  */
 
 import { ArrowDown, ArrowUp, ArrowUpDown } from 'lucide-react';
-import {
-  useCallback,
-  useEffect,
-  useMemo,
-  useState,
-  type ReactNode,
-} from 'react';
+import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
 
 import { Checkbox, Pagination, SegmentedControl } from './controls';
 import { SkeletonTable } from './feedback';
@@ -62,6 +56,12 @@ export type DataTableProps<Row> = {
   bulkActions?: (selected: Row[], clear: () => void) => ReactNode;
   caption: string;
   columns: Column<Row>[];
+  /**
+   * Drops the row count. The count answers "how much of the data am I seeing?",
+   * which is only a question when something can hide rows — a fixed list that
+   * cannot be searched, filtered or paged is just restating what is on screen.
+   */
+  countHidden?: boolean;
   emptyHint?: ReactNode;
   emptyIcon?: ReactNode;
   emptyTitle?: string;
@@ -92,6 +92,7 @@ export function DataTable<Row>({
   bulkActions,
   caption,
   columns,
+  countHidden = false,
   emptyHint = 'Nothing matches the current view.',
   emptyIcon,
   emptyTitle = 'No results',
@@ -281,9 +282,7 @@ export function DataTable<Row>({
 
       {showBulkBar ? (
         <div className="dt-bulkbar" role="group" aria-label="Bulk actions">
-          <span className="dt-bulkbar-count">
-            {selectedRows.length} selected
-          </span>
+          <span className="dt-bulkbar-count">{selectedRows.length} selected</span>
           {bulkActions?.(selectedRows, clearSelection)}
           <QuietButton onClick={clearSelection}>Clear</QuietButton>
         </div>
@@ -303,7 +302,9 @@ export function DataTable<Row>({
                       <span className="dt-th-inner">
                         <Checkbox
                           ariaLabel={
-                            allOnPageSelected ? 'Deselect all on this page' : 'Select all on this page'
+                            allOnPageSelected
+                              ? 'Deselect all on this page'
+                              : 'Select all on this page'
                           }
                           checked={allOnPageSelected}
                           indeterminate={someOnPageSelected}
@@ -363,10 +364,7 @@ export function DataTable<Row>({
                       onClick={onRowClick ? () => onRowClick(row) : undefined}
                     >
                       {selectable ? (
-                        <td
-                          className="dt-cell-select"
-                          onClick={(event) => event.stopPropagation()}
-                        >
+                        <td className="dt-cell-select" onClick={(event) => event.stopPropagation()}>
                           <Checkbox
                             ariaLabel={`Select row ${id}`}
                             checked={selected}
@@ -401,20 +399,24 @@ export function DataTable<Row>({
             </table>
           </div>
 
-          <div className="dt-foot">
-            <span aria-live="polite" className="dt-count">
-              {sorted.length === rows.length
-                ? `${sorted.length} ${sorted.length === 1 ? 'row' : 'rows'}`
-                : `${sorted.length} of ${rows.length} rows`}
-              {pageCount > 1 ? ` · page ${safePage} of ${pageCount}` : ''}
-            </span>
-            <Pagination
-              label={`${caption} pages`}
-              onPageChange={setPage}
-              page={safePage}
-              pageCount={pageCount}
-            />
-          </div>
+          {countHidden && pageCount === 1 ? null : (
+            <div className="dt-foot">
+              {countHidden ? null : (
+                <span aria-live="polite" className="dt-count">
+                  {sorted.length === rows.length
+                    ? `${sorted.length} ${sorted.length === 1 ? 'row' : 'rows'}`
+                    : `${sorted.length} of ${rows.length} rows`}
+                  {pageCount > 1 ? ` · page ${safePage} of ${pageCount}` : ''}
+                </span>
+              )}
+              <Pagination
+                label={`${caption} pages`}
+                onPageChange={setPage}
+                page={safePage}
+                pageCount={pageCount}
+              />
+            </div>
+          )}
         </>
       )}
     </div>

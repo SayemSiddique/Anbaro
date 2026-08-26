@@ -61,6 +61,16 @@
   --type-label-tracking: 0.1em;
   --type-numeric: 600 15px/1.4 var(--font-mono);
 
+  /* Motion — plan §5.3. `swift` moves surfaces (sheets, palette, route
+     change); `calm` moves properties (hover, focus, colour); `commit` is the
+     one animation allowed past 300 ms, and only for a write that landed.
+     Every value below matches `tokens.motion` in @anbaro/design-tokens. */
+  --ease-swift: cubic-bezier(0.32, 0.72, 0, 1);
+  --ease-calm: cubic-bezier(0.4, 0, 0.2, 1);
+  --dur-swift: 180ms;
+  --dur-calm: 140ms;
+  --dur-commit: 340ms;
+
   --radius-sm: 8px;
   --radius-md: 12px;
   --radius-lg: 16px;
@@ -91,32 +101,6 @@
   --brand-night-2: #232021;
   --brand-on-night: #f7f3f2;
   --brand-on-night-muted: #b0a6a3;
-
-  /* --- Compatibility aliases ---------------------------------------------
-     The old token names, repointed at the semantic ramp. marketing.css still
-     consumes them (99 usages) and is out of scope until D5; nothing new should
-     reference these. Delete the block once marketing.css is migrated. */
-  --canvas: var(--ground);
-  --surface-subtle: var(--surface-2);
-  --surface-inverse: var(--ink);
-  --text: var(--ink);
-  --text-muted: var(--ink-muted);
-  --text-soft: var(--ink-faint);
-  --border: var(--hairline);
-  --border-strong: var(--hairline-firm);
-  --primary: var(--accent);
-  --primary-hover: var(--accent-strong);
-  --primary-soft: var(--accent-wash);
-  --primary-text: var(--on-accent);
-  --focus: var(--accent);
-  --success: var(--good);
-  --success-surface: var(--good-wash);
-  --warning: var(--warn);
-  --warning-surface: var(--warn-wash);
-  --danger: var(--bad);
-  --danger-surface: var(--bad-wash);
-  --info: var(--ink-muted);
-  --info-surface: var(--surface-2);
 }
 
 /* The dark ramp, declared once and applied from both entry points below. */
@@ -327,8 +311,8 @@ a {
   padding: 9px 10px;
   text-decoration: none;
   transition:
-    background 140ms ease,
-    color 140ms ease;
+    background var(--dur-calm) var(--ease-calm),
+    color var(--dur-calm) var(--ease-calm);
 }
 .nav-link:hover {
   background: var(--surface-3);
@@ -423,8 +407,8 @@ a {
   height: 34px;
   justify-content: center;
   transition:
-    background 140ms ease,
-    color 140ms ease;
+    background var(--dur-calm) var(--ease-calm),
+    color var(--dur-calm) var(--ease-calm);
   width: 34px;
 }
 .theme-toggle:hover {
@@ -572,10 +556,10 @@ a {
   padding: 9px 16px;
   text-decoration: none;
   transition:
-    background 140ms ease,
-    border-color 140ms ease,
-    box-shadow 140ms ease,
-    transform 60ms ease;
+    background var(--dur-calm) var(--ease-calm),
+    border-color var(--dur-calm) var(--ease-calm),
+    box-shadow var(--dur-calm) var(--ease-calm),
+    transform 60ms var(--ease-calm);
   white-space: nowrap;
 }
 .btn:active:not(:disabled) {
@@ -630,6 +614,9 @@ a {
 }
 
 .spinner {
+  /* A loop's duration is its period, not a wait — §5.3's 300 ms budget is
+     about how long a state change takes, so spinners and the skeleton pulse
+     sit outside it. */
   animation: spin 700ms linear infinite;
   border: 2px solid currentColor;
   border-radius: 999px;
@@ -675,8 +662,8 @@ a {
   min-height: 42px;
   padding: 8px 12px;
   transition:
-    border-color 140ms ease,
-    box-shadow 140ms ease;
+    border-color var(--dur-calm) var(--ease-calm),
+    box-shadow var(--dur-calm) var(--ease-calm);
   width: 100%;
 }
 .input:focus {
@@ -684,6 +671,12 @@ a {
   box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 22%, transparent);
   outline: none;
 }
+/* Vertical only: a textarea dragged wider than its column drags the card with
+   it, and nothing here is worth reflowing a page for. */
+.textarea {
+  resize: vertical;
+}
+
 /* The chrome form of a select: shorter than a form control, and capped so a
    long organization name truncates rather than pushing the topbar around. */
 .input-compact {
@@ -693,9 +686,58 @@ a {
 }
 
 .form-grid {
+  align-content: start;
   display: grid;
   gap: 14px;
   max-width: 560px;
+}
+
+/* A form whose content is a wide grid rather than a column of fields: the
+   readable measure that keeps inputs from becoming banners is the wrong cap
+   for twenty checkboxes. */
+.form-grid-wide {
+  max-width: none;
+}
+
+/* A named group of checkboxes. The legend carries the group's name, which is
+   what a `<label>` around other labels was failing to do. */
+.fieldset {
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-sm);
+  display: grid;
+  gap: 10px;
+  margin: 0;
+  padding: 14px;
+}
+.fieldset legend {
+  color: var(--ink);
+  font-size: 13.5px;
+  font-weight: 500;
+  padding: 0 6px;
+}
+.checkbox-grid {
+  display: grid;
+  gap: 8px;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+}
+
+/* A secret shown once: mono so every character is distinguishable, and wrapped
+   rather than truncated because the whole string is the point. */
+.token-readout {
+  background: var(--surface-2);
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-sm);
+  font: var(--type-numeric);
+  overflow-wrap: anywhere;
+  padding: 10px 12px;
+}
+
+/* Two independent forms side by side — "add a category" next to "add an item" —
+   collapsing to one column before either gets narrower than a usable field. */
+.form-columns {
+  display: grid;
+  gap: 24px;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
 }
 .form-row {
   align-items: end;
@@ -731,6 +773,167 @@ a {
   width: 17px;
 }
 
+/* ---------- Route change ----------
+   `template.tsx` remounts on every navigation and only on a navigation, so an
+   entry animation on it fires exactly once per route change — composited by the
+   browser, unlike the JS transform this replaced. Transform and opacity only. */
+
+@keyframes route-enter {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.route-enter {
+  animation: route-enter var(--dur-swift) var(--ease-swift) both;
+}
+
+/* Cross-document navigations — marketing → /login → /dashboard — can use the
+   real thing. The App Router's client-side navigations cannot; see the note in
+   template.tsx. Both halves share `swift`, which is the point of naming it. */
+@view-transition {
+  navigation: auto;
+}
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation-duration: var(--dur-swift);
+  animation-timing-function: var(--ease-swift);
+}
+/* Exits leave ~20% faster than entrances arrive (§5.3) — a screen you are
+   done with should not hold the frame. */
+::view-transition-old(root) {
+  animation-duration: calc(var(--dur-swift) * 0.8);
+}
+
+/* ---------- Commit ----------
+   The one animation allowed past 300 ms (§5.3), and only for a write that
+   landed: a figure swells and settles so the eye catches that *this* number is
+   the one that just changed. Transform only, so it costs no layout. Its native
+   twin is the count keypad's commit pulse from D2. */
+
+@keyframes commit-pulse {
+  0% {
+    transform: scale(1);
+  }
+  38% {
+    transform: scale(1.11);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+.commit-pulse {
+  animation: commit-pulse var(--dur-commit) var(--ease-swift);
+  display: inline-block;
+  transform-origin: center;
+}
+
+/* ---------- Icon tints -----------------------------------------------------
+   A Lucide glyph strokes in `currentColor`, so a tinted icon is a one-property
+   wrapper rather than a `color` prop naming a token inside a feature. */
+
+.icon-good,
+.icon-faint,
+.icon-accent {
+  display: inline-flex;
+}
+.icon-good {
+  color: var(--good);
+}
+.icon-faint {
+  color: var(--ink-faint);
+}
+.icon-accent {
+  color: var(--accent);
+}
+
+/* ---------- Pricing ---------- */
+
+/* The interval switch is a SegmentedControl, so it sizes to its content; this
+   centres that content in the page's single-column grid. */
+.plan-interval {
+  justify-self: center;
+}
+/* The savings flag inside a segment. It inherits the segment's colour in both
+   states, so the selected pill needs no second rule to stay legible. */
+.segment-note {
+  background: color-mix(in srgb, currentColor 16%, transparent);
+  border-radius: 999px;
+  font: var(--type-label);
+  letter-spacing: var(--type-label-tracking);
+  margin-left: 6px;
+  padding: 2px 7px;
+}
+
+.plan-grid {
+  display: grid;
+  gap: 16px;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+}
+.plan-card {
+  background: var(--surface);
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-lg);
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 24px;
+}
+/* The recommended plan. The accent is spent here rather than on a second
+   filled button, which is why the Free card's action stays secondary. */
+.plan-card-featured {
+  border: 2px solid var(--accent);
+  box-shadow: 0 12px 32px -18px var(--accent);
+}
+.plan-card-head {
+  align-items: center;
+  display: flex;
+  gap: 12px;
+  justify-content: space-between;
+}
+.plan-name {
+  align-items: center;
+  display: flex;
+  gap: 6px;
+}
+.plan-price {
+  align-items: baseline;
+  display: flex;
+  gap: 6px;
+}
+.plan-price-unit {
+  color: var(--ink-muted);
+}
+.plan-features {
+  display: grid;
+  gap: 10px;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.plan-features li {
+  align-items: center;
+  display: flex;
+  gap: 8px;
+}
+
+/* An aside that is neither a card nor an error — a hint sitting between them.
+   The dashed rule is what says "not a control". */
+.note {
+  align-items: center;
+  border: 1px dashed var(--hairline-firm);
+  border-radius: var(--radius-md);
+  color: var(--ink-muted);
+  display: flex;
+  font: var(--type-compact);
+  gap: 10px;
+  padding: 12px 16px;
+}
+
 /* ---------- Tables ---------- */
 
 .table-wrap {
@@ -759,7 +962,7 @@ a {
   vertical-align: top;
 }
 .data-table tbody tr {
-  transition: background 120ms ease;
+  transition: background var(--dur-calm) var(--ease-calm);
 }
 .data-table tbody tr:hover {
   background: var(--surface-2);
@@ -885,6 +1088,9 @@ a {
 }
 /* The mark plate scales in, then each box drops into the stack. */
 .splash .mark-box {
+  /* Brand motion on a load screen, deliberately outside §5.3's interface
+     budget: it covers a wait rather than answering a tap, and the sequence is
+     part of the mark. Reduced motion removes it entirely, below. */
   animation: brand-box-in 550ms cubic-bezier(0.2, 0.9, 0.25, 1.2) both;
   transform-box: fill-box;
   transform-origin: 50% 100%;
@@ -935,7 +1141,11 @@ a {
 }
 .auth-hero {
   background:
-    radial-gradient(1200px 600px at -10% -10%, color-mix(in srgb, var(--brand-lobster) 22%, transparent), transparent 60%),
+    radial-gradient(
+      1200px 600px at -10% -10%,
+      color-mix(in srgb, var(--brand-lobster) 22%, transparent),
+      transparent 60%
+    ),
     linear-gradient(160deg, var(--brand-night) 0%, var(--brand-night-2) 100%);
   color: var(--brand-on-night);
   display: flex;
@@ -979,6 +1189,28 @@ a {
 .auth-card {
   max-width: 400px;
   width: 100%;
+}
+/* The dark hero sets its own text colours, so its footnote cannot inherit the
+   `small` rule's `--ink-muted` — that is a light-theme value on a fixed-dark
+   panel. */
+.auth-hero-foot {
+  color: var(--brand-on-night-muted);
+}
+/* The links under an auth form: secondary by definition, centred under a
+   centred card, stacked so a second one does not read as a button pair. */
+.auth-actions {
+  display: grid;
+  gap: 4px;
+  justify-items: center;
+  margin-top: 16px;
+}
+
+/* A page with no application shell around it — signed out, or the workspace
+   itself failed to load. */
+.centered-page {
+  margin: 64px auto;
+  max-width: 560px;
+  padding: 24px;
 }
 
 /* ---------- Responsive ---------- */
@@ -1043,8 +1275,8 @@ a {
   min-height: 34px;
   padding: 6px 10px;
   transition:
-    background 140ms cubic-bezier(0.4, 0, 0.2, 1),
-    color 140ms cubic-bezier(0.4, 0, 0.2, 1);
+    background var(--dur-calm) var(--ease-calm),
+    color var(--dur-calm) var(--ease-calm);
   white-space: nowrap;
 }
 .quiet-btn:hover:not(:disabled) {
@@ -1073,7 +1305,7 @@ a {
   position: fixed;
   inset: 0;
   background: var(--scrim);
-  animation: overlay-fade 180ms cubic-bezier(0.32, 0.72, 0, 1);
+  animation: overlay-fade var(--dur-swift) var(--ease-swift);
   z-index: 60;
 }
 @keyframes overlay-fade {
@@ -1113,7 +1345,7 @@ a {
   flex-direction: column;
   max-height: min(84vh, 720px);
   width: min(100%, 520px);
-  animation: dialog-in 180ms cubic-bezier(0.32, 0.72, 0, 1);
+  animation: dialog-in var(--dur-swift) var(--ease-swift);
 }
 .dialog-panel-sm {
   width: min(100%, 400px);
@@ -1139,13 +1371,13 @@ a {
   border-radius: var(--radius-lg) 0 0 var(--radius-lg);
   height: 100%;
   width: min(100%, 440px);
-  animation: sheet-in-right 180ms cubic-bezier(0.32, 0.72, 0, 1);
+  animation: sheet-in-right var(--dur-swift) var(--ease-swift);
 }
 .sheet-bottom {
   border-radius: var(--radius-lg) var(--radius-lg) 0 0;
   max-height: 86vh;
   width: 100%;
-  animation: sheet-in-bottom 180ms cubic-bezier(0.32, 0.72, 0, 1);
+  animation: sheet-in-bottom var(--dur-swift) var(--ease-swift);
 }
 @keyframes sheet-in-right {
   from {
@@ -1201,7 +1433,7 @@ a {
   display: inline-flex;
   height: 32px;
   justify-content: center;
-  transition: background 140ms cubic-bezier(0.4, 0, 0.2, 1);
+  transition: background var(--dur-calm) var(--ease-calm);
   width: 32px;
 }
 .overlay-close:hover {
@@ -1238,7 +1470,7 @@ a {
   display: flex;
   gap: 10px;
   padding: 12px 12px 12px 14px;
-  animation: toast-in 180ms cubic-bezier(0.32, 0.72, 0, 1);
+  animation: toast-in var(--dur-swift) var(--ease-swift);
 }
 @keyframes toast-in {
   from {
@@ -1293,7 +1525,7 @@ a {
   transform: translateX(-50%);
   white-space: nowrap;
   z-index: 65;
-  animation: tooltip-in 140ms cubic-bezier(0.4, 0, 0.2, 1);
+  animation: tooltip-in var(--dur-calm) var(--ease-calm);
 }
 @keyframes tooltip-in {
   from {
@@ -1317,7 +1549,7 @@ a {
   position: absolute;
   top: calc(100% + 6px);
   z-index: 65;
-  animation: menu-in 140ms cubic-bezier(0.32, 0.72, 0, 1);
+  animation: menu-in var(--dur-swift) var(--ease-swift);
 }
 .menu-start {
   left: 0;
@@ -1380,7 +1612,7 @@ a {
   font: var(--type-compact-strong);
   margin-bottom: -1px;
   padding: 10px 12px;
-  transition: color 140ms cubic-bezier(0.4, 0, 0.2, 1);
+  transition: color var(--dur-calm) var(--ease-calm);
   white-space: nowrap;
 }
 .tab:hover {
@@ -1414,8 +1646,8 @@ a {
   min-height: 30px;
   padding: 5px 12px;
   transition:
-    background 140ms cubic-bezier(0.4, 0, 0.2, 1),
-    color 140ms cubic-bezier(0.4, 0, 0.2, 1);
+    background var(--dur-calm) var(--ease-calm),
+    color var(--dur-calm) var(--ease-calm);
   white-space: nowrap;
 }
 .segment[aria-checked='true'] {
@@ -1441,7 +1673,7 @@ a {
   height: 24px;
   padding: 0;
   position: relative;
-  transition: background 140ms cubic-bezier(0.4, 0, 0.2, 1);
+  transition: background var(--dur-calm) var(--ease-calm);
   width: 42px;
 }
 .switch-track[aria-checked='true'] {
@@ -1458,7 +1690,7 @@ a {
   left: 3px;
   position: absolute;
   top: 3px;
-  transition: transform 140ms cubic-bezier(0.4, 0, 0.2, 1);
+  transition: transform var(--dur-calm) var(--ease-calm);
   width: 18px;
 }
 .switch-track[aria-checked='true'] .switch-thumb {
@@ -1668,8 +1900,8 @@ a {
   min-height: 30px;
   padding: 4px 12px;
   transition:
-    background 140ms cubic-bezier(0.4, 0, 0.2, 1),
-    color 140ms cubic-bezier(0.4, 0, 0.2, 1);
+    background var(--dur-calm) var(--ease-calm),
+    color var(--dur-calm) var(--ease-calm);
 }
 .dt-chip:hover {
   background: var(--surface-2);
@@ -1760,13 +1992,13 @@ a {
 .dt-table td {
   border-bottom: 1px solid var(--hairline);
   padding: 10px 14px;
-  vertical-align: middle;
+  vertical-align: top;
 }
 .dt-table tbody tr:last-child td {
   border-bottom: none;
 }
 .dt-table tbody tr {
-  transition: background 140ms cubic-bezier(0.4, 0, 0.2, 1);
+  transition: background var(--dur-calm) var(--ease-calm);
 }
 .dt-table tbody tr:hover {
   background: var(--surface-2);
@@ -1815,7 +2047,7 @@ a {
   min-height: 32px;
   min-width: 32px;
   padding: 4px 8px;
-  transition: background 140ms cubic-bezier(0.4, 0, 0.2, 1);
+  transition: background var(--dur-calm) var(--ease-calm);
 }
 .pagination-page:hover:not(:disabled) {
   background: var(--surface-2);
@@ -1933,8 +2165,8 @@ a {
   min-height: 34px;
   padding: 6px 8px 6px 10px;
   transition:
-    background 140ms cubic-bezier(0.4, 0, 0.2, 1),
-    color 140ms cubic-bezier(0.4, 0, 0.2, 1);
+    background var(--dur-calm) var(--ease-calm),
+    color var(--dur-calm) var(--ease-calm);
 }
 .topbar-search:hover {
   background: var(--surface-3);
@@ -1966,8 +2198,8 @@ a {
   justify-content: center;
   position: relative;
   transition:
-    background 140ms cubic-bezier(0.4, 0, 0.2, 1),
-    color 140ms cubic-bezier(0.4, 0, 0.2, 1);
+    background var(--dur-calm) var(--ease-calm),
+    color var(--dur-calm) var(--ease-calm);
   width: 34px;
 }
 .notif-bell:hover {
@@ -2010,7 +2242,7 @@ a {
   gap: 2px;
   padding: 10px;
   text-align: left;
-  transition: background 140ms cubic-bezier(0.4, 0, 0.2, 1);
+  transition: background var(--dur-calm) var(--ease-calm);
   width: 100%;
 }
 .notif-item:hover,
@@ -2072,7 +2304,7 @@ a {
   max-width: 100%;
   overflow: hidden;
   width: 560px;
-  animation: palette-in 180ms cubic-bezier(0.32, 0.72, 0, 1);
+  animation: palette-in var(--dur-swift) var(--ease-swift);
 }
 
 @keyframes palette-in {
@@ -2189,5 +2421,21 @@ a {
     animation-iteration-count: 1 !important;
     scroll-behavior: auto !important;
     transition-duration: 0.01ms !important;
+  }
+  /* The universal selector does not reach the view-transition pseudo-elements
+     or the splash sequence, and `commit` is a scale on a live figure — the one
+     animation someone with vestibular sensitivity is most likely to feel. Each
+     is turned off by name. */
+  ::view-transition-group(*),
+  ::view-transition-old(*),
+  ::view-transition-new(*) {
+    animation: none !important;
+  }
+  .route-enter,
+  .commit-pulse,
+  .splash-letters,
+  .splash-tagline,
+  .splash .mark-box {
+    animation: none !important;
   }
 }

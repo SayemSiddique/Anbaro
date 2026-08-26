@@ -5,8 +5,7 @@ import { StockBar } from './stock-bar';
 const rows = [
   {
     icon: Coffee,
-    tint: 'var(--mkt-primary-tint-10)',
-    color: 'var(--primary)',
+    swatch: 'primary',
     name: 'Paper Cups (12oz)',
     location: 'Main Storeroom',
     qty: 24,
@@ -15,8 +14,7 @@ const rows = [
   },
   {
     icon: Droplets,
-    tint: 'var(--mkt-decorative-green-tint)',
-    color: 'var(--mkt-decorative-green)',
+    swatch: 'green',
     name: 'Hand Soap',
     location: 'Supply Closet',
     qty: 156,
@@ -25,8 +23,7 @@ const rows = [
   },
   {
     icon: Package,
-    tint: 'var(--mkt-accent-tint-15)',
-    color: 'var(--accent)',
+    swatch: 'accent',
     name: 'Shipping Boxes (M)',
     location: 'Warehouse A',
     qty: 89,
@@ -35,8 +32,7 @@ const rows = [
   },
   {
     icon: Printer,
-    tint: 'var(--mkt-primary-tint-10)',
-    color: 'var(--primary)',
+    swatch: 'primary',
     name: 'Printer Paper (A4)',
     location: 'Office',
     qty: 8,
@@ -57,7 +53,7 @@ export function HeroMockupCard() {
         <div className="mockup-body">
           {rows.map((row) => (
             <div className="mockup-row" key={row.name}>
-              <div className="mockup-row-icon" style={{ background: row.tint, color: row.color }}>
+              <div className={`mockup-row-icon mkt-swatch-${row.swatch}`}>
                 <row.icon aria-hidden="true" size={17} />
               </div>
               <div className="mockup-row-info">
@@ -77,7 +73,7 @@ export function HeroMockupCard() {
       </div>
 
       <div className="float-card float-card-1">
-        <div className="float-card-icon" style={{ background: 'var(--primary)' }}>
+        <div className="float-card-icon float-card-icon-primary">
           <Bell aria-hidden="true" size={16} />
         </div>
         <div>
@@ -86,10 +82,7 @@ export function HeroMockupCard() {
         </div>
       </div>
       <div className="float-card float-card-2">
-        <div
-          className="float-card-icon"
-          style={{ background: 'var(--mkt-decorative-green)' }}
-        >
+        <div className="float-card-icon float-card-icon-green">
           <Barcode aria-hidden="true" size={16} />
         </div>
         <div>

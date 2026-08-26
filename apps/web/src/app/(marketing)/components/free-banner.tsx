@@ -36,11 +36,7 @@ export function FreeBanner() {
             </div>
           ))}
         </div>
-        <Link
-          className="btn-primary"
-          href="/login?mode=sign-up"
-          style={{ fontSize: '1.05rem', padding: '1rem 2.5rem' }}
-        >
+        <Link className="btn-primary btn-primary-lg" href="/login?mode=sign-up">
           <ArrowRight aria-hidden="true" size={17} />
           Try Anbaro for Free
         </Link>

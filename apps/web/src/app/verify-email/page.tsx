@@ -5,7 +5,7 @@ import { useSearchParams } from 'next/navigation';
 import { Suspense, useEffect, useMemo, useRef, useState } from 'react';
 
 import { AnbaroWordmark } from '../../components/brand';
-import { Card } from '../../components/ui';
+import { Card, CardIntro, InlineError } from '../../components/ui';
 import { apiErrorMessage, createSessionApi } from '../../lib/session';
 
 export default function VerifyEmailPage() {
@@ -45,24 +45,21 @@ function VerifyEmail() {
     <main className="auth-panel">
       <div className="auth-card">
         <Card>
-          <div style={{ display: 'grid', gap: 6, marginBottom: 18 }}>
-            <AnbaroWordmark size={30} />
-            <h1>Email verification</h1>
+          <div className="stack">
+            <CardIntro icon={<AnbaroWordmark size={30} />} title="Email verification" />
+            {status === 'working' ? (
+              <p role="status">Verifying your email…</p>
+            ) : status === 'verified' ? (
+              <p role="status">Your email is verified. Thanks for confirming.</p>
+            ) : (
+              <InlineError detail={error} title="Couldn’t verify your email" />
+            )}
+            <div className="auth-actions">
+              <Link className="btn btn-ghost btn-sm" href="/dashboard">
+                Go to dashboard
+              </Link>
+            </div>
           </div>
-          {status === 'working' ? (
-            <p role="status">Verifying your email…</p>
-          ) : status === 'verified' ? (
-            <p role="status">Your email is verified. Thanks for confirming.</p>
-          ) : (
-            <p role="alert" style={{ color: 'var(--danger)' }}>
-              {error}
-            </p>
-          )}
-          <p style={{ marginTop: 16, textAlign: 'center' }}>
-            <Link className="btn btn-ghost btn-sm" href="/dashboard">
-              Go to dashboard
-            </Link>
-          </p>
         </Card>
       </div>
     </main>

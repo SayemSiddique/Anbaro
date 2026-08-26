@@ -5,7 +5,16 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { Suspense, useMemo, useState, type FormEvent } from 'react';
 
 import { AnbaroWordmark } from '../../components/brand';
-import { Button, Card, Field, Input } from '../../components/ui';
+import {
+  Button,
+  Card,
+  CardIntro,
+  Field,
+  FormSection,
+  InlineError,
+  Input,
+  Meta,
+} from '../../components/ui';
 import { apiErrorMessage, createSessionApi } from '../../lib/session';
 
 export default function LoginPage() {
@@ -73,74 +82,75 @@ function LoginForm() {
             </li>
           </ul>
         </div>
-        <small style={{ color: 'var(--brand-on-night-muted)' }}>
-          Anbaro · stock management for operators
-        </small>
+        <small className="auth-hero-foot">Anbaro · stock management for operators</small>
       </aside>
       <main className="auth-panel">
         <div className="auth-card">
           <Card>
-            <div style={{ display: 'grid', gap: 6, marginBottom: 18 }}>
-              <h1 id="access-title">
-                {mode === 'sign-up' ? 'Create your free account' : 'Welcome back'}
-              </h1>
-              <p style={{ color: 'var(--text-muted)' }}>
-                {mode === 'sign-up'
-                  ? 'No card required. Create your organization and first location next.'
-                  : 'Sign in to your Anbaro workspace.'}
-              </p>
-            </div>
-            <form className="form-grid" onSubmit={submit} style={{ maxWidth: 'none' }}>
-              {mode === 'sign-up' ? (
-                <Field label="Name">
-                  <Input autoComplete="name" name="name" required />
+            <div className="stack">
+              <CardIntro
+                id="access-title"
+                title={mode === 'sign-up' ? 'Create your free account' : 'Welcome back'}
+              >
+                <Meta>
+                  {mode === 'sign-up'
+                    ? 'No card required. Create your organization and first location next.'
+                    : 'Sign in to your Anbaro workspace.'}
+                </Meta>
+              </CardIntro>
+              <FormSection onSubmit={submit} standalone>
+                {mode === 'sign-up' ? (
+                  <Field label="Name">
+                    <Input autoComplete="name" name="name" required />
+                  </Field>
+                ) : null}
+                <Field label="Email">
+                  <Input autoComplete="email" name="email" required type="email" />
                 </Field>
-              ) : null}
-              <Field label="Email">
-                <Input autoComplete="email" name="email" required type="email" />
-              </Field>
-              <Field
-                label="Password"
-                hint={mode === 'sign-up' ? 'At least 8 characters.' : undefined}
-              >
-                <Input
-                  autoComplete={mode === 'sign-up' ? 'new-password' : 'current-password'}
-                  minLength={8}
-                  name="password"
-                  required
-                  type="password"
-                />
-              </Field>
-              {error ? (
-                <p role="alert" style={{ color: 'var(--danger)', margin: 0 }}>
-                  {error}
-                </p>
-              ) : null}
-              <Button loading={working} type="submit">
-                {mode === 'sign-up' ? 'Create account' : 'Sign in'}
-              </Button>
-            </form>
-            {mode === 'sign-in' ? (
-              <p style={{ marginTop: 12, textAlign: 'center' }}>
-                <a className="btn btn-ghost btn-sm" href="/forgot-password">
-                  Forgot your password?
-                </a>
-              </p>
-            ) : null}
-            <p style={{ marginTop: 16, textAlign: 'center' }}>
-              <button
-                className="btn btn-ghost btn-sm"
-                onClick={() => {
-                  setError('');
-                  setMode(mode === 'sign-up' ? 'sign-in' : 'sign-up');
-                }}
-                type="button"
-              >
-                {mode === 'sign-up'
-                  ? 'Already have an account? Sign in'
-                  : 'New to Anbaro? Create a free account'}
-              </button>
-            </p>
+                <Field
+                  label="Password"
+                  hint={mode === 'sign-up' ? 'At least 8 characters.' : undefined}
+                >
+                  <Input
+                    autoComplete={mode === 'sign-up' ? 'new-password' : 'current-password'}
+                    minLength={8}
+                    name="password"
+                    required
+                    type="password"
+                  />
+                </Field>
+                {error ? (
+                  <InlineError
+                    detail={error}
+                    title={
+                      mode === 'sign-up' ? 'Couldn’t create your account' : 'Couldn’t sign you in'
+                    }
+                  />
+                ) : null}
+                <Button loading={working} type="submit">
+                  {mode === 'sign-up' ? 'Create account' : 'Sign in'}
+                </Button>
+              </FormSection>
+              <div className="auth-actions">
+                {mode === 'sign-in' ? (
+                  <a className="btn btn-ghost btn-sm" href="/forgot-password">
+                    Forgot your password?
+                  </a>
+                ) : null}
+                <button
+                  className="btn btn-ghost btn-sm"
+                  onClick={() => {
+                    setError('');
+                    setMode(mode === 'sign-up' ? 'sign-in' : 'sign-up');
+                  }}
+                  type="button"
+                >
+                  {mode === 'sign-up'
+                    ? 'Already have an account? Sign in'
+                    : 'New to Anbaro? Create a free account'}
+                </button>
+              </div>
+            </div>
           </Card>
         </div>
       </main>

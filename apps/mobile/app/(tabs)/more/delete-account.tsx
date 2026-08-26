@@ -5,7 +5,7 @@ import { useState } from 'react';
 import { ScrollView, Text, TextInput, View } from 'react-native';
 
 import { useMobileSession } from '../../../src/components/app-shell';
-import { PrimaryButton, SecondaryButton, StatePanel } from '../../../src/components/ui';
+import { DangerButton, SecondaryButton, StatePanel } from '../../../src/components/ui';
 import { font } from '../../../src/lib/fonts';
 import { makeStyles, text } from '../../../src/lib/theme';
 
@@ -84,17 +84,17 @@ export default function DeleteAccountScreen() {
           style={styles.input}
           value={confirmation}
         />
+        {/* Scoped to the form it belongs to: a wrong password says nothing about
+            the warning above it. */}
         {error ? (
-          <Text accessibilityRole="alert" style={styles.error}>
-            {error}
-          </Text>
+          <StatePanel detail={error} title="Couldn’t delete your account" tone="error" />
         ) : null}
-        <PrimaryButton
+        <DangerButton
           disabled={busy || confirmation !== 'DELETE' || password.length === 0}
           onPress={() => void remove()}
         >
           {busy ? 'Deleting…' : 'Permanently delete my account'}
-        </PrimaryButton>
+        </DangerButton>
         <SecondaryButton disabled={busy} onPress={() => router.back()}>
           Keep my account
         </SecondaryButton>

@@ -1,5 +1,6 @@
 import type { CurrentUser } from '@anbaro/contracts';
 import { ApiClientError } from '@anbaro/contracts';
+import { tokens } from '@anbaro/design-tokens';
 import {
   createContext,
   useCallback,
@@ -10,6 +11,7 @@ import {
   type ReactNode,
 } from 'react';
 import { AppState, Text, TextInput, View } from 'react-native';
+import Animated, { FadeIn } from 'react-native-reanimated';
 
 import { MobileSessionController } from '../lib/session';
 import { AnbaroWordmark } from './brand';
@@ -88,7 +90,7 @@ export function MobileShell({ children }: { children: ReactNode }) {
       <MobileAccessForm controller={controller} onAuthenticated={bootstrap} />
     ) : state.kind === 'error' ? (
       <StatePanel
-        action={<PrimaryButton onPress={() => void bootstrap()}>Try again</PrimaryButton>}
+        action={<SecondaryButton onPress={() => void bootstrap()}>Try again</SecondaryButton>}
         detail="We could not load your account. Check your connection and try again."
         title="Couldn’t load your workspace"
         tone="error"
@@ -96,9 +98,20 @@ export function MobileShell({ children }: { children: ReactNode }) {
     ) : (
       children
     );
+  /* The session's three states replace each other outright — splash, sign-in,
+     app — and a hard swap at that scale reads as a flicker rather than as an
+     arrival. `key` on the state makes each one a fresh mount, so the fade runs
+     on the change and not on every re-render underneath it. `swift`'s 180 ms,
+     matching the web route change. Reanimated honours reduced motion itself. */
   return (
     <MobileSessionContext.Provider value={{ state, controller, reload: bootstrap }}>
-      <View style={styles.container}>{content}</View>
+      <Animated.View
+        entering={FadeIn.duration(tokens.motion.normal)}
+        key={state.kind}
+        style={styles.container}
+      >
+        {content}
+      </Animated.View>
     </MobileSessionContext.Provider>
   );
 }
@@ -172,11 +185,7 @@ function MobileAccessForm({
         style={styles.input}
         value={password}
       />
-      {error ? (
-        <Text accessibilityRole="alert" style={styles.error}>
-          {error}
-        </Text>
-      ) : null}
+      {error ? <StatePanel detail={error} title="Couldn’t sign you in" tone="error" /> : null}
       <PrimaryButton
         disabled={working || !email || password.length < 8 || (mode === 'sign-up' && !name)}
         onPress={() => void submit()}
@@ -199,7 +208,6 @@ const useStyles = makeStyles((c) => ({
     padding: 16,
   },
   detail: { ...text.body, color: c.inkMuted },
-  error: { color: c.bad },
   form: { gap: 12, marginHorizontal: 'auto', maxWidth: 480, width: '100%' },
   tagline: { ...text.body, color: c.inkMuted },
   input: {

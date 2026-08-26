@@ -1,18 +1,24 @@
 'use client';
 
 import { type Location, type StockProposal } from '@anbaro/contracts';
-import { ArrowRight, Check, Sparkles } from 'lucide-react';
+import { Check, Sparkles } from 'lucide-react';
 import { useCallback, useEffect, useState, type FormEvent } from 'react';
 
 import {
+  Actions,
   Badge,
   Button,
   Card,
   CardTitle,
+  type Column,
+  DataTable,
   EmptyState,
   Field,
+  FormSection,
+  InlineError,
+  Meta,
   Select,
-  StatePanel,
+  Textarea,
 } from '../components/ui';
 import { apiErrorMessage, useSession } from '../lib/session';
 
@@ -24,6 +30,9 @@ type RowState =
   | { kind: 'applying' }
   | { kind: 'applied'; resultingQuantity: string }
   | { kind: 'error'; message: string };
+
+/** A movement carries its index because that is what every per-row map is keyed by. */
+type MovementRow = { index: number; movement: ProposedMovement };
 
 export function AssistantFeature() {
   const { api, permissions } = useSession();
@@ -37,15 +46,19 @@ export function AssistantFeature() {
   const [chosenItem, setChosenItem] = useState<Record<number, string>>({});
   const [rows, setRows] = useState<Record<number, RowState>>({});
   const [asking, setAsking] = useState(false);
+  // Two failures, two states: a dead location list must not read as a dead
+  // assistant, and neither one takes the form down.
+  const [locationError, setLocationError] = useState('');
   const [error, setError] = useState('');
 
   const loadLocations = useCallback(async () => {
+    setLocationError('');
     try {
       const response = await api.getLocations();
       setLocations(response.data);
       setLocationId((current) => current || response.data[0]?.id || '');
     } catch (caught) {
-      setError(apiErrorMessage(caught));
+      setLocationError(apiErrorMessage(caught));
     }
   }, [api]);
   useEffect(() => {
@@ -119,9 +132,15 @@ export function AssistantFeature() {
 
   if (!canUse) {
     return (
-      <StatePanel title="Assistant isn’t enabled for your role" tone="info">
-        Ask an owner or manager to grant assistant access.
-      </StatePanel>
+      <div className="stack">
+        <Card>
+          <EmptyState
+            hint="Ask an owner or manager to grant assistant access."
+            icon={<Sparkles size={36} strokeWidth={1.5} />}
+            title="Assistant isn’t enabled for your role"
+          />
+        </Card>
+      </div>
     );
   }
 
@@ -129,6 +148,108 @@ export function AssistantFeature() {
     proposal?.locationName ??
     locations.find((location) => location.id === locationId)?.name ??
     null;
+
+  const movementRows: MovementRow[] = (proposal?.movements ?? []).map((movement, index) => ({
+    index,
+    movement,
+  }));
+
+  const columns: Column<MovementRow>[] = [
+    {
+      id: 'movement',
+      header: 'Movement',
+      cell: ({ movement }) => (
+        <div>
+          <span className="compact-strong">
+            {movement.eventType === 'loss' ? 'Loss' : 'Adjustment'}
+          </span>{' '}
+          <Badge tone={movement.confidence === 'high' ? 'success' : 'warning'}>
+            {movement.confidence === 'high' ? 'Confident' : 'Unsure'}
+          </Badge>
+          <Meta>
+            Heard “{movement.itemQuery}”{movement.reason ? ` · ${movement.reason}` : ''}
+          </Meta>
+        </div>
+      ),
+    },
+    {
+      id: 'quantity',
+      header: 'Quantity',
+      align: 'end',
+      numeric: true,
+      cell: ({ movement }) =>
+        movement.eventType === 'loss'
+          ? Math.abs(movement.quantityDelta)
+          : `${movement.quantityDelta > 0 ? '+' : ''}${movement.quantityDelta}`,
+    },
+    {
+      id: 'item',
+      header: 'Item',
+      cell: ({ index, movement }) => {
+        const row = rows[index] ?? { kind: 'idle' };
+        // A movement the model placed with no runners-up has nothing to choose
+        // between, so it reads as the answer rather than as a one-option picker.
+        if (movement.resolvedItem && movement.candidates.length === 0) {
+          return movement.resolvedItem.name;
+        }
+        return (
+          <Select
+            aria-label={`Item for “${movement.itemQuery}”`}
+            compact
+            disabled={row.kind === 'applied' || row.kind === 'applying'}
+            onChange={(event) =>
+              setChosenItem((prev) => ({ ...prev, [index]: event.target.value }))
+            }
+            value={chosenItem[index] ?? ''}
+          >
+            <option value="">Select an item…</option>
+            {[
+              ...(movement.resolvedItem ? [movement.resolvedItem] : []),
+              ...movement.candidates.filter(
+                (candidate) => candidate.id !== movement.resolvedItem?.id,
+              ),
+            ].map((candidate) => (
+              <option key={candidate.id} value={candidate.id}>
+                {candidate.name}
+              </option>
+            ))}
+          </Select>
+        );
+      },
+    },
+    {
+      id: 'status',
+      header: 'Status',
+      cell: ({ index }) => {
+        const row = rows[index] ?? { kind: 'idle' };
+        if (row.kind === 'applied') {
+          return (
+            <div>
+              <Badge tone="success" withDot>
+                Applied
+              </Badge>
+              <Meta>
+                Now <span className="numeric">{row.resultingQuantity}</span> on hand
+              </Meta>
+            </div>
+          );
+        }
+        if (row.kind === 'error') {
+          // Scoped to its row: one movement that will not write says nothing
+          // about the three above it.
+          return (
+            <div role="alert">
+              <Badge tone="danger" withDot>
+                Didn’t apply
+              </Badge>
+              <Meta>{row.message}</Meta>
+            </div>
+          );
+        }
+        return <Meta inline>Nothing written yet</Meta>;
+      },
+    },
+  ];
 
   return (
     <div className="stack">
@@ -138,9 +259,9 @@ export function AssistantFeature() {
           subtitle="Describe a stock change in plain language. Nothing is written until you confirm each movement."
           title="Describe a stock change"
         />
-        <form onSubmit={ask}>
-          <div className="form-row" style={{ marginBottom: 12 }}>
-            <Field label="Location">
+        <FormSection onSubmit={ask} standalone>
+          <div className="form-row">
+            <Field grow label="Location">
               <Select onChange={(event) => setLocationId(event.target.value)} value={locationId}>
                 {locations.map((location) => (
                   <option key={location.id} value={location.id}>
@@ -150,34 +271,43 @@ export function AssistantFeature() {
               </Select>
             </Field>
           </div>
+          {locationError ? (
+            <InlineError
+              detail={locationError}
+              onRetry={() => void loadLocations()}
+              title="Couldn’t load your locations"
+            />
+          ) : null}
           <Field label="What changed?">
-            <textarea
-              className="input"
+            <Textarea
               onChange={(event) => setMessage(event.target.value)}
               placeholder="e.g. we’re out of 15 limes downtown, they spoiled"
               rows={3}
-              style={{ resize: 'vertical', width: '100%' }}
               value={message}
             />
           </Field>
-          <div style={{ marginTop: 12 }}>
+          <Actions>
             <Button icon={<Sparkles size={15} />} loading={asking} type="submit">
               Ask assistant
             </Button>
+          </Actions>
+        </FormSection>
+        {error ? (
+          <div className="inline-error-stacked">
+            <InlineError detail={error} title="Couldn’t reach the assistant" />
           </div>
-        </form>
+        ) : null}
       </Card>
 
-      {error ? (
-        <StatePanel title="Couldn’t reach the assistant" tone="error">
-          {error}
-        </StatePanel>
-      ) : null}
-
       {proposal?.clarification ? (
-        <StatePanel title="The assistant needs a bit more" tone="info">
-          {proposal.clarification}
-        </StatePanel>
+        <Card labelledBy="clarification-title">
+          <CardTitle
+            id="clarification-title"
+            subtitle="Add the missing detail and ask again."
+            title="The assistant needs a bit more"
+          />
+          <Meta>{proposal.clarification}</Meta>
+        </Card>
       ) : null}
 
       {proposal && proposal.movements.length > 0 ? (
@@ -191,95 +321,34 @@ export function AssistantFeature() {
             }
             title="Review the proposal"
           />
-          <ul className="stack" style={{ listStyle: 'none', margin: 0, padding: 0 }}>
-            {proposal.movements.map((movement, index) => {
+          <DataTable
+            caption="Proposed movements"
+            columns={columns}
+            getRowId={({ index }) => String(index)}
+            rowActions={({ index, movement }) => {
               const row = rows[index] ?? { kind: 'idle' };
-              const applied = row.kind === 'applied';
+              if (row.kind === 'applied') {
+                return (
+                  <Meta inline>
+                    <Check size={14} /> Done
+                  </Meta>
+                );
+              }
               return (
-                <li
-                  className="card"
-                  key={index}
-                  style={{ alignItems: 'center', display: 'flex', flexWrap: 'wrap', gap: 12 }}
+                <Button
+                  disabled={!chosenItem[index]}
+                  loading={row.kind === 'applying'}
+                  onClick={() => void confirmMovement(movement, index)}
+                  size="sm"
+                  tone="secondary"
+                  type="button"
                 >
-                  <div style={{ flex: '1 1 240px', minWidth: 0 }}>
-                    <div style={{ alignItems: 'center', display: 'flex', gap: 8 }}>
-                      <strong>
-                        {movement.eventType === 'loss'
-                          ? `Loss ${Math.abs(movement.quantityDelta)}`
-                          : `Adjust ${movement.quantityDelta > 0 ? '+' : ''}${movement.quantityDelta}`}
-                      </strong>
-                      <Badge tone={movement.confidence === 'high' ? 'success' : 'warning'}>
-                        {movement.confidence === 'high' ? 'Confident' : 'Unsure'}
-                      </Badge>
-                    </div>
-                    <p style={{ color: 'var(--text-muted)', margin: '4px 0 0' }}>
-                      Heard “{movement.itemQuery}”{movement.reason ? ` · ${movement.reason}` : ''}
-                    </p>
-                  </div>
-
-                  <div style={{ flex: '1 1 220px' }}>
-                    {movement.resolvedItem && movement.candidates.length === 0 ? (
-                      <span style={{ alignItems: 'center', display: 'flex', gap: 6 }}>
-                        <ArrowRight size={14} /> {movement.resolvedItem.name}
-                      </span>
-                    ) : (
-                      <Field label="Item">
-                        <Select
-                          disabled={applied || row.kind === 'applying'}
-                          onChange={(event) =>
-                            setChosenItem((prev) => ({ ...prev, [index]: event.target.value }))
-                          }
-                          value={chosenItem[index] ?? ''}
-                        >
-                          <option value="">Select an item…</option>
-                          {[
-                            ...(movement.resolvedItem ? [movement.resolvedItem] : []),
-                            ...movement.candidates.filter(
-                              (candidate) => candidate.id !== movement.resolvedItem?.id,
-                            ),
-                          ].map((candidate) => (
-                            <option key={candidate.id} value={candidate.id}>
-                              {candidate.name}
-                            </option>
-                          ))}
-                        </Select>
-                      </Field>
-                    )}
-                  </div>
-
-                  <div style={{ flex: '0 0 auto' }}>
-                    {applied ? (
-                      <span
-                        style={{
-                          alignItems: 'center',
-                          color: 'var(--success)',
-                          display: 'flex',
-                          gap: 6,
-                        }}
-                      >
-                        <Check size={16} /> Applied · now {row.resultingQuantity}
-                      </span>
-                    ) : (
-                      <Button
-                        disabled={!chosenItem[index]}
-                        loading={row.kind === 'applying'}
-                        onClick={() => void confirmMovement(movement, index)}
-                        tone="secondary"
-                        type="button"
-                      >
-                        Confirm
-                      </Button>
-                    )}
-                    {row.kind === 'error' ? (
-                      <p role="alert" style={{ color: 'var(--danger)', margin: '6px 0 0' }}>
-                        {row.message}
-                      </p>
-                    ) : null}
-                  </div>
-                </li>
+                  Confirm
+                </Button>
               );
-            })}
-          </ul>
+            }}
+            rows={movementRows}
+          />
         </Card>
       ) : null}
 

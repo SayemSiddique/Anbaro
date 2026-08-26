@@ -1,13 +1,25 @@
 import type { Notification, NotificationPreference, ReorderSuggestion } from '@anbaro/contracts';
 import { ApiClientError } from '@anbaro/contracts';
 
+import { Check, RotateCw } from 'lucide-react-native';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { ScrollView, Text, View } from 'react-native';
 
 import { useMobileSession } from '../../src/components/app-shell';
-import { PrimaryButton, StatePanel } from '../../src/components/ui';
+import {
+  QuietButton,
+  SecondaryButton,
+  SkeletonRows,
+  StatePanel,
+  Switch,
+} from '../../src/components/ui';
 import { makeStyles, text } from '../../src/lib/theme';
 
+/**
+ * A read screen. Nothing here is "the thing the screen is for" in the way a
+ * count or a save is, so it spends no filled primary at all (§5.2 allows zero):
+ * refreshing, marking read, and reviewing a recommendation are all peers.
+ */
 export default function AlertsScreen() {
   const styles = useStyles();
   const { controller, state } = useMobileSession();
@@ -85,13 +97,19 @@ export default function AlertsScreen() {
       <Text style={styles.detail}>
         Low-stock alerts are based on stock changes, not a live polling guess.
       </Text>
-      {error ? <StatePanel detail={error} title="Couldn’t update alerts" tone="error" /> : null}
-      <PrimaryButton onPress={() => void load()}>Refresh alerts</PrimaryButton>
       <View style={styles.panel}>
-        <Text accessibilityRole="header" style={styles.section}>
-          Low-stock alerts
-        </Text>
-        {loading ? <Text style={styles.detail}>Loading alerts…</Text> : null}
+        <View style={styles.panelHead}>
+          <Text accessibilityRole="header" style={styles.section}>
+            Low-stock alerts
+          </Text>
+          <QuietButton icon={RotateCw} onPress={() => void load()}>
+            Refresh
+          </QuietButton>
+        </View>
+        {/* The failure sits with the list it belongs to, not at the top of a
+            screen whose preferences panel loaded perfectly well. */}
+        {error ? <StatePanel detail={error} title="Couldn’t update alerts" tone="error" /> : null}
+        {loading ? <SkeletonRows label="Loading alerts" rows={2} /> : null}
         {!loading && !alerts.length ? (
           <StatePanel detail="You’re all caught up." title="No low-stock alerts" />
         ) : null}
@@ -103,7 +121,11 @@ export default function AlertsScreen() {
               {alert.locationName} · {new Date(alert.createdAt).toLocaleString()}
             </Text>
             {!alert.readAt ? (
-              <PrimaryButton onPress={() => void markRead(alert.id)}>Mark read</PrimaryButton>
+              <View style={styles.rowActions}>
+                <QuietButton icon={Check} onPress={() => void markRead(alert.id)}>
+                  Mark read
+                </QuietButton>
+              </View>
             ) : null}
           </View>
         ))}
@@ -131,12 +153,14 @@ export default function AlertsScreen() {
                 {suggestion.locationName}
                 {suggestion.primarySupplierName ? ` · ${suggestion.primarySupplierName}` : ''}
               </Text>
-              <PrimaryButton onPress={() => void review(suggestion.id, 'reviewed_sent')}>
-                Mark reviewed / sent
-              </PrimaryButton>
-              <PrimaryButton onPress={() => void review(suggestion.id, 'dismissed')}>
-                Dismiss recommendation
-              </PrimaryButton>
+              <View style={styles.rowActions}>
+                <SecondaryButton onPress={() => void review(suggestion.id, 'reviewed_sent')}>
+                  Mark reviewed / sent
+                </SecondaryButton>
+                <QuietButton onPress={() => void review(suggestion.id, 'dismissed')}>
+                  Dismiss
+                </QuietButton>
+              </View>
             </View>
           ))}
         </View>
@@ -157,11 +181,17 @@ export default function AlertsScreen() {
                   ? 'Email'
                   : 'Push'}
             </Text>
-            <PrimaryButton
-              onPress={() => void setPreference(preference.channel, !preference.enabled)}
-            >
-              {preference.enabled ? 'On' : 'Off'}
-            </PrimaryButton>
+            <Switch
+              label={`${
+                preference.channel === 'in_app'
+                  ? 'In-app'
+                  : preference.channel === 'email'
+                    ? 'Email'
+                    : 'Push'
+              } alerts`}
+              onValueChange={(next) => void setPreference(preference.channel, next)}
+              value={preference.enabled}
+            />
           </View>
         ))}
       </View>
@@ -189,7 +219,14 @@ const useStyles = makeStyles((c) => ({
     justifyContent: 'space-between',
     paddingTop: 10,
   },
+  panelHead: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: 8,
+    justifyContent: 'space-between',
+  },
   row: { borderTopColor: c.hairline, borderTopWidth: 1, gap: 6, paddingTop: 10 },
+  rowActions: { alignItems: 'flex-start', flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   rowTitle: { ...text.heading, color: c.ink },
   section: { ...text.title, color: c.ink },
   title: { ...text.display, color: c.ink },

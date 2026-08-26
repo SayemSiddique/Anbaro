@@ -2,12 +2,19 @@ import { ApiClientError, type Location, type Notification } from '@anbaro/contra
 
 import { useRouter } from 'expo-router';
 import * as SecureStore from 'expo-secure-store';
-import { Bell, Check } from 'lucide-react-native';
+import { Bell, Check, Pencil, Archive } from 'lucide-react-native';
 import { useCallback, useEffect, useState } from 'react';
 import { Alert, Text, TextInput, View } from 'react-native';
 
 import { useMobileSession } from '../../src/components/app-shell';
-import { PrimaryButton, QuietButton, StatePanel } from '../../src/components/ui';
+import {
+  Chip,
+  PrimaryButton,
+  QuietButton,
+  SecondaryButton,
+  SkeletonRows,
+  StatePanel,
+} from '../../src/components/ui';
 import { makeStyles, text } from '../../src/lib/theme';
 
 /* Three is the whole point. D4 folded Alerts out of the tab bar on the promise
@@ -29,18 +36,26 @@ export default function HomeScreen() {
   });
   const [name, setName] = useState('');
   const [address, setAddress] = useState('');
-  const [error, setError] = useState('');
+  // Three failures, three places. A location that will not save says nothing
+  // about the list above it, and neither one belongs to the alerts panel.
+  const [listError, setListError] = useState('');
+  const [formError, setFormError] = useState('');
+  const [alertError, setAlertError] = useState('');
+  const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState<Location | null>(null);
   const [capacityPrompt, setCapacityPrompt] = useState(false);
   const [draftRestored, setDraftRestored] = useState(false);
   const load = useCallback(async () => {
     if (state.kind !== 'ready' || !state.user.activeOrganizationId) return;
+    setListError('');
     try {
       const response = await controller.getLocations();
       setLocations(response.data);
       setCapacity({ used: response.meta.used, capacity: response.meta.capacity });
     } catch (caught) {
-      setError(caught instanceof ApiClientError ? caught.message : 'Could not load locations.');
+      setListError(caught instanceof ApiClientError ? caught.message : 'Could not load locations.');
+    } finally {
+      setLoading(false);
     }
   }, [controller, state]);
   const loadAlerts = useCallback(async () => {
@@ -90,13 +105,14 @@ export default function HomeScreen() {
       setName('');
       await reload();
     } catch (caught) {
-      setError(
+      setFormError(
         caught instanceof ApiClientError ? caught.message : 'Could not create organization.',
       );
     }
   }
   async function saveLocation() {
     if (!name.trim()) return;
+    setFormError('');
     try {
       if (editing) await controller.updateLocation(editing.id, name, address);
       else await controller.createLocation(name, address);
@@ -108,7 +124,10 @@ export default function HomeScreen() {
     } catch (caught) {
       if (caught instanceof ApiClientError && caught.code === 'LOCATION_CAPACITY_REACHED')
         setCapacityPrompt(true);
-      else setError(caught instanceof ApiClientError ? caught.message : 'Could not save location.');
+      else
+        setFormError(
+          caught instanceof ApiClientError ? caught.message : 'Could not save location.',
+        );
     }
   }
   async function markAlertRead(id: string) {
@@ -116,7 +135,7 @@ export default function HomeScreen() {
       await controller.markNotificationRead(id);
       await loadAlerts();
     } catch {
-      setError('Could not update this alert.');
+      setAlertError('Could not update this alert.');
     }
   }
   async function archiveLocation(location: Location) {
@@ -129,7 +148,7 @@ export default function HomeScreen() {
           void controller
             .archiveLocation(location.id)
             .then(load)
-            .catch(() => setError('Could not archive this location.')),
+            .catch(() => setListError('Could not archive this location.')),
       },
     ]);
   }
@@ -152,10 +171,8 @@ export default function HomeScreen() {
         <PrimaryButton disabled={!name.trim()} onPress={() => void createOrganization()}>
           Continue
         </PrimaryButton>
-        {error ? (
-          <Text accessibilityRole="alert" style={styles.error}>
-            {error}
-          </Text>
+        {formError ? (
+          <StatePanel detail={formError} title="Couldn’t create your organization" tone="error" />
         ) : null}
       </View>
     );
@@ -173,6 +190,9 @@ export default function HomeScreen() {
             All alerts
           </QuietButton>
         </View>
+        {alertError ? (
+          <StatePanel detail={alertError} title="Couldn’t update this alert" tone="error" />
+        ) : null}
         {alerts.length === 0 ? (
           <Text style={styles.detail}>
             Nothing is below its threshold. Alerts appear here the moment stock crosses one.
@@ -200,20 +220,24 @@ export default function HomeScreen() {
       <Text accessibilityRole="header" style={styles.section}>
         Locations
       </Text>
+      {/* Picking the active workspace is a choice among options, not a stack of
+          actions — and a Chip can show which one is already selected, which a
+          row of identical filled buttons cannot. */}
       {state.user.memberships.length > 1 ? (
         <View style={styles.switcher}>
           <Text style={styles.detail}>Switch organization</Text>
-          {state.user.memberships.map((membership) => (
-            <PrimaryButton
-              disabled={membership.organizationId === state.user.activeOrganizationId}
-              key={membership.organizationId}
-              onPress={() =>
-                void controller.selectOrganization(membership.organizationId).then(reload)
-              }
-            >
-              {membership.organizationName}
-            </PrimaryButton>
-          ))}
+          <View style={styles.chipRow}>
+            {state.user.memberships.map((membership) => (
+              <Chip
+                key={membership.organizationId}
+                label={membership.organizationName}
+                onPress={() =>
+                  void controller.selectOrganization(membership.organizationId).then(reload)
+                }
+                selected={membership.organizationId === state.user.activeOrganizationId}
+              />
+            ))}
+          </View>
         </View>
       ) : null}
       <Text style={styles.detail}>
@@ -221,12 +245,24 @@ export default function HomeScreen() {
           ? `${capacity.used} ${capacity.used === 1 ? 'location' : 'locations'}.`
           : `${capacity.used} of ${capacity.capacity} locations used.`}
       </Text>
+      {listError ? (
+        <StatePanel
+          action={<SecondaryButton onPress={() => void load()}>Try again</SecondaryButton>}
+          detail={listError}
+          title="Couldn’t load your locations"
+          tone="error"
+        />
+      ) : null}
+      {loading && !locations.length && !listError ? (
+        <SkeletonRows label="Loading your locations" rows={2} />
+      ) : null}
       {locations.map((location) => (
         <View key={location.id} style={styles.location}>
           <Text style={styles.locationTitle}>{location.name}</Text>
           {location.address ? <Text style={styles.detail}>{location.address}</Text> : null}
           <View style={styles.actions}>
-            <PrimaryButton
+            <QuietButton
+              icon={Pencil}
               onPress={() => {
                 setEditing(location);
                 setName(location.name);
@@ -234,8 +270,10 @@ export default function HomeScreen() {
               }}
             >
               Edit
-            </PrimaryButton>
-            <PrimaryButton onPress={() => void archiveLocation(location)}>Archive</PrimaryButton>
+            </QuietButton>
+            <QuietButton icon={Archive} onPress={() => void archiveLocation(location)}>
+              Archive
+            </QuietButton>
           </View>
         </View>
       ))}
@@ -264,7 +302,7 @@ export default function HomeScreen() {
         {editing ? 'Save changes' : 'Save location'}
       </PrimaryButton>
       {editing ? (
-        <PrimaryButton
+        <SecondaryButton
           onPress={() => {
             setEditing(null);
             setName('');
@@ -272,18 +310,16 @@ export default function HomeScreen() {
           }}
         >
           Cancel edit
-        </PrimaryButton>
+        </SecondaryButton>
       ) : null}
-      {error ? (
-        <Text accessibilityRole="alert" style={styles.error}>
-          {error}
-        </Text>
+      {formError ? (
+        <StatePanel detail={formError} title="Couldn’t save this location" tone="error" />
       ) : null}
       {capacityPrompt ? (
         <StatePanel
           action={
             <View style={styles.actions}>
-              <PrimaryButton onPress={() => setCapacityPrompt(false)}>Got it</PrimaryButton>
+              <SecondaryButton onPress={() => setCapacityPrompt(false)}>Got it</SecondaryButton>
             </View>
           }
           detail={`The Free plan includes ${capacity.capacity} locations. Upgrade to Pro at anbaro.com for unlimited locations — your entered details are saved here.`}
@@ -297,8 +333,8 @@ export default function HomeScreen() {
 const useStyles = makeStyles((c) => ({
   actions: { flexDirection: 'row', gap: 8, marginTop: 8 },
   alert: { borderTopColor: c.hairline, borderTopWidth: 1, gap: 4, paddingTop: 10 },
+  chipRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   detail: { ...text.body, color: c.inkMuted },
-  error: { color: c.bad },
   form: { gap: 12 },
   input: {
     ...text.body,

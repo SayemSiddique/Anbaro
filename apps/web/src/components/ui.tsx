@@ -22,6 +22,7 @@ import type {
   PropsWithChildren,
   ReactNode,
   SelectHTMLAttributes,
+  TextareaHTMLAttributes,
 } from 'react';
 
 type ButtonProps = PropsWithChildren<
@@ -87,11 +88,7 @@ export function QuietButton({
   return (
     <button
       {...props}
-      className={[
-        'quiet-btn',
-        emphasis === 'tinted' ? 'quiet-btn-tinted' : '',
-        className ?? '',
-      ]
+      className={['quiet-btn', emphasis === 'tinted' ? 'quiet-btn-tinted' : '', className ?? '']
         .filter(Boolean)
         .join(' ')}
       type={props.type ?? 'button'}
@@ -157,6 +154,34 @@ export function CardIntro({
       <h1 id={id}>{title}</h1>
       {children}
     </div>
+  );
+}
+
+/**
+ * A narrow column centred in an otherwise empty viewport — the shape a screen
+ * takes when there is no application shell to put it in yet: the org-setup
+ * form, and the failure below.
+ */
+export function CenteredPage({ children }: PropsWithChildren) {
+  return <main className="centered-page">{children}</main>;
+}
+
+/**
+ * The whole-viewport failure: no shell, no navigation, one thing to do. This is
+ * the single legitimate consumer of `StatePanel` — everywhere else a failure
+ * belongs to one panel, which is what `AsyncPanel` and `InlineError` are for.
+ */
+export function FullPageError({
+  children,
+  onRetry,
+  title,
+}: PropsWithChildren<{ onRetry: () => void; title: string }>) {
+  return (
+    <CenteredPage>
+      <StatePanel action={<Button onClick={onRetry}>Try again</Button>} title={title} tone="error">
+        {children}
+      </StatePanel>
+    </CenteredPage>
   );
 }
 
@@ -243,14 +268,22 @@ export function EmptyState({
   );
 }
 
+/**
+ * `pulse` marks a tile whose value moves as you work — the count that just
+ * accepted a line. The value carries `key={value}`, so a changed figure
+ * remounts and replays the `commit` animation; an unchanged one does not
+ * (§5.3: commit is for a write that landed, not for every render).
+ */
 export function StatTile({
   icon,
   label,
+  pulse = false,
   tone,
   value,
 }: {
   icon?: ReactNode;
   label: string;
+  pulse?: boolean;
   tone?: 'danger' | 'warning' | 'success';
   value: ReactNode;
 }) {
@@ -268,7 +301,15 @@ export function StatTile({
         {icon}
         {label}
       </span>
-      <span className={`stat-tile-value${toneClass}`}>{value}</span>
+      <span className={`stat-tile-value${toneClass}`}>
+        {pulse ? (
+          <span className="commit-pulse" key={String(value)}>
+            {value}
+          </span>
+        ) : (
+          value
+        )}
+      </span>
     </div>
   );
 }
@@ -340,17 +381,21 @@ export function FormSection({
   onSubmit,
   standalone = false,
   title,
+  wide = false,
 }: PropsWithChildren<{
   onSubmit: (event: FormEvent<HTMLFormElement>) => void;
   standalone?: boolean;
   title?: ReactNode;
+  /** Drops the readable-measure cap, for a form whose content is a wide grid
+      rather than a column of fields — the permission-set picker is the case. */
+  wide?: boolean;
 }>) {
   // The rule is on the wrapper, not the form: `.form-grid` is capped at a
   // readable measure, and a divider that stopped at the last input would read
   // as a stray line rather than as the edge of a section.
   return (
     <div className={standalone ? undefined : 'form-section'}>
-      <form className="form-grid" onSubmit={onSubmit}>
+      <form className={wide ? 'form-grid form-grid-wide' : 'form-grid'} onSubmit={onSubmit}>
         {title ? <h3>{title}</h3> : null}
         {children}
       </form>
@@ -380,6 +425,19 @@ export function Field({
 
 export function Input(props: InputHTMLAttributes<HTMLInputElement>) {
   return <input {...props} className={['input', props.className ?? ''].join(' ').trim()} />;
+}
+
+/**
+ * The multi-line `Input`. It resizes vertically only: a textarea that can be
+ * dragged wider than its column drags the layout with it.
+ */
+export function Textarea(props: TextareaHTMLAttributes<HTMLTextAreaElement>) {
+  return (
+    <textarea
+      {...props}
+      className={['input', 'textarea', props.className ?? ''].join(' ').trim()}
+    />
+  );
 }
 
 /**
@@ -462,7 +520,13 @@ export {
   type Segment,
   type TabItem,
 } from './controls';
-export { DataTable, type Column, type DataTableProps, type FilterChip, type SavedView } from './data-table';
+export {
+  DataTable,
+  type Column,
+  type DataTableProps,
+  type FilterChip,
+  type SavedView,
+} from './data-table';
 export {
   AsyncPanel,
   InlineError,

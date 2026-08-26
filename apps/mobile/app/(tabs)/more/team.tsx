@@ -5,7 +5,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { ScrollView, Text, View } from 'react-native';
 
 import { useMobileSession } from '../../../src/components/app-shell';
-import { PrimaryButton, StatePanel } from '../../../src/components/ui';
+import { SecondaryButton, SkeletonRows, StatePanel } from '../../../src/components/ui';
 import { font } from '../../../src/lib/fonts';
 import { makeStyles, text, useTheme } from '../../../src/lib/theme';
 
@@ -51,14 +51,14 @@ export default function TeamScreen() {
 
       {error ? (
         <StatePanel
-          action={<PrimaryButton onPress={() => void load()}>Try again</PrimaryButton>}
+          action={<SecondaryButton onPress={() => void load()}>Try again</SecondaryButton>}
           detail={error}
           title="Something didn’t load"
           tone="error"
         />
       ) : null}
 
-      {members === null && !error ? <Text style={styles.detail}>Loading team…</Text> : null}
+      {members === null && !error ? <SkeletonRows label="Loading the team" /> : null}
 
       {members?.length === 0 ? (
         <View style={styles.empty}>

@@ -5,7 +5,12 @@ import { useCallback, useEffect, useState } from 'react';
 import { ScrollView, Text, TextInput, View } from 'react-native';
 
 import { useMobileSession } from '../../../src/components/app-shell';
-import { PrimaryButton, StatePanel } from '../../../src/components/ui';
+import {
+  PrimaryButton,
+  SecondaryButton,
+  SkeletonRows,
+  StatePanel,
+} from '../../../src/components/ui';
 import { font } from '../../../src/lib/fonts';
 import { makeStyles, text, useTheme } from '../../../src/lib/theme';
 
@@ -57,14 +62,14 @@ export default function SuppliersScreen() {
     <ScrollView contentContainerStyle={styles.content}>
       {error ? (
         <StatePanel
-          action={<PrimaryButton onPress={() => void load()}>Try again</PrimaryButton>}
+          action={<SecondaryButton onPress={() => void load()}>Try again</SecondaryButton>}
           detail={error}
           title="Something didn’t load"
           tone="error"
         />
       ) : null}
 
-      {suppliers === null && !error ? <Text style={styles.detail}>Loading suppliers…</Text> : null}
+      {suppliers === null && !error ? <SkeletonRows label="Loading suppliers" /> : null}
 
       {suppliers?.length === 0 ? (
         <View style={styles.empty}>

@@ -13,7 +13,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { ScrollView, Text, View } from 'react-native';
 
 import { useMobileSession } from '../../../src/components/app-shell';
-import { PrimaryButton, StatePanel } from '../../../src/components/ui';
+import { SecondaryButton, SkeletonRows, StatePanel } from '../../../src/components/ui';
 import { makeStyles, text, useTheme } from '../../../src/lib/theme';
 
 const reasonVisuals: Record<string, { icon: LucideIcon; label: string }> = {
@@ -49,14 +49,14 @@ export default function ReportsScreen() {
 
       {error ? (
         <StatePanel
-          action={<PrimaryButton onPress={() => void load()}>Try again</PrimaryButton>}
+          action={<SecondaryButton onPress={() => void load()}>Try again</SecondaryButton>}
           detail={error}
           title="Something didn’t load"
           tone="error"
         />
       ) : null}
 
-      {rows === null && !error ? <Text style={styles.detail}>Loading report…</Text> : null}
+      {rows === null && !error ? <SkeletonRows label="Loading the loss report" /> : null}
 
       {rows?.length === 0 ? (
         <View style={styles.empty}>

@@ -7,23 +7,27 @@ import {
   type Location,
   SessionApiClient,
 } from '@anbaro/contracts';
-import { Archive, History, Package, Plus, Search } from 'lucide-react';
+import { Archive, History, Package, Plus } from 'lucide-react';
 import { useCallback, useEffect, useState, type FormEvent } from 'react';
 
 import { formatQuantity, packDescription, unitShortLabel } from '@anbaro/design-tokens';
 
 import {
+  Actions,
+  AsyncPanel,
   Button,
   Card,
   CardTitle,
   CategoryAvatar,
   type Column,
   DataTable,
-  EmptyState,
+  Dialog,
   Field,
+  type FilterChip,
+  FormSection,
   InlineError,
   Input,
-  LoadingAnnouncement,
+  Meta,
   Select,
   type SavedView,
   SkeletonTable,
@@ -32,65 +36,49 @@ import {
 } from '../components/ui';
 import { apiErrorMessage, useSession } from '../lib/session';
 
-type CategoryGroup = {
-  categoryId: string;
-  categoryName: string;
-  categoryIcon: string | null;
-  items: ItemWithStock[];
-  attentionCount: number;
-};
-
-function groupByCategory(items: ItemWithStock[]): CategoryGroup[] {
-  const groups = new Map<string, CategoryGroup>();
-  for (const item of items) {
-    let group = groups.get(item.categoryId);
-    if (!group) {
-      group = {
-        categoryId: item.categoryId,
-        categoryName: item.categoryName,
-        categoryIcon: item.categoryIcon,
-        items: [],
-        attentionCount: 0,
-      };
-      groups.set(item.categoryId, group);
-    }
-    group.items.push(item);
-    if (item.stockCondition === 'low_stock' || item.stockCondition === 'out_of_stock') {
-      group.attentionCount += 1;
-    }
-  }
-  return [...groups.values()].sort((a, b) => a.categoryName.localeCompare(b.categoryName));
-}
-
 type MovementEvent = Awaited<ReturnType<SessionApiClient['getStockEvents']>>['data'][number];
 
-const movementColumns: Column<MovementEvent>[] = [
-  {
-    id: 'when',
-    header: 'When',
-    cell: (event) => new Date(event.createdAt).toLocaleString(),
-    sortValue: (event) => event.createdAt,
-  },
-  { id: 'type', header: 'Type', cell: (event) => event.eventType, sortValue: (event) => event.eventType },
-  {
-    id: 'change',
-    header: 'Change',
-    align: 'end',
-    numeric: true,
-    cell: (event) => event.quantityDelta,
-    sortValue: (event) => event.quantityDelta,
-  },
-  {
-    id: 'resulting',
-    header: 'Resulting',
-    align: 'end',
-    numeric: true,
-    cell: (event) => event.resultingQuantity,
-    sortValue: (event) => event.resultingQuantity,
-  },
-  { id: 'reason', header: 'Reason', cell: (event) => event.reasonCode ?? '—' },
-  { id: 'by', header: 'By', cell: (event) => event.actorName ?? event.actorUserId },
-];
+/* The unit comes from the item whose history this is, which is why these are
+   built per item rather than declared once: a stored "−4.000" reads as "−4" for
+   a box and "−4" for a kilo, and neither should reach the screen untrimmed. */
+function movementColumnsFor(unit: string): Column<MovementEvent>[] {
+  return [
+    {
+      id: 'when',
+      header: 'When',
+      cell: (event) => new Date(event.createdAt).toLocaleString(),
+      sortValue: (event) => event.createdAt,
+    },
+    {
+      id: 'type',
+      header: 'Type',
+      cell: (event) => event.eventType,
+      sortValue: (event) => event.eventType,
+    },
+    {
+      id: 'change',
+      header: 'Change',
+      align: 'end',
+      numeric: true,
+      cell: (event) => formatQuantity(event.quantityDelta, unit),
+      sortValue: (event) => Number.parseFloat(event.quantityDelta) || 0,
+    },
+    {
+      id: 'resulting',
+      header: 'Resulting',
+      align: 'end',
+      numeric: true,
+      cell: (event) => formatQuantity(event.resultingQuantity, unit),
+      sortValue: (event) => Number.parseFloat(event.resultingQuantity) || 0,
+    },
+    {
+      id: 'reason',
+      header: 'Reason',
+      cell: (event) => event.reasonCode ?? <Meta inline>None</Meta>,
+    },
+    { id: 'by', header: 'By', cell: (event) => event.actorName ?? event.actorUserId },
+  ];
+}
 
 const movementViews: SavedView<MovementEvent>[] = [
   { id: 'all', label: 'All', sort: { columnId: 'when', direction: 'descending' } },
@@ -102,6 +90,9 @@ const movementViews: SavedView<MovementEvent>[] = [
   },
 ];
 
+const needsAttention = (item: ItemWithStock) =>
+  item.stockCondition === 'low_stock' || item.stockCondition === 'out_of_stock';
+
 export function CatalogFeature() {
   const { api, permissions } = useSession();
   const canWrite = permissions.has('item:write');
@@ -111,13 +102,20 @@ export function CatalogFeature() {
   const [items, setItems] = useState<ItemWithStock[]>([]);
   const [locations, setLocations] = useState<Location[]>([]);
   const [locationId, setLocationId] = useState('');
-  const [categoryId, setCategoryId] = useState('');
-  const [search, setSearch] = useState('');
+  // Three failures, three states. A catalog form that will not save says
+  // nothing about the item list, and neither one belongs to the detail card.
   const [error, setError] = useState('');
+  const [setupError, setSetupError] = useState('');
+  const [detailError, setDetailError] = useState('');
+  const [loaded, setLoaded] = useState(false);
   const [loading, setLoading] = useState(true);
   const [selected, setSelected] = useState<ItemWithStock | null>(null);
+  const [archiving, setArchiving] = useState<ItemWithStock | null>(null);
   const [history, setHistory] = useState<MovementEvent[]>([]);
 
+  // The location is the only server-side narrowing left: it decides what "on
+  // hand" means. Category and search are the table's own, so their chips can
+  // count what is actually in front of you.
   const load = useCallback(async () => {
     setLoading(true);
     setError('');
@@ -130,18 +128,15 @@ export function CatalogFeature() {
       setLocations(locationResponse.data);
       const nextLocation = locationId || locationResponse.data[0]?.id || '';
       setLocationId(nextLocation);
-      const itemResponse = await api.getItems({
-        ...(categoryId ? { categoryId } : {}),
-        ...(nextLocation ? { locationId: nextLocation } : {}),
-        ...(search ? { search } : {}),
-      });
+      const itemResponse = await api.getItems(nextLocation ? { locationId: nextLocation } : {});
       setItems(itemResponse.data);
+      setLoaded(true);
     } catch (caught) {
       setError(apiErrorMessage(caught));
     } finally {
       setLoading(false);
     }
-  }, [api, categoryId, locationId, search]);
+  }, [api, locationId]);
   useEffect(() => {
     void load();
   }, [load]);
@@ -150,6 +145,7 @@ export function CatalogFeature() {
     event.preventDefault();
     const formElement = event.currentTarget;
     const form = new FormData(formElement);
+    setSetupError('');
     try {
       await api.createCategory({
         name: String(form.get('categoryName')),
@@ -159,7 +155,7 @@ export function CatalogFeature() {
       formElement.reset();
       await load();
     } catch (caught) {
-      setError(apiErrorMessage(caught));
+      setSetupError(apiErrorMessage(caught));
     }
   }
   async function addItem(event: FormEvent<HTMLFormElement>) {
@@ -169,6 +165,7 @@ export function CatalogFeature() {
     const unit = String(form.get('customUnit') || '').trim() || String(form.get('unit'));
     const packSize = Number(form.get('packSize'));
     const packUnit = String(form.get('packUnit') || '').trim();
+    setSetupError('');
     try {
       await api.createItem({
         categoryId: String(form.get('itemCategoryId')),
@@ -180,16 +177,17 @@ export function CatalogFeature() {
       formElement.reset();
       await load();
     } catch (caught) {
-      setError(apiErrorMessage(caught));
+      setSetupError(apiErrorMessage(caught));
     }
   }
   async function openItem(item: ItemWithStock) {
     setSelected(item);
+    setDetailError('');
     if (!locationId) return;
     try {
       setHistory((await api.getStockEvents(item.id, { locationId })).data);
     } catch (caught) {
-      setError(apiErrorMessage(caught));
+      setDetailError(apiErrorMessage(caught));
     }
   }
   async function addMovement(event: FormEvent<HTMLFormElement>) {
@@ -200,9 +198,10 @@ export function CatalogFeature() {
     const eventType = String(form.get('eventType')) as 'adjustment' | 'loss';
     const enteredQuantity = Number(form.get('quantity'));
     if (!enteredQuantity || !fitsStockQuantity(enteredQuantity)) {
-      setError('Enter a non-zero quantity with at most 3 decimal places.');
+      setDetailError('Enter a non-zero quantity with at most 3 decimal places.');
       return;
     }
+    setDetailError('');
     try {
       await api.createStockEvent({
         itemId: selected.id,
@@ -216,19 +215,94 @@ export function CatalogFeature() {
       await openItem(selected);
       await load();
     } catch (caught) {
-      setError(apiErrorMessage(caught));
+      setDetailError(apiErrorMessage(caught));
     }
   }
-  async function archiveItem(item: ItemWithStock) {
-    if (!window.confirm(`Archive ${item.name}? Its stock history will remain available.`)) return;
+  async function archiveItem() {
+    if (!archiving) return;
+    setDetailError('');
     try {
-      await api.archiveItem(item.id);
+      await api.archiveItem(archiving.id);
+      setArchiving(null);
       setSelected(null);
       await load();
     } catch (caught) {
-      setError(apiErrorMessage(caught));
+      setDetailError(apiErrorMessage(caught));
     }
   }
+
+  const columns: Column<ItemWithStock>[] = [
+    {
+      id: 'item',
+      header: 'Item',
+      cell: (item) => (
+        <Actions>
+          <CategoryAvatar icon={item.categoryIcon} name={item.categoryName} />
+          <div>
+            <span className="compact-strong">{item.name}</span>
+            <Meta>{item.categoryName}</Meta>
+          </div>
+        </Actions>
+      ),
+      sortValue: (item) => item.name,
+    },
+    {
+      id: 'unit',
+      header: 'Unit',
+      cell: (item) => {
+        const pack = packDescription(item.unit, item.packSize, item.packUnit);
+        return (
+          <div>
+            {unitShortLabel(item.unit)}
+            {pack ? <Meta>{pack}</Meta> : null}
+          </div>
+        );
+      },
+      sortValue: (item) => item.unit,
+    },
+    ...(locationId
+      ? ([
+          {
+            id: 'quantity',
+            header: 'On hand',
+            align: 'end',
+            numeric: true,
+            cell: (item) =>
+              item.quantity === null ? (
+                <Meta inline>Not stocked</Meta>
+              ) : (
+                formatQuantity(item.quantity, item.unit)
+              ),
+            sortValue: (item) => (item.quantity === null ? null : Number.parseFloat(item.quantity)),
+          },
+          {
+            id: 'condition',
+            header: 'Status',
+            cell: (item) => <StockBadge condition={item.stockCondition} />,
+            sortValue: (item) => item.stockCondition,
+          },
+        ] satisfies Column<ItemWithStock>[])
+      : []),
+  ];
+
+  // The category grouping this table used to render, as chips that filter it:
+  // same information, one table, and the counts now follow the search.
+  const categoryFilters: FilterChip<ItemWithStock>[] = [
+    ...new Map(items.map((item) => [item.categoryId, item.categoryName])).entries(),
+  ]
+    .sort((a, b) => a[1].localeCompare(b[1]))
+    .map(([id, name]) => ({
+      id: `category-${id}`,
+      label: name,
+      predicate: (item: ItemWithStock) => item.categoryId === id,
+    }));
+
+  const itemViews: SavedView<ItemWithStock>[] = locationId
+    ? [
+        { id: 'all', label: 'All items' },
+        { id: 'attention', label: 'Needs attention', predicate: needsAttention },
+      ]
+    : [];
 
   return (
     <div className="stack">
@@ -238,131 +312,52 @@ export function CatalogFeature() {
           subtitle="Quantities change only through attributed movements — never direct edits."
           title="Item stock"
         />
-        <div className="form-row" style={{ marginBottom: 16 }}>
-          <Field label="Location">
-            <Select
-              onChange={(event) => setLocationId(event.target.value)}
-              style={{ minWidth: 180 }}
-              value={locationId}
-            >
-              <option value="">All locations</option>
-              {locations.map((location) => (
-                <option key={location.id} value={location.id}>
-                  {location.name}
-                </option>
-              ))}
-            </Select>
-          </Field>
-          <Field label="Category">
-            <Select
-              onChange={(event) => setCategoryId(event.target.value)}
-              style={{ minWidth: 160 }}
-              value={categoryId}
-            >
-              <option value="">All categories</option>
-              {categories.map((category) => (
-                <option key={category.id} value={category.id}>
-                  {category.name}
-                </option>
-              ))}
-            </Select>
-          </Field>
-          <Field label="Search">
-            <Input
-              onChange={(event) => setSearch(event.target.value)}
-              placeholder="Item name or barcode"
-              value={search}
-            />
-          </Field>
-          <Button icon={<Search size={15} />} onClick={() => void load()} tone="secondary">
-            Search
-          </Button>
-        </div>
-        {loading ? (
-          <>
-            <LoadingAnnouncement label="Loading items" />
-            <SkeletonTable columns={locationId ? 5 : 3} rows={6} />
-          </>
-        ) : items.length === 0 ? (
-          <EmptyState
-            hint="Add a category and your first item to start tracking stock."
-            icon={<Package size={36} strokeWidth={1.5} />}
-            title="No items yet"
-          />
-        ) : (
-          <div className="table-wrap">
-            <table className="data-table">
-              <thead>
-                <tr>
-                  <th>Item</th>
-                  <th>Unit</th>
-                  {locationId ? <th>On hand</th> : null}
-                  {locationId ? <th>Status</th> : null}
-                  <th />
-                </tr>
-              </thead>
-              {groupByCategory(items).map((group) => (
-                <tbody key={group.categoryId}>
-                  <tr>
-                    <td
-                      colSpan={locationId ? 5 : 3}
-                      style={{ background: 'var(--surface-subtle)', padding: '8px 12px' }}
-                    >
-                      <span
-                        style={{
-                          alignItems: 'center',
-                          display: 'flex',
-                          fontWeight: 600,
-                          gap: 10,
-                        }}
-                      >
-                        <CategoryAvatar icon={group.categoryIcon} name={group.categoryName} />
-                        {group.categoryName}
-                        <span style={{ color: 'var(--text-muted)', fontWeight: 400 }}>
-                          {group.items.length} item{group.items.length === 1 ? '' : 's'}
-                          {locationId && group.attentionCount > 0
-                            ? ` · ${group.attentionCount} need${group.attentionCount === 1 ? 's' : ''} attention`
-                            : ''}
-                        </span>
-                      </span>
-                    </td>
-                  </tr>
-                  {group.items.map((item) => (
-                    <tr key={item.id}>
-                      <td style={{ fontWeight: 600, paddingLeft: 24 }}>{item.name}</td>
-                      <td>
-                        {unitShortLabel(item.unit)}
-                        {packDescription(item.unit, item.packSize, item.packUnit) ? (
-                          <span
-                            style={{ color: 'var(--text-muted)', display: 'block', fontSize: 12 }}
-                          >
-                            {packDescription(item.unit, item.packSize, item.packUnit)}
-                          </span>
-                        ) : null}
-                      </td>
-                      {locationId ? <td>{formatQuantity(item.quantity, item.unit)}</td> : null}
-                      {locationId ? (
-                        <td>
-                          <StockBadge condition={item.stockCondition} />
-                        </td>
-                      ) : null}
-                      <td style={{ textAlign: 'right' }}>
-                        <Button
-                          icon={<History size={14} />}
-                          onClick={() => void openItem(item)}
-                          size="sm"
-                          tone="secondary"
-                        >
-                          Details
-                        </Button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              ))}
-            </table>
+        <div className="stack">
+          <div className="form-row">
+            <Field grow label="Location">
+              <Select onChange={(event) => setLocationId(event.target.value)} value={locationId}>
+                <option value="">All locations</option>
+                {locations.map((location) => (
+                  <option key={location.id} value={location.id}>
+                    {location.name}
+                  </option>
+                ))}
+              </Select>
+            </Field>
           </div>
-        )}
+          <AsyncPanel
+            error={error || null}
+            hasContent={loaded}
+            loading={loading}
+            loadingLabel="Loading items"
+            onRetry={() => void load()}
+            skeleton={<SkeletonTable columns={locationId ? 5 : 3} rows={6} />}
+          >
+            <DataTable
+              caption="Item stock"
+              columns={columns}
+              emptyHint="Add a category and your first item to start tracking stock."
+              emptyIcon={<Package size={36} strokeWidth={1.5} />}
+              emptyTitle="No items yet"
+              filters={categoryFilters}
+              getRowId={(item) => item.id}
+              rowActions={(item) => (
+                <Button
+                  icon={<History size={14} />}
+                  onClick={() => void openItem(item)}
+                  size="sm"
+                  tone="secondary"
+                >
+                  Details
+                </Button>
+              )}
+              rows={items}
+              searchPlaceholder="Item name or barcode"
+              searchValue={(item) => `${item.name} ${item.barcodeIdentifier ?? ''}`}
+              views={itemViews}
+            />
+          </AsyncPanel>
+        </div>
       </Card>
 
       {selected ? (
@@ -372,7 +367,7 @@ export function CatalogFeature() {
               canArchive ? (
                 <Button
                   icon={<Archive size={14} />}
-                  onClick={() => void archiveItem(selected)}
+                  onClick={() => setArchiving(selected)}
                   size="sm"
                   tone="danger"
                 >
@@ -381,12 +376,16 @@ export function CatalogFeature() {
               ) : undefined
             }
             id="item-detail-title"
-            subtitle={`${selected.categoryName} · ${unitShortLabel(selected.unit)}${packDescription(selected.unit, selected.packSize, selected.packUnit) ? ` · ${packDescription(selected.unit, selected.packSize, selected.packUnit)}` : ''} · on hand at selected location: ${selected.quantity ?? 'choose a location'}`}
+            subtitle={`${selected.categoryName} · ${unitShortLabel(selected.unit)}${packDescription(selected.unit, selected.packSize, selected.packUnit) ? ` · ${packDescription(selected.unit, selected.packSize, selected.packUnit)}` : ''} · on hand at selected location: ${selected.quantity === null ? 'choose a location' : formatQuantity(selected.quantity, selected.unit)}`}
             title={selected.name}
           />
+          {detailError ? (
+            <div className="inline-error-stacked">
+              <InlineError detail={detailError} title="Couldn’t update this item" />
+            </div>
+          ) : null}
           {canAdjust && locationId ? (
-            <form className="form-grid" onSubmit={addMovement}>
-              <h3>Record a stock movement</h3>
+            <FormSection onSubmit={addMovement} standalone title="Record a stock movement">
               <Field label="Movement type">
                 <Select defaultValue="adjustment" name="eventType">
                   <option value="adjustment">Manual adjustment</option>
@@ -399,15 +398,15 @@ export function CatalogFeature() {
               <Field hint="Required when marking a loss." label="Loss reason">
                 <Input name="reasonCode" />
               </Field>
-              <div>
+              <Actions>
                 <Button type="submit">Record movement</Button>
-              </div>
-            </form>
+              </Actions>
+            </FormSection>
           ) : null}
           <h3 className="section-heading">Movement history</h3>
           <DataTable
             caption={`Movement history for ${selected.name}`}
-            columns={movementColumns}
+            columns={movementColumnsFor(selected.unit)}
             emptyHint="No movements recorded at this location."
             emptyTitle="No movements yet"
             getRowId={(event) => event.id}
@@ -428,15 +427,13 @@ export function CatalogFeature() {
             subtitle="Categories organize the catalog; items carry a unit and optional barcode."
             title="Catalog setup"
           />
-          <div
-            style={{
-              display: 'grid',
-              gap: 24,
-              gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))',
-            }}
-          >
-            <form className="form-grid" onSubmit={addCategory} style={{ alignContent: 'start' }}>
-              <h3>Add category</h3>
+          {setupError ? (
+            <div className="inline-error-stacked">
+              <InlineError detail={setupError} title="Couldn’t save that" />
+            </div>
+          ) : null}
+          <div className="form-columns">
+            <FormSection onSubmit={addCategory} standalone title="Add category">
               <Field label="Category name">
                 <Input name="categoryName" required />
               </Field>
@@ -454,14 +451,13 @@ export function CatalogFeature() {
                   <option value="other">General merchandise</option>
                 </Select>
               </Field>
-              <div>
-                <Button icon={<Plus size={15} />} type="submit">
+              <Actions>
+                <Button icon={<Plus size={15} />} tone="secondary" type="submit">
                   Add category
                 </Button>
-              </div>
-            </form>
-            <form className="form-grid" onSubmit={addItem} style={{ alignContent: 'start' }}>
-              <h3>Add item</h3>
+              </Actions>
+            </FormSection>
+            <FormSection onSubmit={addItem} standalone title="Add item">
               <Field label="Category">
                 <Select name="itemCategoryId" required>
                   <option value="">Choose a category</option>
@@ -492,24 +488,40 @@ export function CatalogFeature() {
               <Field hint="Optional — scan or type. Used for instant lookup." label="Barcode">
                 <Input name="barcodeIdentifier" />
               </Field>
-              <div>
-                <Button disabled={categories.length === 0} icon={<Plus size={15} />} type="submit">
+              <Actions>
+                <Button
+                  disabled={categories.length === 0}
+                  icon={<Plus size={15} />}
+                  tone="secondary"
+                  type="submit"
+                >
                   Add item
                 </Button>
-              </div>
-            </form>
+              </Actions>
+            </FormSection>
           </div>
         </Card>
       ) : null}
 
-      {error ? (
-        <InlineError
-          detail={error}
-          onRetry={() => void load()}
-          retrying={loading}
-          title="Couldn’t update catalog or stock"
-        />
-      ) : null}
+      <Dialog
+        description="Its stock history stays available, and the item leaves every active view now."
+        footer={
+          <Actions>
+            <Button onClick={() => void archiveItem()} tone="danger">
+              Archive item
+            </Button>
+            <Button onClick={() => setArchiving(null)} tone="secondary">
+              Keep it
+            </Button>
+          </Actions>
+        }
+        onClose={() => setArchiving(null)}
+        open={archiving !== null}
+        size="sm"
+        title={archiving ? `Archive ${archiving.name}?` : 'Archive item'}
+      >
+        <p>Counts, alerts and reorder suggestions stop including it.</p>
+      </Dialog>
     </div>
   );
 }

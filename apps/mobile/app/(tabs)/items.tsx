@@ -1,6 +1,7 @@
 import type { Category, ItemWithStock, Location, StockEvent } from '@anbaro/contracts';
 import { ApiClientError, fitsStockQuantity } from '@anbaro/contracts';
 import { formatQuantity, packDescription, unitShortLabel } from '@anbaro/design-tokens';
+import { ScanLine } from 'lucide-react-native';
 import { useCallback, useEffect, useState } from 'react';
 import { Platform, Pressable, ScrollView, Text, TextInput, View } from 'react-native';
 
@@ -10,7 +11,9 @@ import {
   CategoryTile,
   Chip,
   PrimaryButton,
+  QuietButton,
   SecondaryButton,
+  SkeletonRows,
   StatePanel,
   StockConditionBadge,
   UnitPicker,
@@ -48,7 +51,11 @@ export default function ItemsScreen() {
   const [lossReason, setLossReason] = useState('');
   const [movementType, setMovementType] = useState<'adjustment' | 'loss'>('adjustment');
   const [scanTarget, setScanTarget] = useState<ScanTarget | null>(null);
-  const [error, setError] = useState('');
+  // A catalog form that will not save says nothing about the item list, and
+  // neither one belongs to the movement panel.
+  const [listError, setListError] = useState('');
+  const [catalogError, setCatalogError] = useState('');
+  const [detailError, setDetailError] = useState('');
   const [notice, setNotice] = useState('');
   const [loading, setLoading] = useState(true);
   const permissions =
@@ -84,9 +91,9 @@ export default function ItemsScreen() {
           })
         ).data,
       );
-      setError('');
+      setListError('');
     } catch (caught) {
-      setError(caught instanceof ApiClientError ? caught.message : 'Could not load items.');
+      setListError(caught instanceof ApiClientError ? caught.message : 'Could not load items.');
     } finally {
       setLoading(false);
     }
@@ -101,7 +108,7 @@ export default function ItemsScreen() {
     try {
       setHistory((await controller.getStockEvents(item.id, selectedLocationId)).data);
     } catch (caught) {
-      setError(
+      setDetailError(
         caught instanceof ApiClientError ? caught.message : 'Could not load movement history.',
       );
     }
@@ -124,24 +131,28 @@ export default function ItemsScreen() {
         setBarcode(scanned);
         setNotice(`No item uses barcode ${scanned} yet — it's been filled into the new-item form.`);
       } else {
-        setError(caught instanceof ApiClientError ? caught.message : 'Barcode lookup failed.');
+        setListError(caught instanceof ApiClientError ? caught.message : 'Barcode lookup failed.');
       }
     }
   }
   async function addCategory() {
     if (!newCategory.trim()) return;
+    setCatalogError('');
     try {
       await controller.createCategory(newCategory, 'other');
       setNewCategory('');
       await load();
     } catch (caught) {
-      setError(caught instanceof ApiClientError ? caught.message : 'Could not add category.');
+      setCatalogError(
+        caught instanceof ApiClientError ? caught.message : 'Could not add category.',
+      );
     }
   }
   async function addItem() {
     const finalUnit = customUnit.trim().toLowerCase() || unit;
     if (!newItem.trim() || !finalUnit || !selectedCategoryId) return;
     const parsedPackSize = Number(packSize);
+    setCatalogError('');
     try {
       await controller.createItem({
         categoryId: selectedCategoryId,
@@ -159,7 +170,7 @@ export default function ItemsScreen() {
       setBarcode('');
       await load();
     } catch (caught) {
-      setError(caught instanceof ApiClientError ? caught.message : 'Could not add item.');
+      setCatalogError(caught instanceof ApiClientError ? caught.message : 'Could not add item.');
     }
   }
   async function recordMovement() {
@@ -172,8 +183,9 @@ export default function ItemsScreen() {
       return;
     const entered = Number(quantity);
     if (!Number.isFinite(entered) || entered === 0) return;
+    setDetailError('');
     if (!fitsStockQuantity(entered)) {
-      setError('Enter a quantity with at most 3 decimal places.');
+      setDetailError('Enter a quantity with at most 3 decimal places.');
       return;
     }
     try {
@@ -190,7 +202,7 @@ export default function ItemsScreen() {
       await selectItem(selectedItem);
       await load();
     } catch (caught) {
-      setError(
+      setDetailError(
         caught instanceof ApiClientError ? caught.message : 'Could not record stock movement.',
       );
     }
@@ -204,8 +216,12 @@ export default function ItemsScreen() {
       <Text style={styles.detail}>
         Everything you stock, grouped by category. Pick a location to see live quantities.
       </Text>
+      {/* The library names scanning as the tinted-quiet case: readily available
+          in a stockroom without spending the screen's one filled primary. */}
       {canScan ? (
-        <PrimaryButton onPress={() => setScanTarget('lookup')}>Scan a barcode</PrimaryButton>
+        <QuietButton emphasis="tinted" icon={ScanLine} onPress={() => setScanTarget('lookup')}>
+          Scan a barcode
+        </QuietButton>
       ) : null}
       <Text style={styles.label}>Location</Text>
       <View style={styles.chipRow}>
@@ -244,8 +260,16 @@ export default function ItemsScreen() {
         value={search}
       />
       {notice ? <StatePanel detail={notice} title="Barcode scan" /> : null}
+      {listError ? (
+        <StatePanel
+          action={<SecondaryButton onPress={() => void load()}>Try again</SecondaryButton>}
+          detail={listError}
+          title="Couldn’t load your items"
+          tone="error"
+        />
+      ) : null}
       {loading ? (
-        <Text style={styles.detail}>Loading items…</Text>
+        <SkeletonRows label="Loading items" rows={3} />
       ) : items.length === 0 ? (
         <StatePanel
           detail="Add a category and item to begin tracking stock."
@@ -294,9 +318,9 @@ export default function ItemsScreen() {
             style={styles.input}
             value={newCategory}
           />
-          <PrimaryButton disabled={!newCategory.trim()} onPress={() => void addCategory()}>
+          <SecondaryButton disabled={!newCategory.trim()} onPress={() => void addCategory()}>
             Add category
-          </PrimaryButton>
+          </SecondaryButton>
           <Text style={styles.label}>Item category</Text>
           <View style={styles.chipRow}>
             {categories.map((category) => (
@@ -365,12 +389,15 @@ export default function ItemsScreen() {
               <SecondaryButton onPress={() => setScanTarget('new-item')}>Scan</SecondaryButton>
             ) : null}
           </View>
-          <PrimaryButton
+          <SecondaryButton
             disabled={!newItem.trim() || !(customUnit.trim() || unit) || !selectedCategoryId}
             onPress={() => void addItem()}
           >
             Add item
-          </PrimaryButton>
+          </SecondaryButton>
+          {catalogError ? (
+            <StatePanel detail={catalogError} title="Couldn’t save that" tone="error" />
+          ) : null}
         </View>
       ) : null}
       {selectedItem ? (
@@ -428,10 +455,20 @@ export default function ItemsScreen() {
               </PrimaryButton>
             </>
           ) : null}
+          {detailError ? (
+            <StatePanel detail={detailError} title="Couldn’t update this item" tone="error" />
+          ) : null}
           {history.length ? (
             history.map((event) => (
               <Text key={event.id} style={styles.history}>
-                {event.eventType}: {event.quantityDelta} → {event.resultingQuantity}
+                {event.eventType}:{' '}
+                <Text style={styles.historyQuantity}>
+                  {formatQuantity(event.quantityDelta, selectedItem.unit)}
+                </Text>{' '}
+                →{' '}
+                <Text style={styles.historyQuantity}>
+                  {formatQuantity(event.resultingQuantity, selectedItem.unit)}
+                </Text>
                 {event.reasonCode ? ` (${event.reasonCode})` : ''} ·{' '}
                 {event.actorName ?? event.actorUserId}
               </Text>
@@ -440,9 +477,6 @@ export default function ItemsScreen() {
             <Text style={styles.detail}>No movements recorded at this location.</Text>
           )}
         </View>
-      ) : null}
-      {error ? (
-        <StatePanel detail={error} title="Couldn’t update items or stock" tone="error" />
       ) : null}
       <BarcodeScannerModal
         onClose={() => setScanTarget(null)}
@@ -459,6 +493,7 @@ const useStyles = makeStyles((c) => ({
   detail: { ...text.body, color: c.inkMuted },
   detailHeader: { alignItems: 'center', flexDirection: 'row', gap: 10 },
   history: { ...text.body, color: c.ink },
+  historyQuantity: { ...text.numeric, color: c.ink },
   input: {
     ...text.body,
     backgroundColor: c.surface,
