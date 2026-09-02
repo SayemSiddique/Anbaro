@@ -159,9 +159,7 @@ export function SuppliersFeature() {
             getRowId={(row) => row.id}
             rows={suppliers}
             searchPlaceholder="Search suppliers"
-            searchValue={(row) =>
-              `${row.name} ${row.contactEmail ?? ''} ${row.contactPhone ?? ''}`
-            }
+            searchValue={(row) => `${row.name} ${row.contactEmail ?? ''} ${row.contactPhone ?? ''}`}
           />
           <FormSection onSubmit={createSupplier} title="Add supplier">
             <Field label="Name">

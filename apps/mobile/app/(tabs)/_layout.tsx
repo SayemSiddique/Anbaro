@@ -1,5 +1,12 @@
 import { Tabs } from 'expo-router';
-import { ClipboardList, House, Menu, Package, ScanLine, type LucideIcon } from 'lucide-react-native';
+import {
+  ClipboardList,
+  House,
+  Menu,
+  Package,
+  ScanLine,
+  type LucideIcon,
+} from 'lucide-react-native';
 import { View, type ColorValue } from 'react-native';
 
 import { MobileShell } from '../../src/components/app-shell';

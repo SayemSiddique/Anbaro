@@ -130,8 +130,10 @@ or video are captured or uploaded. The permission can be declined and barcodes
 entered manually.
 
 PAYMENTS
-The app is free. There are no in-app purchases and no external purchase flows in
-the mobile app.
+The app is free to use, with an optional Pro subscription. There are no
+in-app purchases — Pro is purchased on the web. Hitting a Free-tier limit
+shows an "Upgrade to Pro" button that opens anbaro.com/billing in the device's
+browser; no payment is ever collected inside the app.
 
 PRIVACY
 Privacy policy: https://anbaro.com/privacy
@@ -149,8 +151,8 @@ Declare, at minimum:
 - **Data linked to the user:** account identifiers, inventory/business data the
   user creates.
 - **Camera:** used on-device for barcode scanning; **not** collected/transmitted.
-- **Not collected:** payment info (no IAP at launch); location; contacts;
-  advertising identifiers.
+- **Not collected:** payment info (no IAP — Pro is purchased on the web, not
+  in the app); location; contacts; advertising identifiers.
 - **Data deletion:** in-app account deletion available; deletion request path
   documented in the privacy policy.
 
@@ -169,6 +171,13 @@ under-declaring or over-declaring both cause review friction.
 - [ ] Screenshots captured for all required sizes
 - [ ] Data-safety / privacy labels completed to match the build
 - [ ] Account-deletion path confirmed working on-device
-- [ ] Confirmed: no IAP, no external purchase links in the mobile app
-      (see the Session 9 flag re: the "Upgrade to Pro at anbaro.com" capacity
-      prompt on the mobile home screen — decide whether that copy stays)
+- [x] Decided (Sam, 2026-09-02): no IAP, but the mobile app **does** carry an
+      external purchase link — the home screen's capacity prompt opens
+      `anbaro.com/billing` in the system browser via an "Upgrade to Pro"
+      button. This is a deliberate anti-steering choice; the PAYMENTS
+      description above and the data-safety label reflect it.
+- [ ] Re-verify that link against the App Store/Play Store review guidelines
+      in force at submission time before shipping the build — external-link
+      policy is jurisdiction- and version-dependent and can move between now
+      and Session 9. Have a fallback (e.g. a remote flag hiding the button)
+      ready in case a reviewer objects.

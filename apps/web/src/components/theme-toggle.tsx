@@ -34,7 +34,13 @@ export function ThemeToggle() {
 
   const Icon = icons[preference];
   return (
-    <button aria-label={labels[preference]} className="theme-toggle" onClick={cycle} title={labels[preference]} type="button">
+    <button
+      aria-label={labels[preference]}
+      className="theme-toggle"
+      onClick={cycle}
+      title={labels[preference]}
+      type="button"
+    >
       <Icon aria-hidden size={17} strokeWidth={2} />
     </button>
   );

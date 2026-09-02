@@ -1,7 +1,7 @@
 # Anbaro — Production Launch Plan (Master Doc)
 
 **Owner:** Sam · **Created:** 2026-07-21 · **Status:** ACTIVE — Session 1 landed; Session 2 partially done (see the pre-completion callout below)
-**Launch posture (locked):** Free launch, billing dormant (`BILLING_ENABLED` unset). Pro billing is a fast-follow 2–4 weeks after go-live.
+**Launch posture (locked, revised 2026-09-02):** Billing is live at launch — Session 11 is pulled forward and runs alongside the rest of go-live rather than as a fast-follow. 10-day cardless trial (was 30). `BILLING_ENABLED` stays unset in any environment without live Stripe keys, so no environment ends up half-wired while Session 11's provisioning is still in flight.
 **Stack (locked):** Neon (Postgres) · Upstash (Redis) · Railway (API container) · Vercel (Next.js web) · Expo EAS (mobile) · Sentry (errors) · Postmark (email) · Groq (AI, optional).
 **Domain (locked):** `anbaro.com` is registered. API at `api.anbaro.com`, web at `anbaro.com` + `www.anbaro.com`.
 
@@ -81,21 +81,21 @@ The agent will refine this list against the real tree when we execute it, stage 
 
 You can create all of these before or during the early sessions. Each yields a secret/URL an agent session will consume. **Buy paid tiers, not free tiers** — this is the "world-class, not MVP" choice (backups, SLAs, always-on).
 
-| #    | Account                           | Tier                           | Produces                                                 | Consumed by     |
-| ---- | --------------------------------- | ------------------------------ | -------------------------------------------------------- | --------------- |
-| S-1  | **GitHub** private repo           | Team ($4/user) or Free-private | repo + Actions                                           | Session 1, 5    |
-| S-2  | **Neon**                          | Launch/Scale (PITR on)         | `DATABASE_URL` (stock_app), `DATABASE_ADMIN_URL` (owner) | Session 2       |
-| S-3  | **Upstash** Redis                 | Pay-as-you-go, TLS             | `REDIS_URL`                                              | Session 3       |
-| S-4  | **Railway**                       | Hobby→Pro, always-on           | API host + deploy token                                  | Session 3, 5    |
-| S-5  | **Vercel**                        | Pro                            | web host + deploy token                                  | Session 4, 5    |
-| S-6  | **Sentry**                        | Team                           | 3 DSNs (api/web/mobile)                                  | Session 3, 4, 8 |
-| S-7  | **Postmark**                      | Paid, verified sender domain   | `POSTMARK_SERVER_TOKEN`, `EMAIL_FROM`                    | Session 7       |
-| S-8  | **Expo** (EAS)                    | Production                     | EAS project + build access                               | Session 8, 9    |
-| S-9  | **Apple Developer**               | ✅ _you have this_             | App Store Connect record                                 | Session 9       |
-| S-10 | **Google Play Console**           | ✅ _you have this_             | Play app listing                                         | Session 9       |
-| S-11 | **Groq** (optional)               | Pay-as-you-go                  | `GROQ_API_KEY`                                           | Session 10      |
-| S-12 | **Stripe** (fast-follow)          | Live + verified                | price IDs, webhook secret                                | Session 11      |
-| S-13 | **Uptime** (Better Stack/Checkly) | Paid                           | monitors                                                 | Session 6       |
+| #    | Account                                                                                    | Tier                           | Produces                                                 | Consumed by     |
+| ---- | ------------------------------------------------------------------------------------------ | ------------------------------ | -------------------------------------------------------- | --------------- |
+| S-1  | **GitHub** private repo                                                                    | Team ($4/user) or Free-private | repo + Actions                                           | Session 1, 5    |
+| S-2  | **Neon**                                                                                   | Launch/Scale (PITR on)         | `DATABASE_URL` (stock_app), `DATABASE_ADMIN_URL` (owner) | Session 2       |
+| S-3  | **Upstash** Redis                                                                          | Pay-as-you-go, TLS             | `REDIS_URL`                                              | Session 3       |
+| S-4  | **Railway**                                                                                | Hobby→Pro, always-on           | API host + deploy token                                  | Session 3, 5    |
+| S-5  | **Vercel**                                                                                 | Pro                            | web host + deploy token                                  | Session 4, 5    |
+| S-6  | **Sentry**                                                                                 | Team                           | 3 DSNs (api/web/mobile)                                  | Session 3, 4, 8 |
+| S-7  | **Postmark**                                                                               | Paid, verified sender domain   | `POSTMARK_SERVER_TOKEN`, `EMAIL_FROM`                    | Session 7       |
+| S-8  | **Expo** (EAS)                                                                             | Production                     | EAS project + build access                               | Session 8, 9    |
+| S-9  | **Apple Developer**                                                                        | ✅ _you have this_             | App Store Connect record                                 | Session 9       |
+| S-10 | **Google Play Console**                                                                    | ✅ _you have this_             | Play app listing                                         | Session 9       |
+| S-11 | **Groq** (optional)                                                                        | Pay-as-you-go                  | `GROQ_API_KEY`                                           | Session 10      |
+| S-12 | **Stripe** (pulled forward — targeted for go-live, not a hard blocker on the other tracks) | Live + verified                | price IDs, webhook secret                                | Session 11      |
+| S-13 | **Uptime** (Better Stack/Checkly)                                                          | Paid                           | monitors                                                 | Session 6       |
 
 **Secrets handling rule:** I (the agent) will tell you _exactly_ which variable to set and in which dashboard. **You paste secrets into provider dashboards yourself** — I never type your live secrets into a third-party service. Locally, secrets live in `.env` files that are git-ignored; never commit them.
 
@@ -319,16 +319,17 @@ _No external accounts required. Run this first, in parallel with Sam's provision
 
 ---
 
-## Phase 8 — Billing go-live (fast-follow, ~2–4 weeks post-launch)
+## Phase 8 — Billing go-live (pulled forward to launch, 2026-09-02 — was fast-follow)
 
 ### Session 11 — Turn on Pro billing
 
-- **Goal:** The one Pro plan ($10/mo · $24.99/qtr · $89.99/yr) live on **web only**, 30-day cardless trial, Free-tier caps bind after trial.
-- **Depends on:** stable prod launch; billing decision confirmed.
+- **Goal:** The one Pro plan ($10/mo · $24.99/qtr · $89.99/yr) live on **web only**, 10-day cardless trial, Free-tier caps bind after trial.
+- **Pulled forward (Sam, 2026-09-02):** this now runs as part of go-live, not 2–4 weeks after. The code path, the 10-day trial (migration `0023_session_20_ten_day_trial.sql`), and mobile's web-billing-link-out are already built and locally verified (`pnpm --filter @anbaro/api test` with `BILLING_ENABLED=true` + dummy Stripe keys green). What's left is exactly the credential-gated steps below — run this session whenever Session 3's env is up, don't wait for a separate "stable prod" checkpoint.
+- **Depends on:** Session 3 (API deployed) at minimum; doesn't need to trail the rest of go-live.
 - **Sam must have ready:** Stripe (S-12) live + business verification; 3 Price objects with the seeded lookup keys; webhook at `https://api.anbaro.com/api/v1/billing/webhook`; promo codes (Stripe-native).
 - **Agent reads ONLY:** the `anbaro-pricing-model` memory, `services/api/src/onboarding/service.ts` (tier caps), `services/api/src/billing/stripe.ts`, `services/api/.env.example` (Stripe block), `services/api/test/billing.integration.test.ts`.
-- **Steps:** set `STRIPE_*` + price IDs in **staging**, `BILLING_ENABLED=true`; run the billing integration test; verify checkout, trial→Free transition, promo code, webhook reconciliation, Free-tier caps (2 loc / 4 team / 100 items / 2 CSV per 7d). Seed an entitlement row per workspace. Promote to prod. **Keep mobile free** (no IAP).
-- **Done when:** a real test purchase + trial expiry + promo code verified in prod; caps enforced.
+- **Steps:** set `STRIPE_*` + price IDs in **staging**, `BILLING_ENABLED=true`; run the billing integration test; verify checkout, trial→Free transition, promo code, webhook reconciliation, Free-tier caps (2 loc / 4 team / 100 items / 2 CSV per 7d). Seed an entitlement row per workspace. Promote to prod. **Keep mobile IAP-free** — it links out to `anbaro.com/billing` in the system browser instead (`apps/mobile/app/(tabs)/home.tsx`, capacity prompt) rather than a native purchase flow. Flag for this session: Apple's external-link/anti-steering policy is jurisdiction- and version-dependent, so treat the store-review outcome as unverified until Session 9 actually submits a build with the link live, and keep a same-day fallback (gate the button behind a remote flag) ready in case a reviewer pushes back.
+- **Done when:** a real test purchase + trial expiry + promo code verified in prod; caps enforced; mobile's upgrade button opens the correct URL on-device.
 - **Handoff (chat text, not a file).**
 
 ---
@@ -360,8 +361,8 @@ S1 (code) ─┐
 Sam accts ─┘                         ├─ S7 (Email)
                                      ├─ S8 (Mobile preview) ── S9 (Mobile stores)
                                      └─ S10 (AI, optional)
-S3+S4 stable ── S11 (Billing, fast-follow)
-S2..S7 ── S12 (Go/No-Go)
+S3 (Stripe ready) ── S11 (Billing, pulled forward — targets go-live)
+S2..S7, S11 ── S12 (Go/No-Go)
 ```
 
 Critical path to a public web launch: **S1 → S2 → S3 → S4 → S6 → S12.** Mobile (S8–S9) and email (S7) run in parallel once S3 is live.
@@ -398,4 +399,4 @@ RULES: don't read the whole codebase; stay in this session's scope; don't commit
 - `SETUP_REQUIRED.md` is stale (Counted naming, old $12/$29 pricing, `counted_standard_*` keys). Fix in Session 1.
 - Web + mobile Sentry SDKs were deferred in the hardening plan — scaffolded inert in Session 1, DSNs wired in S3/S4/S8.
 - No CD existed before this plan — introduced in S1 (scaffold) + S5 (activate).
-- Billing stays OFF at launch by decision; Session 11 is the deliberate fast-follow.
+- Billing was originally OFF-at-launch by decision, deliberately fast-followed. **Reversed 2026-09-02 (Sam):** Session 11 now targets go-live itself. `BILLING_ENABLED` still only flips on once Stripe (S-12) is actually live in that environment — the reversal is about scheduling intent, not about skipping the credential gate.

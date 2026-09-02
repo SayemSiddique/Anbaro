@@ -59,17 +59,13 @@ export default function ScanScreen() {
         <View style={styles.card}>
           <View style={styles.cardHead}>
             <Text style={styles.itemName}>{item.name}</Text>
-            {item.stockCondition ? (
-              <StockConditionBadge condition={item.stockCondition} />
-            ) : null}
+            {item.stockCondition ? <StockConditionBadge condition={item.stockCondition} /> : null}
           </View>
           <Animated.View style={[styles.quantityRow, { transform: [{ scale }] }]}>
             <Text style={styles.quantity}>{item.quantity ?? '—'}</Text>
             <Text style={styles.unit}>{item.unit}</Text>
           </Animated.View>
-          {item.threshold ? (
-            <Text style={styles.meta}>Low below {item.threshold}</Text>
-          ) : null}
+          {item.threshold ? <Text style={styles.meta}>Low below {item.threshold}</Text> : null}
         </View>
       ) : (
         <View style={styles.card}>
@@ -87,7 +83,9 @@ export default function ScanScreen() {
         {item ? 'Scan another' : 'Scan a barcode'}
       </PrimaryButton>
       {item ? (
-        <SecondaryButton onPress={() => router.push('/counts')}>Count this location</SecondaryButton>
+        <SecondaryButton onPress={() => router.push('/counts')}>
+          Count this location
+        </SecondaryButton>
       ) : null}
       {item ? <QuietButton onPress={() => setItem(null)}>Clear</QuietButton> : null}
 
@@ -110,7 +108,12 @@ const useStyles = makeStyles((c) => ({
     gap: 10,
     padding: 18,
   },
-  cardHead: { alignItems: 'flex-start', flexDirection: 'row', gap: 12, justifyContent: 'space-between' },
+  cardHead: {
+    alignItems: 'flex-start',
+    flexDirection: 'row',
+    gap: 12,
+    justifyContent: 'space-between',
+  },
   content: { gap: 12, marginHorizontal: 'auto', maxWidth: 640, padding: 16, width: '100%' },
   emptyIcon: {
     alignItems: 'center',

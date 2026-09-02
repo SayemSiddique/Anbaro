@@ -137,7 +137,13 @@ const destinations: Array<NavigationItem & { permission?: ShellPermission }> = [
 
   // Support carries no permission: Anbaro is free and anyone may support it.
   { id: 'support', label: 'Support Anbaro', href: '/support', slot: 'account' },
-  { id: 'settings', label: 'Settings', href: '/settings', permission: 'settings:read', slot: 'account' },
+  {
+    id: 'settings',
+    label: 'Settings',
+    href: '/settings',
+    permission: 'settings:read',
+    slot: 'account',
+  },
   { id: 'team', label: 'Team', href: '/team', permission: 'user:manage', slot: 'account' },
 ];
 
@@ -381,11 +387,7 @@ export function WebApplicationShell({
             )}
           </div>
           <div className="topbar-user">
-            <button
-              className="topbar-search"
-              onClick={() => palette.setOpen(true)}
-              type="button"
-            >
+            <button className="topbar-search" onClick={() => palette.setOpen(true)} type="button">
               <Search aria-hidden="true" size={16} />
               <span>Search</span>
               <kbd className="palette-kbd">⌘K</kbd>
@@ -406,7 +408,9 @@ export function WebApplicationShell({
         </main>
       </div>
       <CommandPalette
-        assistantHref={commands.some((item) => item.id === 'open-assistant') ? '/assistant' : undefined}
+        assistantHref={
+          commands.some((item) => item.id === 'open-assistant') ? '/assistant' : undefined
+        }
         commands={commands}
         onClose={() => palette.setOpen(false)}
         onNavigate={navigate}

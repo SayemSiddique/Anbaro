@@ -176,7 +176,9 @@ function nativeTextStyle(step: TypeStep): TextStyle {
     ...(step.uppercase ? { textTransform: 'uppercase' as const } : null),
     // Tabular figures are the reason quantities use this step: decimals line
     // up down a column instead of jittering row to row.
-    ...(step.numeric ? { fontVariant: ['tabular-nums' as const], fontWeight: '600' as const } : null),
+    ...(step.numeric
+      ? { fontVariant: ['tabular-nums' as const], fontWeight: '600' as const }
+      : null),
   };
 }
 
@@ -198,5 +200,9 @@ export const text = {
 
 /** A numeric style at an arbitrary size — quantity displays that aren't body-sized. */
 export function numericText(fontSize: number): TextStyle {
-  return { ...text.numeric, fontSize, lineHeight: Math.round(fontSize * typeScale.numeric.lineHeight) };
+  return {
+    ...text.numeric,
+    fontSize,
+    lineHeight: Math.round(fontSize * typeScale.numeric.lineHeight),
+  };
 }

@@ -368,7 +368,9 @@ describe('Pagination', () => {
   it('marks the current page and disables the ends', () => {
     const onPageChange = vi.fn();
     render(<Pagination onPageChange={onPageChange} page={1} pageCount={4} />);
-    expect(screen.getByRole('button', { name: 'Page 1' }).getAttribute('aria-current')).toBe('page');
+    expect(screen.getByRole('button', { name: 'Page 1' }).getAttribute('aria-current')).toBe(
+      'page',
+    );
     expect(screen.getByRole('button', { name: 'Previous page' })).toHaveProperty('disabled', true);
     fireEvent.click(screen.getByRole('button', { name: 'Next page' }));
     expect(onPageChange).toHaveBeenCalledWith(2);
@@ -414,7 +416,12 @@ describe('AsyncPanel', () => {
     expect(screen.getByRole('status').textContent).toBe('Loading…');
 
     rerender(
-      <AsyncPanel error="Network unreachable" hasContent loading={false} skeleton={<SkeletonTable />}>
+      <AsyncPanel
+        error="Network unreachable"
+        hasContent
+        loading={false}
+        skeleton={<SkeletonTable />}
+      >
         <p>Real content</p>
       </AsyncPanel>,
     );

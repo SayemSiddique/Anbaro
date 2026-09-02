@@ -94,10 +94,11 @@ export type DeleteAccountRequest = { email: string; password: string };
  * Stripe Prices mirror these figures. Amounts elsewhere are in minor units
  * (cents); the display strings here are what the UI shows.
  *
- * Billing surfaces on web only for now. The mobile apps stay on the free tier to
- * keep Anbaro clear of Apple's and Google's in-app-purchase rules.
+ * Billing surfaces on web only. Mobile never runs a native purchase flow —
+ * hitting a Free-tier limit links out to the web billing page instead — to
+ * keep Anbaro clear of Apple's and Google's in-app-purchase cut.
  */
-export const TRIAL_DAYS = 30 as const;
+export const TRIAL_DAYS = 10 as const;
 
 export type BillingInterval = 'monthly' | 'quarterly' | 'annual';
 

@@ -14,14 +14,7 @@
  * first paint depends on the network.
  */
 
-import {
-  ArrowRight,
-  MapPin,
-  Package,
-  Search,
-  Sparkles,
-  type LucideIcon,
-} from 'lucide-react';
+import { ArrowRight, MapPin, Package, Search, Sparkles, type LucideIcon } from 'lucide-react';
 import {
   useCallback,
   useEffect,
@@ -118,9 +111,7 @@ function byGroup(items: CommandItem[]): [string, CommandItem[]][] {
     if (bucket) bucket.push(item);
     else groups.set(item.group, [item]);
   }
-  return [...groups.entries()].sort(
-    (a, b) => groupOrder.indexOf(a[0]) - groupOrder.indexOf(b[0]),
-  );
+  return [...groups.entries()].sort((a, b) => groupOrder.indexOf(a[0]) - groupOrder.indexOf(b[0]));
 }
 
 export function CommandPalette({
@@ -307,7 +298,9 @@ export function CommandPalette({
                       >
                         <Icon aria-hidden="true" size={16} strokeWidth={2} />
                         <span className="palette-option-label">{item.label}</span>
-                        {item.hint ? <span className="palette-option-hint">{item.hint}</span> : null}
+                        {item.hint ? (
+                          <span className="palette-option-hint">{item.hint}</span>
+                        ) : null}
                       </div>
                     );
                   })}

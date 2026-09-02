@@ -1,5 +1,6 @@
 import { ApiClientError, type Location, type Notification } from '@anbaro/contracts';
 
+import * as Linking from 'expo-linking';
 import { useRouter } from 'expo-router';
 import * as SecureStore from 'expo-secure-store';
 import { Bell, Check, Pencil, Archive } from 'lucide-react-native';
@@ -319,10 +320,17 @@ export default function HomeScreen() {
         <StatePanel
           action={
             <View style={styles.actions}>
-              <SecondaryButton onPress={() => setCapacityPrompt(false)}>Got it</SecondaryButton>
+              {/* Opens the system browser to anbaro.com/billing rather than an
+                  in-app purchase — Pro is a web-only subscription (Sam,
+                  2026-09-02) so mobile never touches Apple's or Google's IAP
+                  cut. See @anbaro/contracts TRIAL_DAYS doc comment. */}
+              <PrimaryButton onPress={() => void Linking.openURL('https://anbaro.com/billing')}>
+                Upgrade to Pro
+              </PrimaryButton>
+              <SecondaryButton onPress={() => setCapacityPrompt(false)}>Not now</SecondaryButton>
             </View>
           }
-          detail={`The Free plan includes ${capacity.capacity} locations. Upgrade to Pro at anbaro.com for unlimited locations — your entered details are saved here.`}
+          detail={`The Free plan includes ${capacity.capacity} locations. Upgrade to Pro on the web for unlimited locations — your entered details are saved here.`}
           title="You’ve reached your location limit"
         />
       ) : null}

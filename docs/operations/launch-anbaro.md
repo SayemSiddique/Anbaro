@@ -3,9 +3,13 @@
 This production path fits the current monorepo: a Next.js web app, Fastify API,
 PostgreSQL, Redis, and Expo mobile app.
 
-Anbaro launches free: there is no trial, subscription, or paid tier. The billing
-implementation is intact but dormant behind `BILLING_ENABLED`, which defaults to
-off. Leave it unset and no Stripe account, product, price, or webhook is needed.
+Anbaro targets billing live at launch (revised 2026-09-02 — Pro billing was
+originally a post-launch fast-follow; plan Session 11 is now pulled forward to
+run alongside the rest of go-live). A free tier always exists regardless.
+Until Stripe (S-12) is actually provisioned and live in a given environment,
+leave `BILLING_ENABLED` unset there — the checkout, portal, and webhook routes
+stay unregistered (404, not merely hidden) and no Stripe account, product,
+price, or webhook is needed yet. The trial is 10 days (was 30).
 
 ## Recommended services
 
@@ -38,12 +42,15 @@ or Redis in the API container.
    DATABASE_ADMIN_URL='postgresql://…' pnpm db:verify
    ```
 
-5. Skip Stripe entirely for this launch. While `BILLING_ENABLED` is unset the
-   checkout, portal, and webhook routes are never registered — they return 404
-   rather than merely being hidden — and no workspace can be forced read-only by
-   trial expiry. To restore paid plans later, create the Stripe Price objects,
-   set the `STRIPE_*` variables, add the webhook at
-   `https://api.anbaro.com/api/v1/billing/webhook`, and set `BILLING_ENABLED=true`.
+5. Set up Stripe as part of this launch (Session 11 — pulled forward, not a
+   later fast-follow): create the Stripe Price objects, set the `STRIPE_*`
+   variables, add the webhook at
+   `https://api.anbaro.com/api/v1/billing/webhook`, and set
+   `BILLING_ENABLED=true` once Stripe is actually verified live. Until that's
+   done in a given environment, leave `BILLING_ENABLED` unset there — the
+   checkout, portal, and webhook routes are never registered while it's unset
+   (404, not merely hidden), and no workspace can be forced read-only by trial
+   expiry, so there's no half-wired billing surface in the meantime.
 
 ## API: api.anbaro.com
 
@@ -65,7 +72,11 @@ or Redis in the API container.
    TRUST_PROXY=1
    ```
 
-   Do not set `BILLING_ENABLED` or any `STRIPE_*` variable while Anbaro is free.
+   Add `BILLING_ENABLED` and the `STRIPE_*` variables here only once Stripe
+   (S-12) is provisioned and verified live for this environment — Session 11
+   now runs alongside launch rather than after it, but the credential gate is
+   unchanged: never set `BILLING_ENABLED=true` ahead of the Stripe setup that
+   makes it correct.
 
 4. Confirm `https://api.anbaro.com/health` returns an `ok` status. Never put
    `DATABASE_ADMIN_URL` in the runtime service.
@@ -125,8 +136,21 @@ first store build; it cannot be changed after release.
 
 ## Store policy and privacy gates
 
-Anbaro is free on every platform, with no purchase, trial, or unlockable content
-anywhere in the apps. That keeps both submissions simple.
+**Revised 2026-09-02 — Anbaro is no longer no-purchase-anywhere.** A Pro plan
+now targets go-live (see the top of this file). It is still true that neither
+app processes a purchase itself: hitting a Free-tier limit shows an "Upgrade
+to Pro" button (`apps/mobile/app/(tabs)/home.tsx`) that opens
+`anbaro.com/billing` in the **system browser** — not an in-app WebView, and
+not Stripe's checkout embedded anywhere in the app. That distinction is the
+whole compliance argument below, so don't blur it by ever routing a purchase
+through an in-app browser view instead of the OS-level external-link handoff.
+
+That argument is real but unverified against current store policy — Apple's
+external-purchase-link rules have moved before and are jurisdiction-dependent,
+and this hasn't been tested against an actual review yet (Session 9). Budget
+for a reviewer pushing back, and keep a fallback ready (e.g. a remote flag
+that hides the button for a build under review) rather than discovering the
+problem at submission time.
 
 The support page ("Buy me a coffee") ships on **web and Android only**. It is
 hidden on iOS by a `Platform.OS !== 'ios'` check. Apple treats a donation to a
@@ -136,10 +160,13 @@ boundary. Android's policy permits the link, and iOS users can still find it on
 the website. If you later want it on iOS, the compliant route is a real In-App
 Purchase "tip" product, not an external link.
 
-If you ever reintroduce paid plans, keep purchases on the web, and implement
-Apple In-App Purchase and Google Play Billing with server-side receipt
-verification before selling inside either store app; never reuse Stripe checkout
-inside the mobile apps.
+Purchases stay on the web by design: the external-link-out pattern above is
+the compliant route precisely because it never embeds Stripe checkout inside
+either store app. If a future direction wants Pro purchasable _inside_ the
+mobile app itself (not just linked out to), that requires implementing Apple
+In-App Purchase and Google Play Billing with server-side receipt verification
+first — Stripe checkout must never be embedded (WebView or otherwise) inside
+either mobile app.
 
 Publish `https://anbaro.com/privacy` and a support URL before submission. The
 privacy policy must cover account, inventory, camera/device, billing, and
@@ -157,5 +184,7 @@ Use the smallest paid, always-on API tier with a stable webhook endpoint. Set a
 Railway usage limit, Neon spend alert, and Upstash monthly budget before launch.
 Pricing changes, so verify each provider's current plan before purchase. Apple
 Developer Program membership and the one-time Play Console registration are
-separate from hosting. There are no payment-processing fees while Anbaro is free,
-so hosting is the whole running cost — which is what the support page helps offset.
+separate from hosting. Stripe's processing fees apply once billing is live —
+purchases route through the web, so there's no App Store/Play Store cut on
+top. Before Stripe is live in an environment, hosting is the whole running
+cost — which is what the support page helps offset.

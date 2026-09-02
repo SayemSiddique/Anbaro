@@ -193,10 +193,7 @@ function ModalShell({
 }
 
 /** A centred modal. Use it for a decision; use a Sheet for a workspace. */
-export function Dialog({
-  size = 'md',
-  ...props
-}: ModalShellProps & { size?: 'sm' | 'md' | 'lg' }) {
+export function Dialog({ size = 'md', ...props }: ModalShellProps & { size?: 'sm' | 'md' | 'lg' }) {
   return (
     <ModalShell
       {...props}
@@ -207,7 +204,10 @@ export function Dialog({
 }
 
 /** An edge-anchored panel. `bottom` is the phone form, `right` the desktop one. */
-export function Sheet({ side = 'right', ...props }: ModalShellProps & { side?: 'right' | 'bottom' }) {
+export function Sheet({
+  side = 'right',
+  ...props
+}: ModalShellProps & { side?: 'right' | 'bottom' }) {
   return (
     <ModalShell
       {...props}

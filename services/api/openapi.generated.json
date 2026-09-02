@@ -9,7 +9,9 @@
     "/api/v1/auth/register": {
       "post": {
         "summary": "Register a new user",
-        "tags": ["auth"],
+        "tags": [
+          "auth"
+        ],
         "requestBody": {
           "required": true,
           "content": {
@@ -36,10 +38,17 @@
                   "clientType": {
                     "default": "web",
                     "type": "string",
-                    "enum": ["web", "mobile"]
+                    "enum": [
+                      "web",
+                      "mobile"
+                    ]
                   }
                 },
-                "required": ["email", "password", "name"],
+                "required": [
+                  "email",
+                  "password",
+                  "name"
+                ],
                 "additionalProperties": false
               }
             }
@@ -58,7 +67,9 @@
     "/api/v1/auth/login": {
       "post": {
         "summary": "Log in",
-        "tags": ["auth"],
+        "tags": [
+          "auth"
+        ],
         "requestBody": {
           "required": true,
           "content": {
@@ -80,10 +91,16 @@
                   "clientType": {
                     "default": "web",
                     "type": "string",
-                    "enum": ["web", "mobile"]
+                    "enum": [
+                      "web",
+                      "mobile"
+                    ]
                   }
                 },
-                "required": ["email", "password"],
+                "required": [
+                  "email",
+                  "password"
+                ],
                 "additionalProperties": false
               }
             }
@@ -102,7 +119,9 @@
     "/api/v1/auth/password-reset/request": {
       "post": {
         "summary": "Request a password reset email",
-        "tags": ["auth"],
+        "tags": [
+          "auth"
+        ],
         "requestBody": {
           "required": true,
           "content": {
@@ -117,7 +136,9 @@
                     "pattern": "^(?!\\.)(?!.*\\.\\.)([A-Za-z0-9_'+\\-\\.]*)[A-Za-z0-9_+-]@([A-Za-z0-9][A-Za-z0-9\\-]*\\.)+[A-Za-z]{2,}$"
                   }
                 },
-                "required": ["email"],
+                "required": [
+                  "email"
+                ],
                 "additionalProperties": false
               }
             }
@@ -136,7 +157,9 @@
     "/api/v1/auth/password-reset/confirm": {
       "post": {
         "summary": "Set a new password from a reset token",
-        "tags": ["auth"],
+        "tags": [
+          "auth"
+        ],
         "requestBody": {
           "required": true,
           "content": {
@@ -155,7 +178,10 @@
                     "maxLength": 256
                   }
                 },
-                "required": ["token", "password"],
+                "required": [
+                  "token",
+                  "password"
+                ],
                 "additionalProperties": false
               }
             }
@@ -174,7 +200,9 @@
     "/api/v1/auth/verify-email": {
       "post": {
         "summary": "Verify an email address",
-        "tags": ["auth"],
+        "tags": [
+          "auth"
+        ],
         "requestBody": {
           "required": true,
           "content": {
@@ -188,7 +216,9 @@
                     "maxLength": 512
                   }
                 },
-                "required": ["token"],
+                "required": [
+                  "token"
+                ],
                 "additionalProperties": false
               }
             }
@@ -207,7 +237,9 @@
     "/api/v1/categories": {
       "post": {
         "summary": "Create a category",
-        "tags": ["catalog"],
+        "tags": [
+          "catalog"
+        ],
         "requestBody": {
           "required": true,
           "content": {
@@ -228,10 +260,18 @@
                   },
                   "broadTypeFallback": {
                     "type": "string",
-                    "enum": ["food", "cleaning", "equipment", "other"]
+                    "enum": [
+                      "food",
+                      "cleaning",
+                      "equipment",
+                      "other"
+                    ]
                   }
                 },
-                "required": ["name", "broadTypeFallback"],
+                "required": [
+                  "name",
+                  "broadTypeFallback"
+                ],
                 "additionalProperties": false
               }
             }
@@ -250,7 +290,9 @@
     "/api/v1/items": {
       "post": {
         "summary": "Create an item",
-        "tags": ["catalog"],
+        "tags": [
+          "catalog"
+        ],
         "requestBody": {
           "required": true,
           "content": {
@@ -293,7 +335,11 @@
                     "maxLength": 32
                   }
                 },
-                "required": ["categoryId", "name", "unit"],
+                "required": [
+                  "categoryId",
+                  "name",
+                  "unit"
+                ],
                 "additionalProperties": false
               }
             }
@@ -312,7 +358,9 @@
     "/api/v1/stock-events": {
       "post": {
         "summary": "Record a manual stock movement (idempotent)",
-        "tags": ["stock"],
+        "tags": [
+          "stock"
+        ],
         "requestBody": {
           "required": true,
           "content": {
@@ -332,7 +380,10 @@
                   },
                   "eventType": {
                     "type": "string",
-                    "enum": ["adjustment", "loss"]
+                    "enum": [
+                      "adjustment",
+                      "loss"
+                    ]
                   },
                   "quantityDelta": {
                     "type": "number",
@@ -352,7 +403,10 @@
                   "source": {
                     "default": "manual",
                     "type": "string",
-                    "enum": ["manual", "assistant"]
+                    "enum": [
+                      "manual",
+                      "assistant"
+                    ]
                   },
                   "assistant": {
                     "type": "object",
@@ -401,7 +455,9 @@
     "/api/v1/count-sessions": {
       "post": {
         "summary": "Start a count session",
-        "tags": ["counts"],
+        "tags": [
+          "counts"
+        ],
         "requestBody": {
           "required": true,
           "content": {
@@ -415,7 +471,9 @@
                     "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
                   }
                 },
-                "required": ["locationId"],
+                "required": [
+                  "locationId"
+                ],
                 "additionalProperties": false
               }
             }
@@ -434,7 +492,9 @@
     "/api/v1/imports": {
       "post": {
         "summary": "Initialize a CSV import batch",
-        "tags": ["imports"],
+        "tags": [
+          "imports"
+        ],
         "requestBody": {
           "required": true,
           "content": {
@@ -453,7 +513,10 @@
                     "maxLength": 255
                   }
                 },
-                "required": ["idempotencyKey", "filename"],
+                "required": [
+                  "idempotencyKey",
+                  "filename"
+                ],
                 "additionalProperties": false
               }
             }
@@ -472,7 +535,9 @@
     "/api/v1/membership-invitations": {
       "post": {
         "summary": "Invite a team member with a location scope",
-        "tags": ["team"],
+        "tags": [
+          "team"
+        ],
         "requestBody": {
           "required": true,
           "content": {
@@ -512,7 +577,10 @@
                     }
                   }
                 },
-                "required": ["email", "grantSetId"],
+                "required": [
+                  "email",
+                  "grantSetId"
+                ],
                 "additionalProperties": false
               }
             }
@@ -531,7 +599,9 @@
     "/api/v1/memberships/{id}": {
       "patch": {
         "summary": "Update a member (role, status, location scope)",
-        "tags": ["team"],
+        "tags": [
+          "team"
+        ],
         "requestBody": {
           "required": true,
           "content": {
@@ -546,7 +616,10 @@
                   },
                   "status": {
                     "type": "string",
-                    "enum": ["active", "revoked"]
+                    "enum": [
+                      "active",
+                      "revoked"
+                    ]
                   },
                   "allLocations": {
                     "type": "boolean"
@@ -579,7 +652,9 @@
     "/api/v1/assistant/stock-proposals": {
       "post": {
         "summary": "Turn a natural-language message into a stock-change proposal (no write)",
-        "tags": ["assistant"],
+        "tags": [
+          "assistant"
+        ],
         "requestBody": {
           "required": true,
           "content": {
@@ -598,7 +673,9 @@
                     "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
                   }
                 },
-                "required": ["message"],
+                "required": [
+                  "message"
+                ],
                 "additionalProperties": false
               }
             }

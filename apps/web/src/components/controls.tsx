@@ -185,7 +185,15 @@ export function Tabs({
 
   function onKeyDown(event: ReactKeyboardEvent<HTMLDivElement>) {
     const delta =
-      event.key === 'ArrowRight' ? 1 : event.key === 'ArrowLeft' ? -1 : event.key === 'Home' ? 0 : event.key === 'End' ? 0 : null;
+      event.key === 'ArrowRight'
+        ? 1
+        : event.key === 'ArrowLeft'
+          ? -1
+          : event.key === 'Home'
+            ? 0
+            : event.key === 'End'
+              ? 0
+              : null;
     if (delta === null) return;
     event.preventDefault();
     const index = tabs.findIndex((tab) => tab.id === active?.id);
@@ -203,7 +211,13 @@ export function Tabs({
 
   return (
     <div>
-      <div aria-label={label} className="tabs-list" onKeyDown={onKeyDown} ref={listRef} role="tablist">
+      <div
+        aria-label={label}
+        className="tabs-list"
+        onKeyDown={onKeyDown}
+        ref={listRef}
+        role="tablist"
+      >
         {tabs.map((tab) => (
           <button
             aria-controls={`${baseId}-panel-${tab.id}`}
@@ -320,7 +334,9 @@ export function Combobox({
     <div className="combobox" ref={rootRef}>
       <input
         aria-autocomplete="list"
-        aria-activedescendant={open && matches[activeIndex] ? `${baseId}-option-${activeIndex}` : undefined}
+        aria-activedescendant={
+          open && matches[activeIndex] ? `${baseId}-option-${activeIndex}` : undefined
+        }
         aria-controls={open ? listboxId : undefined}
         aria-expanded={open}
         aria-label={label}
@@ -374,7 +390,9 @@ export function Combobox({
 function pageWindow(page: number, pageCount: number): (number | 'gap')[] {
   if (pageCount <= 7) return Array.from({ length: pageCount }, (_, index) => index + 1);
   const pages = new Set([1, pageCount, page, page - 1, page + 1]);
-  const visible = [...pages].filter((value) => value >= 1 && value <= pageCount).sort((a, b) => a - b);
+  const visible = [...pages]
+    .filter((value) => value >= 1 && value <= pageCount)
+    .sort((a, b) => a - b);
   const out: (number | 'gap')[] = [];
   let previous = 0;
   for (const value of visible) {

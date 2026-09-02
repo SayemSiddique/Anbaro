@@ -10,10 +10,19 @@ as a deliberate post-launch item.
 
 ---
 
-## 0. Launch posture (locked)
+## 0. Launch posture (locked, revised 2026-09-02)
 
-- [x] Free launch — `BILLING_ENABLED` unset everywhere (Stripe routes return 404).
-- [x] Pro billing is a fast-follow (plan Session 11), not a launch blocker.
+- [x] Pro billing targets go-live itself (Session 11 pulled forward, not a
+      fast-follow). 10-day cardless trial (was 30) — code + migration
+      (`0023_session_20_ten_day_trial.sql`) verified locally.
+- [ ] `BILLING_ENABLED` unset until Stripe (S-12) is actually live in that
+      environment — while unset, Stripe routes still 404 (unchanged safety
+      property; only the target timing changed).
+- [ ] Mobile's "Upgrade to Pro" now links out to `anbaro.com/billing` in the
+      system browser instead of staying silent — re-verify this reads clean
+      against the App Store/Play Store review guidelines current at go time
+      (external-purchase-link policy has moved before; don't assume it's
+      unchanged since this decision was made).
 - [ ] Confirm this posture still holds at go time.
 
 ## 1. Data layer — Neon (Session 2)
@@ -75,9 +84,16 @@ as a deliberate post-launch item.
 - [ ] Brand assets current (`pnpm brand:export`; verified zero-diff in Session 2).
 - [ ] Production builds in TestFlight + Play internal track.
 - [ ] Store listings complete; reviewer notes point to the account-deletion path.
-- [ ] Decision recorded on the mobile "Upgrade to Pro at anbaro.com" capacity
-      prompt (App Store anti-steering consideration flagged at
-      `apps/mobile/app/(tabs)/home.tsx:221`).
+- [x] Decision recorded on the mobile capacity prompt (Sam, 2026-09-02): it
+      now has a live "Upgrade to Pro" button opening `anbaro.com/billing` in
+      the system browser (`apps/mobile/app/(tabs)/home.tsx`, `capacityPrompt`)
+      rather than staying silent — a deliberate anti-steering call to route
+      customers around Apple's/Google's in-app-purchase cut.
+- [ ] Re-verify that call against App Store/Play Store review guidelines
+      current at submission time — external-purchase-link policy is
+      jurisdiction- and version-dependent and can move between now and
+      Session 9. Have a fallback ready (e.g. a remote flag that hides the
+      button for a build under review) in case a reviewer pushes back.
 - [ ] Submitted for review.
 
 ## 8. AI assistant (Session 10) — optional at launch

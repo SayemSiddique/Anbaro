@@ -187,5 +187,6 @@ pnpm lint && pnpm typecheck && pnpm build
 ```
 
 **Never:** run destructive migrations from CD · put `DATABASE_ADMIN_URL` on a
-runtime service · restore over a live database · set `BILLING_ENABLED` before
-plan Session 11.
+runtime service · restore over a live database · set `BILLING_ENABLED` in an
+environment before Stripe (S-12) is actually live there, even though plan
+Session 11 now targets go-live rather than a fast-follow (2026-09-02).

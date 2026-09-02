@@ -48,7 +48,7 @@ function hexToHsl(hex: string): [number, number, number] {
   if (d === 0) return [0, 0, l];
   const s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
   const h =
-    max === r ? ((g - b) / d + (g < b ? 6 : 0)) : max === g ? (b - r) / d + 2 : (r - g) / d + 4;
+    max === r ? (g - b) / d + (g < b ? 6 : 0) : max === g ? (b - r) / d + 2 : (r - g) / d + 4;
   return [h * 60, s, l];
 }
 
@@ -56,7 +56,7 @@ function hslToHex(h: number, s: number, l: number): string {
   const c = (1 - Math.abs(2 * l - 1)) * s;
   const x = c * (1 - Math.abs(((h / 60) % 2) - 1));
   const m = l - c / 2;
-  const seg = Math.floor(((h % 360) + 360) % 360 / 60);
+  const seg = Math.floor((((h % 360) + 360) % 360) / 60);
   const [r, g, b] = (
     [
       [c, x, 0],
