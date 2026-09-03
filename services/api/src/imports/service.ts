@@ -41,7 +41,7 @@ type BatchRow = {
   stock_event_id: string | null;
 };
 
-const columns = [
+export const importColumns = [
   'name',
   'unit',
   'category',
@@ -49,7 +49,18 @@ const columns = [
   'barcode',
   'location',
   'quantity_delta',
-];
+] as const;
+const columns = importColumns as readonly string[];
+
+/**
+ * One CSV cell, quoted, with a leading =+-@ neutralized so a spreadsheet opening
+ * the export cannot execute it as a formula.
+ */
+export function csvCell(value: string | null | undefined): string {
+  const safe = value ?? '';
+  const neutral = /^[=+\-@]/.test(safe) ? `'${safe}` : safe;
+  return `"${neutral.replaceAll('"', '""')}"`;
+}
 
 export const csvTemplate = `${columns.join(',')}\nLimes,kg,Produce,food,012345678901,Main kitchen,5\n`;
 

@@ -1,4 +1,4 @@
--- Session 15: durable notification dispatch discovery.
+-- Durable notification dispatch discovery.
 -- Any API instance must be able to find tenants with stranded queued
 -- deliveries after a restart. Ordinary tenant RLS intentionally blocks
 -- cross-tenant scans for stock_app, so discovery goes through a narrow

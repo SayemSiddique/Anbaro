@@ -2,7 +2,7 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
 import { buildApp } from '../src/app.js';
 
-describe('Session 13 HTTP hardening', () => {
+describe('HTTP hardening', () => {
   const app = buildApp();
 
   beforeAll(async () => {

@@ -1,4 +1,4 @@
--- Session 03 rollback, for local/review environments only.
+-- Rollback, for local/review environments only.
 REVOKE SELECT ON organizations FROM stock_app;
 DROP FUNCTION IF EXISTS app.auth_resolve_membership(uuid, uuid, uuid);
 DROP FUNCTION IF EXISTS app.auth_activate_organization(uuid, uuid, uuid);

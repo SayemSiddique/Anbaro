@@ -12,6 +12,7 @@ import { withAuthorizedTenant } from '../tenant/access.js';
 import {
   commitValidRows,
   createUploadToken,
+  csvCell,
   csvTemplate,
   queueImportValidation,
   rowsForBatch,
@@ -99,12 +100,6 @@ async function getBatch(client: Parameters<typeof rowsForBatch>[0], id: string) 
   );
   if (!batch.rows[0]) throw new ApiError(404, 'IMPORT_NOT_FOUND', 'This import is not available.');
   return batch.rows[0];
-}
-
-function csvCell(value: string | null | undefined): string {
-  const safe = value ?? '';
-  const neutral = /^[=+\-@]/.test(safe) ? `'${safe}` : safe;
-  return `"${neutral.replaceAll('"', '""')}"`;
 }
 
 export async function registerImportRoutes(app: FastifyInstance): Promise<void> {

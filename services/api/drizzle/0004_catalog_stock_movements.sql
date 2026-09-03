@@ -1,4 +1,4 @@
--- Session 06 catalog and immutable manual stock-movement foundation.
+-- Catalog and immutable manual stock-movement foundation.
 -- Runtime writes remain RLS-scoped as stock_app; these SECURITY DEFINER
 -- functions validate the verified tenant setting before touching projections.
 

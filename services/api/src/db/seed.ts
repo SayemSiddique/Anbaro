@@ -14,7 +14,7 @@ const client = new Client({ connectionString });
 await client.connect();
 try {
   await client.query(await readFile(join(here, '../../drizzle/seed.sql'), 'utf8'));
-  console.log('Loaded Session 02/03 deterministic database fixtures');
+  console.log('Loaded deterministic database fixtures');
 } finally {
   await client.end();
 }

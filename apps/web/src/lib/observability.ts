@@ -9,7 +9,7 @@ import * as Sentry from '@sentry/nextjs';
  * inlined into both the browser and server bundles, so one variable configures
  * every Next.js runtime. Called from the instrumentation entrypoints
  * (`instrumentation.ts` for server/edge, `instrumentation-client.ts` for the
- * browser). The DSN is attached in plan Session 4.
+ * browser). The DSN is attached once a Sentry project is provisioned.
  */
 export function initSentry(): boolean {
   const dsn = process.env.NEXT_PUBLIC_SENTRY_DSN;

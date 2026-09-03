@@ -1,4 +1,4 @@
--- Correct the Session 05 onboarding function for PL/pgSQL output-column shadowing.
+-- Correct the onboarding function for PL/pgSQL output-column shadowing.
 CREATE OR REPLACE FUNCTION app.auth_create_organization(p_session_id uuid, p_user_id uuid, p_name text)
 RETURNS TABLE (id uuid, name varchar, status varchar)
 LANGUAGE plpgsql SECURITY DEFINER SET search_path = pg_catalog, public, app AS $$

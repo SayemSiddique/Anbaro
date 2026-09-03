@@ -52,7 +52,7 @@ Legend for effort: **S** = <½ day, **M** = ~1 day, **L** = multi-day / needs a 
 
 **We are copying the `count_submissions` pattern, not inventing one.**
 
-1. **Migration** `0017_session_18_stock_event_idempotency.sql`:
+1. **Migration** `0017_stock_event_idempotency.sql`:
    - `ALTER TABLE stock_events ADD COLUMN idempotency_key uuid;` (nullable — backfill-free; existing rows stay null)
    - `CREATE UNIQUE INDEX stock_events_org_idempotency_key ON stock_events (organization_id, idempotency_key) WHERE idempotency_key IS NOT NULL;` (partial unique so historical nulls don't collide)
 2. **Stored fn** `apply_manual_stock_event` — add `p_idempotency_key uuid` param. Before inserting, `SELECT` an existing row by `(organization_id, idempotency_key)`; if found, return it unchanged (the conflict-returns-original path). New GRANT signature line.
@@ -83,11 +83,11 @@ If orgs are effectively single-location, or "everyone sees everything" is accept
 
 ### Implementation (assuming 2a=required, 2b=B, 2c=per-location)
 
-1. **Migration** `0018_session_18_location_scoped_membership.sql`:
+1. **Migration** `0018_location_scoped_membership.sql`:
    - `ALTER TABLE user_org_memberships ADD COLUMN all_locations boolean NOT NULL DEFAULT true;` (existing members keep org-wide access — safe default)
    - `CREATE TABLE membership_locations (membership_id uuid, location_id uuid, organization_id uuid, PRIMARY KEY (membership_id, location_id), FOREIGN KEY (membership_id, organization_id) REFERENCES user_org_memberships(id, organization_id) ON DELETE CASCADE, FOREIGN KEY (location_id, organization_id) REFERENCES locations(id, organization_id) ON DELETE CASCADE);` — composite FKs carry `organization_id`, matching the existing defense-in-depth.
    - Enable + FORCE RLS on it; tenant-isolation policy like the others.
-   - Register in the FORCE-RLS coverage assertion list (the `SELECT` at [0000_session_02:400](../services/api/drizzle/0000_session_02_database_foundation.sql)).
+   - Register in the FORCE-RLS coverage assertion list (the `SELECT` at [0000_database_foundation:400](../services/api/drizzle/0000_database_foundation.sql)).
 2. **DB helper** `app.location_visible(p_location_id uuid) returns boolean` — true if `all_locations` GUC is set OR `p_location_id` is in the `app.current_location_ids` GUC. Add RLS policies referencing it on: `stock_events` (INSERT), `location_stocks`, `count_sessions`, `count_session_lines`, `reorder_suggestions`, `notifications`. (Reads on `items`/`categories` stay org-wide — you scope _stock_, not the catalog. Confirm in 2c review.)
 3. **Session context** in `withVerifiedTenant` ([db/client.ts]): after setting `app.current_organization_id`, also `set_config('app.all_locations', ...)` and `set_config('app.current_location_ids', ...)` transaction-locally.
 4. **`ResolvedTenantContext`** ([auth/context.ts:17](../services/api/src/auth/context.ts)): add `allLocations: boolean` and `locationIds: ReadonlySet<string>`; populate in `resolveActiveMembership` (extend `resolveMembership` repository query to pull `all_locations` + joined `membership_locations`).

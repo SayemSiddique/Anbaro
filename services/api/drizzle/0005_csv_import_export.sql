@@ -1,4 +1,4 @@
--- Session 07 CSV import/export. CSV content is a private development object
+-- CSV import/export. CSV content is a private development object
 -- in Postgres; production storage can replace the adapter without changing the
 -- tenant-scoped batch and row protocol.
 ALTER TABLE import_batches

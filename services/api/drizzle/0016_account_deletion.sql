@@ -1,4 +1,4 @@
--- Session 17: in-app account deletion (App Store guideline 5.1.1(v), GDPR erasure).
+-- In-app account deletion (App Store guideline 5.1.1(v), GDPR erasure).
 --
 -- Deleting an owner deletes their entire workspace, including every tenant row.
 -- Tenant tables use ON DELETE RESTRICT throughout, so the purge walks them in

@@ -58,6 +58,7 @@ Anbaro makes the basic inventory workflow clear: **add what you carry, record wh
 | Stock history              | Keep a clear record of stock movements and adjustments, so teams can understand how a quantity changed.                                     |
 | Team access                | Invite staff and give people the access they need.                                                                                          |
 | CSV import and export      | Bring in an existing catalog and take your data with you.                                                                                   |
+| Assistant (voice or typed) | Say or type what changed and review a proposed update before it is saved. Setup and daily changes without typing every field by hand.       |
 | Web and mobile apps        | Review inventory at a desk and count it on the floor, with shared data.                                                                     |
 
 ## What makes it simple
@@ -113,6 +114,8 @@ Anbaro makes inventory easier to see, easier to count, and easier to act on.
 - Know what you have, where it is, and what is running low
 - Count on your phone; review on your computer
 - No separate barcode scanner hardware needed
+- Describe stock changes in plain language, by voice or typing — you confirm
+  every change before it is saved
 - Keep counting even when the connection drops
 - Get alerted before you run out
 - Free to use
@@ -122,7 +125,9 @@ Anbaro makes inventory easier to see, easier to count, and easier to act on.
 
 - Enterprise resource planning (ERP), unless speaking to a technical audience
 - Fully automated purchasing or automatic ordering
-- AI-powered inventory, predictive forecasting, or integrations not confirmed in the product
+- Predictive forecasting, demand prediction, or integrations not confirmed in the product
+- That the assistant acts on its own — it proposes changes a person confirms, and
+  saying otherwise oversells it and undersells the safeguard
 - Guaranteed savings, revenue gains, or accuracy percentages
 - “Free trial,” pricing details, or limits when promoting the current free offering
 - That Anbaro replaces accounting, point-of-sale, purchasing, or warehouse-management systems

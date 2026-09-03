@@ -1,4 +1,4 @@
--- Session 11: tenant-scoped operational visibility, invitation lifecycle, and
+-- Tenant-scoped operational visibility, invitation lifecycle, and
 -- append-only administration audit records. Inventory/count truth remains in
 -- the existing immutable tables; reporting only reads those records.
 
@@ -182,7 +182,7 @@ BEGIN
 END;
 $$;
 
--- Add complete preset coverage for the Session 11 operational surfaces.
+-- Add complete preset coverage for the operational-visibility surfaces.
 INSERT INTO permission_grant_sets (id, organization_id, scope, name, version, is_mutable) VALUES
   ('20000000-0000-4000-8000-000000000002', NULL, 'system', 'Manager', 1, false),
   ('20000000-0000-4000-8000-000000000003', NULL, 'system', 'Server', 1, false)

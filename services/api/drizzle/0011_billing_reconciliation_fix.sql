@@ -1,4 +1,4 @@
--- Qualify table columns in the Session 12 security-definer routine. PostgreSQL
+-- Qualify table columns in the billing security-definer routine. PostgreSQL
 -- treats OUT parameters as PL/pgSQL variables, so unqualified names would make
 -- a production webhook fail rather than reconcile.
 CREATE OR REPLACE FUNCTION app.attach_capacity_checkout_session(p_intent_id uuid, p_checkout_session_id text)

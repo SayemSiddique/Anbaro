@@ -20,11 +20,40 @@ describe.runIf(runIntegration)('assistant stock proposals', () => {
   beforeAll(async () => {
     await app.ready();
     await admin.connect();
-    // Deterministic extraction: "out of 15 limes, spoiled".
+    // Deterministic extraction: "out of 15 limes, spoiled", plus a pack-math
+    // movement and a brand-new item so one proposal covers every action kind.
     setExtractionTransport(async () =>
       JSON.stringify({
-        movements: [
-          { itemQuery: 'limes', eventType: 'loss', quantityDelta: -15, reason: 'spoiled' },
+        actions: [
+          {
+            kind: 'move_stock',
+            itemQuery: 'limes',
+            direction: 'decrease',
+            isLoss: true,
+            reason: 'spoiled',
+            quantity: { packs: null, unitsPerPack: null, units: 15 },
+          },
+          {
+            kind: 'move_stock',
+            itemQuery: 'Coca-Cola 330ml',
+            direction: 'increase',
+            isLoss: false,
+            reason: null,
+            quantity: { packs: 5, unitsPerPack: null, units: null },
+          },
+          {
+            kind: 'set_threshold',
+            itemQuery: 'limes',
+            quantity: { packs: null, unitsPerPack: null, units: 4 },
+          },
+          {
+            kind: 'create_item',
+            name: 'Forks',
+            unit: 'each',
+            categoryName: 'Cutlery',
+            categoryType: 'equipment',
+            quantity: { packs: null, unitsPerPack: null, units: 100 },
+          },
         ],
         locationHint: null,
         clarification: null,
@@ -39,7 +68,17 @@ describe.runIf(runIntegration)('assistant stock proposals', () => {
       // location_stocks.last_event_id at them, so drop the projection first and
       // disable the immutability trigger to clear the ledger (mirrors the
       // security integration cleanup).
+      await admin.query('DELETE FROM assistant_interactions WHERE organization_id = $1', [
+        organizationId,
+      ]);
       await admin.query('DELETE FROM location_stocks WHERE organization_id = $1', [organizationId]);
+      // A confirmed movement can trip the low-stock sweeper; its notification
+      // rows reference the ledger event, and delivery logs reference those.
+      // Same unwind order the security integration cleanup uses.
+      await admin.query('DELETE FROM notification_delivery_logs WHERE organization_id = $1', [
+        organizationId,
+      ]);
+      await admin.query('DELETE FROM notifications WHERE organization_id = $1', [organizationId]);
       await admin.query('ALTER TABLE stock_events DISABLE TRIGGER stock_events_immutable');
       await admin.query('DELETE FROM stock_events WHERE organization_id = $1', [organizationId]);
       await admin.query('ALTER TABLE stock_events ENABLE TRIGGER stock_events_immutable');
@@ -93,6 +132,33 @@ describe.runIf(runIntegration)('assistant stock proposals', () => {
       payload: { categoryId: category.json().data.id, name: 'Limes', unit: 'kg' },
     });
     const itemId = createdItem.json().data.id as string;
+    // An item whose catalog entry knows a case is 24, so "five cases" needs no
+    // pack size from the speaker.
+    await app.inject({
+      method: 'POST',
+      url: '/api/v1/items',
+      headers: authed(ownerToken),
+      payload: {
+        categoryId: category.json().data.id,
+        name: 'Coca-Cola 330ml',
+        unit: 'each',
+        packSize: 24,
+        packUnit: 'case',
+      },
+    });
+    // Opening stock, so the proposal has a real "before" to show.
+    await app.inject({
+      method: 'POST',
+      url: '/api/v1/stock-events',
+      headers: authed(ownerToken),
+      payload: {
+        itemId,
+        locationId,
+        eventType: 'adjustment',
+        quantityDelta: 8,
+        idempotencyKey: randomUUID(),
+      },
+    });
 
     // Owner has assistant:use → proposal resolves against the real catalog.
     const proposal = await app.inject({
@@ -102,12 +168,41 @@ describe.runIf(runIntegration)('assistant stock proposals', () => {
       payload: { message: 'we are out of 15 limes, they spoiled', locationId },
     });
     expect(proposal.statusCode).toBe(200);
-    const movement = proposal.json().data.movements[0];
-    expect(movement.resolvedItem.name).toBe('Limes');
-    expect(movement.eventType).toBe('loss');
-    expect(movement.quantityDelta).toBe(-15);
-    expect(movement.confidence).toBe('high');
-    expect(proposal.json().data.locationId).toBe(locationId);
+    const data = proposal.json().data;
+    expect(data.locationId).toBe(locationId);
+    // Carried so a confirmed write can stamp it into the ledger's attribution.
+    expect(typeof data.model).toBe('string');
+    expect(data.model.length).toBeGreaterThan(0);
+
+    const [loss, packMove, threshold, newItem] = data.actions;
+    expect(loss.resolvedItem.name).toBe('Limes');
+    expect(loss.eventType).toBe('loss');
+    expect(loss.quantityDelta).toBe(-15);
+    expect(loss.confidence).toBe('high');
+    // Phase D read the real on-hand number, so the card can show before → after.
+    expect(loss.currentQuantity).toBe(8);
+    expect(loss.resultingQuantity).toBe(-7);
+
+    // "five cases" with no pack size spoken: the server multiplies by the
+    // item's own pack_size of 24 rather than trusting the model to do it.
+    expect(packMove.quantity).toMatchObject({
+      packs: 5,
+      unitsPerPack: 24,
+      packUnit: 'case',
+      packSource: 'item',
+      total: 120,
+    });
+    expect(packMove.quantityDelta).toBe(120);
+
+    expect(threshold.kind).toBe('set_threshold');
+    expect(threshold.threshold).toBe(4);
+    expect(threshold.currentThreshold).toBe(0);
+
+    // A brand-new item never gets its own write path — it is drafted into the
+    // existing CSV import pipeline, whose preview is the confirmation step.
+    expect(newItem.kind).toBe('create_item');
+    expect(newItem.duplicateOf).toBeNull();
+    expect(data.catalogDraftCsv).toContain('"Forks","each","Cutlery","equipment","","Main","100"');
 
     // A member without assistant:use is denied.
     const grant = await app.inject({
@@ -178,6 +273,65 @@ describe.runIf(runIntegration)('assistant stock proposals', () => {
       model: 'llama-3.1-8b',
       extractionConfidence: 0.92,
     });
+
+    // The correction log: a confirm where the user overrode the model's item is
+    // the row a future fine-tune learns the most from, and today nothing else
+    // records it — the ledger only sees the write that succeeded.
+    const logTranscriptId = randomUUID();
+    const recorded = await app.inject({
+      method: 'POST',
+      url: '/api/v1/assistant/interactions',
+      headers: authed(ownerToken),
+      payload: {
+        transcriptId: logTranscriptId,
+        message: 'we are out of 15 limes, they spoiled',
+        outcomes: [
+          { outcome: 'confirmed', proposed: { kind: 'move_stock', itemQuery: 'limes' } },
+          {
+            outcome: 'corrected',
+            proposed: { kind: 'move_stock', itemQuery: 'lemons' },
+            corrected: { itemId },
+          },
+          { outcome: 'rejected', proposed: { kind: 'set_stock', itemQuery: 'nonsense' } },
+        ],
+      },
+    });
+    expect(recorded.statusCode).toBe(201);
+    expect(recorded.json().data.recorded).toBe(3);
+    const logged = await admin.query(
+      'SELECT outcome, proposed, corrected FROM assistant_interactions WHERE transcript_id = $1 ORDER BY outcome',
+      [logTranscriptId],
+    );
+    expect(logged.rows.map((row) => row.outcome)).toEqual(['confirmed', 'corrected', 'rejected']);
+    const correction = logged.rows.find((row) => row.outcome === 'corrected');
+    expect(correction.corrected).toMatchObject({ itemId });
+    expect(correction.proposed).toMatchObject({ itemQuery: 'lemons' });
+
+    // A correction with nothing to correct to is rejected by the schema.
+    const malformed = await app.inject({
+      method: 'POST',
+      url: '/api/v1/assistant/interactions',
+      headers: authed(ownerToken),
+      payload: {
+        transcriptId: randomUUID(),
+        message: 'x',
+        outcomes: [{ outcome: 'corrected', proposed: {} }],
+      },
+    });
+    expect(malformed.statusCode).toBe(400);
+
+    // Recording an outcome is assistant work, so it needs assistant:use too.
+    const deniedLog = await app.inject({
+      method: 'POST',
+      url: '/api/v1/assistant/interactions',
+      headers: authed(accepted.json().data.session.accessToken as string),
+      payload: {
+        transcriptId: randomUUID(),
+        message: 'x',
+        outcomes: [{ outcome: 'rejected', proposed: {} }],
+      },
+    });
+    expect(deniedLog.statusCode).toBe(403);
 
     // Attribution is not a bypass: a member who can write stock but lacks
     // assistant:use may post manual movements but not assistant-sourced ones.

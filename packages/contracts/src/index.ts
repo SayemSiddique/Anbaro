@@ -1,4 +1,4 @@
-/** Shared types generated from the implemented Session 03 OpenAPI surface. */
+/** Shared types for the implemented OpenAPI surface. */
 export type ApiSuccess<T> = { data: T };
 
 export type ApiError = {
@@ -302,22 +302,108 @@ export type StockEventHistoryResponse = ApiSuccess<StockEvent[]> & {
   meta: { nextCursor: null };
 };
 
-export type ProposedMovement = {
+/** A quantity after the server — never the model — has done the arithmetic. */
+export type ResolvedQuantity = {
+  /** "five packs" → 5. Null when a plain amount was spoken. */
+  packs: number | null;
+  /** Units in one pack, from the speaker or the item's own pack size. */
+  unitsPerPack: number | null;
+  /** The item's word for a pack ("case", "box"), for display. */
+  packUnit: string | null;
+  /** Which of those two supplied unitsPerPack. */
+  packSource: 'spoken' | 'item' | null;
+  /** Total in the item's base unit; null when a pack size is still unknown. */
+  total: number | null;
+};
+export type ResolvedAssistantItem = {
+  id: string;
+  name: string;
+  unit: string;
+  packSize: number | null;
+  packUnit: string | null;
+};
+type AssistantItemResolution = {
+  /** The item words as the speaker said them. */
   itemQuery: string;
-  resolvedItem: { id: string; name: string } | null;
+  resolvedItem: ResolvedAssistantItem | null;
   candidates: { id: string; name: string }[];
-  eventType: 'adjustment' | 'loss';
-  quantityDelta: number;
-  reason: string | null;
   confidence: 'high' | 'low';
 };
+/** Stock came in or went out. Confirmed through POST /stock-events. */
+export type ProposedMovement = AssistantItemResolution & {
+  kind: 'move_stock';
+  eventType: 'adjustment' | 'loss';
+  direction: 'increase' | 'decrease';
+  reason: string | null;
+  quantity: ResolvedQuantity;
+  quantityDelta: number | null;
+  currentQuantity: number | null;
+  resultingQuantity: number | null;
+};
+/** An absolute count ("we have twelve left"), already turned into a delta. */
+export type ProposedSetStock = AssistantItemResolution & {
+  kind: 'set_stock';
+  quantity: ResolvedQuantity;
+  targetQuantity: number | null;
+  quantityDelta: number | null;
+  currentQuantity: number | null;
+};
+/** A low-stock level. Confirmed through PUT /items/:id/location-stock/levels. */
+export type ProposedThreshold = AssistantItemResolution & {
+  kind: 'set_threshold';
+  quantity: ResolvedQuantity;
+  threshold: number | null;
+  currentThreshold: number | null;
+  /** Write this back unchanged so setting a threshold cannot clear the par level. */
+  currentParLevel: number | null;
+};
+/** An item the catalog lacks. Confirmed through the CSV import pipeline. */
+export type ProposedNewItem = {
+  kind: 'create_item';
+  name: string;
+  unit: string;
+  categoryName: string;
+  categoryType: 'food' | 'cleaning' | 'equipment' | 'other';
+  quantity: ResolvedQuantity | null;
+  duplicateOf: { id: string; name: string } | null;
+};
+export type ProposedAction =
+  | ProposedMovement
+  | ProposedSetStock
+  | ProposedThreshold
+  | ProposedNewItem;
 export type StockProposal = {
   locationId: string | null;
   locationName: string | null;
-  movements: ProposedMovement[];
+  actions: ProposedAction[];
   clarification: string | null;
+  /** The model that produced this proposal; stamp it on any confirmed write. */
+  model: string;
+  /**
+   * Import-template CSV for the create_item actions, or null when there are
+   * none. Post it to POST /imports; that pipeline's preview is the confirmation
+   * step, so new items need no separate write path.
+   */
+  catalogDraftCsv: string | null;
 };
 export type CreateStockProposalRequest = { message: string; locationId?: string };
+/**
+ * What the user did with one proposed action. Only confirmations reach the
+ * ledger, so recording corrections and rejections here is the only way the
+ * cases the model got wrong survive — they are the training labels.
+ */
+export type AssistantOutcome = {
+  outcome: 'confirmed' | 'corrected' | 'rejected';
+  proposed: Record<string, unknown>;
+  /** Required for 'corrected', forbidden otherwise. */
+  corrected?: Record<string, unknown> | null;
+};
+export type RecordAssistantOutcomesRequest = {
+  /** Matches the transcriptId stamped on any confirmed write from this message. */
+  transcriptId: string;
+  message: string;
+  outcomes: AssistantOutcome[];
+};
 
 export type CountSessionStatus = 'in_progress' | 'finalized' | 'abandoned';
 export type CountLineResolution = 'pending' | 'single_submission' | 'conflict' | 'accepted';
@@ -599,7 +685,7 @@ export type SessionApiClientOptions = {
 };
 
 /**
- * A client for only the Session 03 endpoints. Access tokens remain in memory.
+ * A client for the implemented endpoints. Access tokens remain in memory.
  * Web requests rely on the HttpOnly refresh cookie; mobile callers provide a
  * Keychain/Keystore-backed refresh-token adapter.
  */
@@ -889,6 +975,16 @@ export class SessionApiClient {
   createStockProposal(input: CreateStockProposalRequest): Promise<ApiSuccess<StockProposal>> {
     return this.request<ApiSuccess<StockProposal>>(
       '/assistant/stock-proposals',
+      { method: 'POST', body: JSON.stringify(input) },
+      true,
+    );
+  }
+
+  recordAssistantOutcomes(
+    input: RecordAssistantOutcomesRequest,
+  ): Promise<ApiSuccess<{ recorded: number }>> {
+    return this.request<ApiSuccess<{ recorded: number }>>(
+      '/assistant/interactions',
       { method: 'POST', body: JSON.stringify(input) },
       true,
     );

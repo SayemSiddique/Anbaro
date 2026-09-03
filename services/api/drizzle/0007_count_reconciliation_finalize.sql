@@ -1,4 +1,4 @@
--- Session 09 reconciliation finalization. The API can never directly write
+-- Reconciliation finalization. The API can never directly write
 -- stock events or projections; this tenant-context-checked function owns the
 -- terminal transition and locks every projection it changes.
 

@@ -10,9 +10,9 @@ import { buildApp } from '../src/app.js';
 const databaseUrl = process.env.DATABASE_URL;
 const adminUrl = process.env.DATABASE_ADMIN_URL;
 const runIntegration = Boolean(databaseUrl && adminUrl);
-const webhookSecret = 'whsec_session_12_test_secret';
+const webhookSecret = 'whsec_billing_test_secret';
 
-describe.runIf(runIntegration)('Session 12 billing integration', () => {
+describe.runIf(runIntegration)('billing integration', () => {
   process.env.STRIPE_WEBHOOK_SECRET = webhookSecret;
   const gateway: StripeGateway = {
     createCheckoutSession: async (input) => ({

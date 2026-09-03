@@ -9,8 +9,11 @@ import {
   type CreateCountSubmissionRequest,
   type CreateStockEventRequest,
   type CreateStockProposalRequest,
+  type ImportInitRequest,
   type LoginRequest,
+  type RecordAssistantOutcomesRequest,
   type RegisterRequest,
+  type UpdateLocationStockLevelsRequest,
 } from '@anbaro/contracts';
 
 import {
@@ -170,6 +173,24 @@ export class MobileSessionController {
 
   createStockProposal(input: CreateStockProposalRequest) {
     return this.api.createStockProposal(input);
+  }
+
+  recordAssistantOutcomes(input: RecordAssistantOutcomesRequest) {
+    return this.api.recordAssistantOutcomes(input);
+  }
+
+  updateLocationStockLevels(itemId: string, input: UpdateLocationStockLevelsRequest) {
+    return this.api.updateLocationStockLevels(itemId, input);
+  }
+
+  // New items the assistant drafts ride the CSV import pipeline; its staged
+  // preview is the confirmation step, so there is no new write path here.
+  initializeImport(input: ImportInitRequest) {
+    return this.api.initializeImport(input);
+  }
+
+  uploadImport(id: string, uploadToken: string, content: string) {
+    return this.api.uploadImport(id, uploadToken, content);
   }
 
   getSuppliers() {

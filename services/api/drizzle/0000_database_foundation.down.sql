@@ -1,4 +1,4 @@
--- Session 02 rollback, for local/review environments only.
+-- Rollback, for local/review environments only.
 -- Production rollback requires an approved data-recovery plan before destructive use.
 DROP SCHEMA IF EXISTS app CASCADE;
 DROP TABLE IF EXISTS billing_event_logs CASCADE;

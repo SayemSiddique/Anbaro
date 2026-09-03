@@ -14,7 +14,7 @@ as a deliberate post-launch item.
 
 - [x] Pro billing targets go-live itself (Session 11 pulled forward, not a
       fast-follow). 10-day cardless trial (was 30) — code + migration
-      (`0023_session_20_ten_day_trial.sql`) verified locally.
+      (`0023_ten_day_trial.sql`) verified locally.
 - [ ] `BILLING_ENABLED` unset until Stripe (S-12) is actually live in that
       environment — while unset, Stripe routes still 404 (unchanged safety
       property; only the target timing changed).

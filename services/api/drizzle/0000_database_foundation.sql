@@ -1,4 +1,4 @@
--- Session 02 canonical schema migration. Apply using a database owner only.
+-- Canonical schema migration. Apply using a database owner only.
 -- The runtime API must use the non-superuser stock_app role created by local Compose.
 CREATE EXTENSION IF NOT EXISTS pgcrypto;
 CREATE SCHEMA IF NOT EXISTS app;
@@ -392,7 +392,7 @@ END;
 $$;
 
 -- RLS always compares direct organization_id against a transaction-local value.
--- The API must set it only after the Session 03 membership resolver verifies the active membership.
+-- The API must set it only after the membership resolver verifies the active membership.
 DO $$
 DECLARE table_name text;
 BEGIN

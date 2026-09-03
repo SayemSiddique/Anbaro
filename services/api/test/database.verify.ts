@@ -12,8 +12,8 @@ const userA = '10000000-0000-4000-8000-000000000001';
 const countSubmissionA = '90000000-0000-4000-8000-000000000001';
 const verificationDatabase = 'stock_management_session02_verify';
 const here = dirname(fileURLToPath(import.meta.url));
-const migrationPath = join(here, '../drizzle/0000_session_02_database_foundation.sql');
-const rollbackPath = join(here, '../drizzle/0000_session_02_database_foundation.down.sql');
+const migrationPath = join(here, '../drizzle/0000_database_foundation.sql');
+const rollbackPath = join(here, '../drizzle/0000_database_foundation.down.sql');
 const seedPath = join(here, '../drizzle/seed.sql');
 
 function withDatabase(url: string, database: string): string {
@@ -119,7 +119,7 @@ try {
   await admin.query(await readFile(rollbackPath, 'utf8'));
   const rolledBack = await admin.query("SELECT to_regclass('public.stock_events') AS stock_events");
   if (rolledBack.rows[0]?.stock_events !== null) {
-    throw new Error('Rollback did not remove the Session 02 schema');
+    throw new Error('Rollback did not remove the foundation schema');
   }
 
   console.log(

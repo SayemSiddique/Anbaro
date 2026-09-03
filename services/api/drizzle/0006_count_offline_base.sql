@@ -1,4 +1,4 @@
--- Session 08 count-domain integrity and permissions.
+-- Count-domain integrity and permissions.
 -- Count submissions remain append-only; mutable line columns are restricted to
 -- the explicit resolution state machine while snapshot identity/quantity stay fixed.
 

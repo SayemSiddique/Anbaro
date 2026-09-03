@@ -18,7 +18,7 @@ WHERE id IN (
   '21000000-0000-4000-8000-000000000004'
 );
 
--- Restore the Free tier to its Session 16 shape.
+-- Restore the Free tier to its 0015_plan_catalog shape.
 UPDATE plans
 SET name = 'Free',
     included_locations = 1,

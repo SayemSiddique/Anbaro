@@ -1,4 +1,4 @@
--- Session 05 onboarding, organization, location, and trial-access lifecycle.
+-- Onboarding, organization, location, and trial-access lifecycle.
 -- The two auth_* functions below are the intentionally narrow pre-tenant
 -- exception: they validate the current server-side session before creating or
 -- enumerating a tenant. All location work still runs through RLS.
@@ -7,7 +7,7 @@ INSERT INTO plans (id, name, base_price, currency, billing_interval, included_lo
 VALUES ('21000000-0000-4000-8000-000000000001', 'Trial', 0, 'USD', 'monthly', 4, true)
 ON CONFLICT (id) DO NOTHING;
 
--- Session 02 fixtures also carry this template, but migrations must be usable
+-- The foundation fixtures also carry this template, but migrations must be usable
 -- before fixtures are loaded on a clean database.
 INSERT INTO permission_grant_sets (id, organization_id, scope, name, version, is_mutable)
 VALUES ('20000000-0000-4000-8000-000000000001', NULL, 'system', 'Owner', 1, false)

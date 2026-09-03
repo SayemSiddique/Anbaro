@@ -1,8 +1,13 @@
 'use client';
 
-import { type Location, type StockProposal } from '@anbaro/contracts';
-import { Check, Sparkles } from 'lucide-react';
-import { useCallback, useEffect, useState, type FormEvent } from 'react';
+import {
+  type Location,
+  type ProposedAction,
+  type ResolvedQuantity,
+  type StockProposal,
+} from '@anbaro/contracts';
+import { ArrowRight, Check, Mic, Square, Sparkles } from 'lucide-react';
+import { useCallback, useEffect, useRef, useState, type FormEvent } from 'react';
 
 import {
   Actions,
@@ -10,29 +15,79 @@ import {
   Button,
   Card,
   CardTitle,
-  type Column,
-  DataTable,
   EmptyState,
   Field,
   FormSection,
   InlineError,
   Meta,
+  QuietButton,
   Select,
   Textarea,
 } from '../components/ui';
+import { useDictation } from '../lib/dictation';
 import { apiErrorMessage, useSession } from '../lib/session';
 
-type ProposedMovement = StockProposal['movements'][number];
-
-/** Per-row confirm state, keyed by the movement's index in the proposal. */
+/** Per-row confirm state, keyed by the action's index in the proposal. */
 type RowState =
   | { kind: 'idle' }
   | { kind: 'applying' }
-  | { kind: 'applied'; resultingQuantity: string }
+  | { kind: 'applied'; detail: string }
   | { kind: 'error'; message: string };
 
-/** A movement carries its index because that is what every per-row map is keyed by. */
-type MovementRow = { index: number; movement: ProposedMovement };
+const numberFormat = new Intl.NumberFormat();
+const format = (value: number) => numberFormat.format(value);
+
+/**
+ * The arithmetic, shown rather than assumed. "5 cases × 24 = 120 each" is the
+ * difference between a user who can catch a misheard "fifteen"/"fifty" before it
+ * is written and one who discovers it in the ledger a week later.
+ */
+function QuantityMath({ quantity, unit }: { quantity: ResolvedQuantity; unit: string }) {
+  if (quantity.packs === null) return null;
+  if (quantity.unitsPerPack === null) {
+    return (
+      <Meta>
+        {format(quantity.packs)} {quantity.packUnit ?? 'pack'}
+        {quantity.packs === 1 ? '' : 's'} — how many {unit} in one? Say it and ask again, or set a
+        pack size on the item.
+      </Meta>
+    );
+  }
+  return (
+    <Meta>
+      {format(quantity.packs)} {quantity.packUnit ?? 'pack'}
+      {quantity.packs === 1 ? '' : 's'} × {format(quantity.unitsPerPack)} ={' '}
+      <span className="numeric">{format(quantity.total ?? 0)}</span> {unit}
+      {quantity.packSource === 'item' ? " (pack size from the item's record)" : ''}
+    </Meta>
+  );
+}
+
+/** Before → after, so a confirm is never a leap of faith. */
+function Transition({ from, to, unit }: { from: number | null; to: number | null; unit?: string }) {
+  if (from === null || to === null) return null;
+  return (
+    <p className="assistant-transition">
+      <span className="numeric">{format(from)}</span>
+      <ArrowRight aria-label="becomes" size={15} strokeWidth={2} />
+      <span className="numeric compact-strong">{format(to)}</span>
+      {unit ? <span className="assistant-unit">{unit}</span> : null}
+    </p>
+  );
+}
+
+function actionTitle(action: ProposedAction): string {
+  switch (action.kind) {
+    case 'move_stock':
+      return action.eventType === 'loss' ? 'Record a loss' : 'Adjust stock';
+    case 'set_stock':
+      return 'Set the count';
+    case 'set_threshold':
+      return 'Set the low-stock level';
+    case 'create_item':
+      return 'Add a new item';
+  }
+}
 
 export function AssistantFeature() {
   const { api, permissions } = useSession();
@@ -41,15 +96,30 @@ export function AssistantFeature() {
   const [locationId, setLocationId] = useState('');
   const [message, setMessage] = useState('');
   const [proposal, setProposal] = useState<StockProposal | null>(null);
-  // The item chosen for each movement — the resolved item by default, or a
-  // candidate the user picks when the model was unsure. Keyed by movement index.
+  // One id per proposal: it is stamped on every confirmed write and on every
+  // correction-log row, so an utterance's outcomes can be reassembled later.
+  const [transcriptId, setTranscriptId] = useState('');
+  // The item chosen for each action — the resolved item by default, or a
+  // candidate the user picks when the model was unsure. Keyed by action index.
   const [chosenItem, setChosenItem] = useState<Record<number, string>>({});
   const [rows, setRows] = useState<Record<number, RowState>>({});
   const [asking, setAsking] = useState(false);
+  const [importing, setImporting] = useState(false);
+  const [importNotice, setImportNotice] = useState('');
   // Two failures, two states: a dead location list must not read as a dead
   // assistant, and neither one takes the form down.
   const [locationError, setLocationError] = useState('');
   const [error, setError] = useState('');
+
+  // What was typed before dictation started, so speech appends to it instead of
+  // replacing work the user already did.
+  const dictationBase = useRef('');
+  const dictation = useDictation(
+    useCallback((transcript: string) => {
+      const base = dictationBase.current;
+      setMessage(base ? `${base} ${transcript}` : transcript);
+    }, []),
+  );
 
   const loadLocations = useCallback(async () => {
     setLocationError('');
@@ -65,11 +135,22 @@ export function AssistantFeature() {
     void loadLocations();
   }, [loadLocations]);
 
+  function toggleDictation() {
+    if (dictation.listening) {
+      dictation.stop();
+      return;
+    }
+    dictationBase.current = message.trim();
+    dictation.start();
+  }
+
   async function ask(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!message.trim()) return;
+    if (dictation.listening) dictation.stop();
     setAsking(true);
     setError('');
+    setImportNotice('');
     setProposal(null);
     setRows({});
     try {
@@ -78,10 +159,13 @@ export function AssistantFeature() {
         ...(locationId ? { locationId } : {}),
       });
       setProposal(response.data);
+      setTranscriptId(crypto.randomUUID());
       // Seed each row's item selection from the model's resolution.
       const seed: Record<number, string> = {};
-      response.data.movements.forEach((movement, index) => {
-        if (movement.resolvedItem) seed[index] = movement.resolvedItem.id;
+      response.data.actions.forEach((action, index) => {
+        if (action.kind !== 'create_item' && action.resolvedItem) {
+          seed[index] = action.resolvedItem.id;
+        }
       });
       setChosenItem(seed);
     } catch (caught) {
@@ -91,42 +175,135 @@ export function AssistantFeature() {
     }
   }
 
-  async function confirmMovement(movement: ProposedMovement, index: number) {
-    // The confirm location comes from the proposal (or the picker when the model
-    // couldn't place it). No item, no location → nothing to write.
+  const targetLocationId = proposal?.locationId ?? locationId;
+
+  async function confirm(action: ProposedAction, index: number) {
+    if (action.kind === 'create_item') return;
     const itemId = chosenItem[index];
-    const targetLocationId = proposal?.locationId ?? locationId;
     if (!itemId || !targetLocationId) return;
-    if (movement.eventType === 'loss' && !movement.reason) {
-      setRows((prev) => ({
-        ...prev,
-        [index]: { kind: 'error', message: 'A loss needs a reason. Rephrase to include one.' },
-      }));
-      return;
-    }
-    setRows((prev) => ({ ...prev, [index]: { kind: 'applying' } }));
+    setRows((previous) => ({ ...previous, [index]: { kind: 'applying' } }));
     try {
+      if (action.kind === 'set_threshold') {
+        if (action.threshold === null) throw new Error('No level to set.');
+        // par_level is written back unchanged: setting a low-stock level must
+        // not silently clear the target that drives reorder suggestions.
+        await api.updateLocationStockLevels(itemId, {
+          locationId: targetLocationId,
+          threshold: action.threshold,
+          parLevel: action.currentParLevel,
+        });
+        setRows((previous) => ({
+          ...previous,
+          [index]: { kind: 'applied', detail: `Low-stock level is now ${format(action.threshold!)}` },
+        }));
+        void recordOutcome(action, itemId);
+        return;
+      }
+
+      const delta = action.quantityDelta;
+      if (delta === null) throw new Error('That quantity is still unknown.');
+      if (delta === 0) {
+        setRows((previous) => ({
+          ...previous,
+          [index]: { kind: 'applied', detail: 'Already at that count — nothing to write' },
+        }));
+        return;
+      }
+      const isLoss = action.kind === 'move_stock' && action.eventType === 'loss';
+      if (isLoss && !action.reason) {
+        setRows((previous) => ({
+          ...previous,
+          [index]: { kind: 'error', message: 'A loss needs a reason. Rephrase to include one.' },
+        }));
+        return;
+      }
       // The model never wrote this — the user is confirming it now, through the
       // same permission-checked, idempotent, location-enforced path a manual
       // adjustment uses, stamped source: 'assistant' for a findable blast radius.
       const response = await api.createStockEvent({
         itemId,
         locationId: targetLocationId,
-        eventType: movement.eventType,
-        quantityDelta: movement.quantityDelta,
+        eventType: isLoss ? 'loss' : 'adjustment',
+        quantityDelta: delta,
         idempotencyKey: crypto.randomUUID(),
         source: 'assistant',
-        ...(movement.eventType === 'loss' ? { reasonCode: movement.reason ?? '' } : {}),
+        // Attribution, not authorization: the write was already permission-
+        // checked. This is what ties the ledger row to the sentence that
+        // produced it and to the correction log for the same transcript.
+        assistant: { transcriptId, model: proposal?.model ?? '' },
+        ...(isLoss ? { reasonCode: action.reason ?? '' } : {}),
       });
-      setRows((prev) => ({
-        ...prev,
-        [index]: { kind: 'applied', resultingQuantity: response.data.resultingQuantity },
+      setRows((previous) => ({
+        ...previous,
+        [index]: { kind: 'applied', detail: `Now ${response.data.resultingQuantity} on hand` },
       }));
+      void recordOutcome(action, itemId);
     } catch (caught) {
-      setRows((prev) => ({
-        ...prev,
-        [index]: { kind: 'error', message: apiErrorMessage(caught) },
+      setRows((previous) => ({
+        ...previous,
+        [index]: {
+          kind: 'error',
+          message: caught instanceof Error ? caught.message : apiErrorMessage(caught),
+        },
       }));
+    }
+  }
+
+  /**
+   * The correction log. A confirm where the user kept the model's item is a
+   * 'confirmed'; one where they picked a different item is a 'corrected', and
+   * that is the row worth training on. Failures here are deliberately silent —
+   * the stock write already succeeded, and losing a training label must never
+   * look to the user like losing their inventory change.
+   */
+  async function recordOutcome(action: ProposedAction, itemId: string) {
+    if (action.kind === 'create_item' || !transcriptId) return;
+    const overrode = action.resolvedItem?.id !== itemId;
+    try {
+      await api.recordAssistantOutcomes({
+        transcriptId,
+        message: message.trim(),
+        outcomes: [
+          {
+            outcome: overrode ? 'corrected' : 'confirmed',
+            proposed: action as unknown as Record<string, unknown>,
+            ...(overrode ? { corrected: { itemId } } : {}),
+          },
+        ],
+      });
+    } catch {
+      // Intentionally ignored — see above.
+    }
+  }
+
+  /**
+   * New items never get their own write path. The drafted rows go to the CSV
+   * import pipeline, whose staged preview is the confirmation step — the same
+   * one a hand-written CSV goes through.
+   */
+  async function sendDraftToImport() {
+    if (!proposal?.catalogDraftCsv) return;
+    setImporting(true);
+    setError('');
+    try {
+      const initialized = await api.initializeImport({
+        idempotencyKey: crypto.randomUUID(),
+        filename: 'assistant-draft.csv',
+      });
+      if (initialized.data.uploadToken) {
+        await api.uploadImport(
+          initialized.data.id,
+          initialized.data.uploadToken,
+          proposal.catalogDraftCsv,
+        );
+      }
+      setImportNotice(
+        'Draft sent to Imports. Open Imports to review each row and commit it — nothing is added until you do.',
+      );
+    } catch (caught) {
+      setError(apiErrorMessage(caught));
+    } finally {
+      setImporting(false);
     }
   }
 
@@ -145,118 +322,17 @@ export function AssistantFeature() {
   }
 
   const proposalLocationName =
-    proposal?.locationName ??
-    locations.find((location) => location.id === locationId)?.name ??
-    null;
-
-  const movementRows: MovementRow[] = (proposal?.movements ?? []).map((movement, index) => ({
-    index,
-    movement,
-  }));
-
-  const columns: Column<MovementRow>[] = [
-    {
-      id: 'movement',
-      header: 'Movement',
-      cell: ({ movement }) => (
-        <div>
-          <span className="compact-strong">
-            {movement.eventType === 'loss' ? 'Loss' : 'Adjustment'}
-          </span>{' '}
-          <Badge tone={movement.confidence === 'high' ? 'success' : 'warning'}>
-            {movement.confidence === 'high' ? 'Confident' : 'Unsure'}
-          </Badge>
-          <Meta>
-            Heard “{movement.itemQuery}”{movement.reason ? ` · ${movement.reason}` : ''}
-          </Meta>
-        </div>
-      ),
-    },
-    {
-      id: 'quantity',
-      header: 'Quantity',
-      align: 'end',
-      numeric: true,
-      cell: ({ movement }) =>
-        movement.eventType === 'loss'
-          ? Math.abs(movement.quantityDelta)
-          : `${movement.quantityDelta > 0 ? '+' : ''}${movement.quantityDelta}`,
-    },
-    {
-      id: 'item',
-      header: 'Item',
-      cell: ({ index, movement }) => {
-        const row = rows[index] ?? { kind: 'idle' };
-        // A movement the model placed with no runners-up has nothing to choose
-        // between, so it reads as the answer rather than as a one-option picker.
-        if (movement.resolvedItem && movement.candidates.length === 0) {
-          return movement.resolvedItem.name;
-        }
-        return (
-          <Select
-            aria-label={`Item for “${movement.itemQuery}”`}
-            compact
-            disabled={row.kind === 'applied' || row.kind === 'applying'}
-            onChange={(event) =>
-              setChosenItem((prev) => ({ ...prev, [index]: event.target.value }))
-            }
-            value={chosenItem[index] ?? ''}
-          >
-            <option value="">Select an item…</option>
-            {[
-              ...(movement.resolvedItem ? [movement.resolvedItem] : []),
-              ...movement.candidates.filter(
-                (candidate) => candidate.id !== movement.resolvedItem?.id,
-              ),
-            ].map((candidate) => (
-              <option key={candidate.id} value={candidate.id}>
-                {candidate.name}
-              </option>
-            ))}
-          </Select>
-        );
-      },
-    },
-    {
-      id: 'status',
-      header: 'Status',
-      cell: ({ index }) => {
-        const row = rows[index] ?? { kind: 'idle' };
-        if (row.kind === 'applied') {
-          return (
-            <div>
-              <Badge tone="success" withDot>
-                Applied
-              </Badge>
-              <Meta>
-                Now <span className="numeric">{row.resultingQuantity}</span> on hand
-              </Meta>
-            </div>
-          );
-        }
-        if (row.kind === 'error') {
-          // Scoped to its row: one movement that will not write says nothing
-          // about the three above it.
-          return (
-            <div role="alert">
-              <Badge tone="danger" withDot>
-                Didn’t apply
-              </Badge>
-              <Meta>{row.message}</Meta>
-            </div>
-          );
-        }
-        return <Meta inline>Nothing written yet</Meta>;
-      },
-    },
-  ];
+    proposal?.locationName ?? locations.find((location) => location.id === locationId)?.name ?? null;
+  const newItemCount = (proposal?.actions ?? []).filter(
+    (action) => action.kind === 'create_item',
+  ).length;
 
   return (
     <div className="stack">
       <Card labelledBy="assistant-title">
         <CardTitle
           id="assistant-title"
-          subtitle="Describe a stock change in plain language. Nothing is written until you confirm each movement."
+          subtitle="Talk or type. Nothing is written until you confirm each change."
           title="Describe a stock change"
         />
         <FormSection onSubmit={ask} standalone>
@@ -281,16 +357,32 @@ export function AssistantFeature() {
           <Field label="What changed?">
             <Textarea
               onChange={(event) => setMessage(event.target.value)}
-              placeholder="e.g. we’re out of 15 limes downtown, they spoiled"
+              placeholder="e.g. five packs of 24 Cokes came in, and we threw out 15 limes"
               rows={3}
               value={message}
             />
           </Field>
+          {dictation.error ? <Meta>{dictation.error}</Meta> : null}
           <Actions>
             <Button icon={<Sparkles size={15} />} loading={asking} type="submit">
               Ask assistant
             </Button>
+            {dictation.supported ? (
+              <QuietButton
+                aria-pressed={dictation.listening}
+                icon={
+                  dictation.listening ? <Square size={15} /> : <Mic aria-hidden size={15} />
+                }
+                onClick={toggleDictation}
+                type="button"
+              >
+                {dictation.listening ? 'Stop dictating' : 'Dictate'}
+              </QuietButton>
+            ) : null}
           </Actions>
+          {dictation.listening ? (
+            <Meta>Listening — speak naturally, then press Stop dictating.</Meta>
+          ) : null}
         </FormSection>
         {error ? (
           <div className="inline-error-stacked">
@@ -310,57 +402,194 @@ export function AssistantFeature() {
         </Card>
       ) : null}
 
-      {proposal && proposal.movements.length > 0 ? (
+      {proposal && proposal.actions.length > 0 ? (
         <Card labelledBy="proposal-title">
           <CardTitle
             id="proposal-title"
             subtitle={
               proposalLocationName
-                ? `Proposed movements at ${proposalLocationName}. Confirm the ones that look right.`
-                : 'Proposed movements. Pick a location above, then confirm.'
+                ? `At ${proposalLocationName}. Confirm each change you want written.`
+                : 'Pick a location above, then confirm each change.'
             }
-            title="Review the proposal"
+            title="Review before anything is written"
           />
-          <DataTable
-            caption="Proposed movements"
-            columns={columns}
-            getRowId={({ index }) => String(index)}
-            rowActions={({ index, movement }) => {
-              const row = rows[index] ?? { kind: 'idle' };
-              if (row.kind === 'applied') {
-                return (
-                  <Meta inline>
-                    <Check size={14} /> Done
-                  </Meta>
-                );
-              }
-              return (
+          <div className="assistant-actions">
+            {proposal.actions.map((action, index) => (
+              <ActionCard
+                action={action}
+                chosenItemId={chosenItem[index]}
+                key={index}
+                onChooseItem={(itemId) =>
+                  setChosenItem((previous) => ({ ...previous, [index]: itemId }))
+                }
+                onConfirm={() => void confirm(action, index)}
+                state={rows[index] ?? { kind: 'idle' }}
+              />
+            ))}
+          </div>
+          {newItemCount > 0 ? (
+            <div className="assistant-draft">
+              <Meta>
+                {newItemCount} new item{newItemCount === 1 ? '' : 's'} can’t be added directly —
+                they go through the normal import review, where you can edit every row first.
+              </Meta>
+              <Actions>
                 <Button
-                  disabled={!chosenItem[index]}
-                  loading={row.kind === 'applying'}
-                  onClick={() => void confirmMovement(movement, index)}
-                  size="sm"
+                  loading={importing}
+                  onClick={() => void sendDraftToImport()}
                   tone="secondary"
                   type="button"
                 >
-                  Confirm
+                  Send new items to Imports
                 </Button>
-              );
-            }}
-            rows={movementRows}
-          />
+              </Actions>
+              {importNotice ? <Meta>{importNotice}</Meta> : null}
+            </div>
+          ) : null}
         </Card>
       ) : null}
 
-      {proposal && proposal.movements.length === 0 && !proposal.clarification ? (
+      {proposal && proposal.actions.length === 0 && !proposal.clarification ? (
         <Card>
           <EmptyState
-            hint="The assistant didn’t find a stock change in that message. Try naming the item and quantity."
-            icon={<Sparkles size={22} />}
-            title="No movements proposed"
+            hint="Try naming the item and the quantity — “15 limes spoiled at Downtown”."
+            icon={<Sparkles size={36} strokeWidth={1.5} />}
+            title="No changes found in that message"
           />
         </Card>
       ) : null}
     </div>
+  );
+}
+
+function ActionCard({
+  action,
+  chosenItemId,
+  onChooseItem,
+  onConfirm,
+  state,
+}: {
+  action: ProposedAction;
+  chosenItemId: string | undefined;
+  onChooseItem: (itemId: string) => void;
+  onConfirm: () => void;
+  state: RowState;
+}) {
+  const busy = state.kind === 'applying' || state.kind === 'applied';
+
+  if (action.kind === 'create_item') {
+    return (
+      <section className="assistant-action">
+        <header className="assistant-action-head">
+          <span className="compact-strong">{actionTitle(action)}</span>
+          <Badge tone="info">New</Badge>
+        </header>
+        <p className="assistant-action-line">
+          <span className="compact-strong">{action.name}</span>
+          <Meta inline>
+            {action.unit} · {action.categoryName}
+          </Meta>
+        </p>
+        {action.quantity?.total !== null && action.quantity ? (
+          <Meta>Opening stock {format(action.quantity.total ?? 0)}</Meta>
+        ) : null}
+        {action.quantity ? <QuantityMath quantity={action.quantity} unit={action.unit} /> : null}
+        {action.duplicateOf ? (
+          <Meta>
+            Careful — “{action.duplicateOf.name}” is already in your catalog. Adding this would
+            create a second entry.
+          </Meta>
+        ) : null}
+        <Meta>Added through the import review below, not written directly.</Meta>
+      </section>
+    );
+  }
+
+  const unit = action.resolvedItem?.unit ?? '';
+  const options = [
+    ...(action.resolvedItem ? [action.resolvedItem] : []),
+    ...action.candidates.filter((candidate) => candidate.id !== action.resolvedItem?.id),
+  ];
+
+  return (
+    <section className="assistant-action">
+      <header className="assistant-action-head">
+        <span className="compact-strong">{actionTitle(action)}</span>
+        <Badge tone={action.confidence === 'high' ? 'success' : 'warning'}>
+          {action.confidence === 'high' ? 'Confident' : 'Unsure'}
+        </Badge>
+      </header>
+
+      <Meta>
+        Heard “{action.itemQuery}”
+        {action.kind === 'move_stock' && action.reason ? ` · ${action.reason}` : ''}
+      </Meta>
+
+      {/* An item the model placed with no runners-up reads as the answer rather
+          than as a one-option picker. */}
+      {action.resolvedItem && action.candidates.length <= 1 ? (
+        <p className="assistant-action-line">
+          <span className="compact-strong">{action.resolvedItem.name}</span>
+        </p>
+      ) : (
+        <Field label={`Which item did you mean by “${action.itemQuery}”?`}>
+          <Select
+            compact
+            disabled={busy}
+            onChange={(event) => onChooseItem(event.target.value)}
+            value={chosenItemId ?? ''}
+          >
+            <option value="">Select an item…</option>
+            {options.map((candidate) => (
+              <option key={candidate.id} value={candidate.id}>
+                {candidate.name}
+              </option>
+            ))}
+          </Select>
+        </Field>
+      )}
+
+      <QuantityMath quantity={action.quantity} unit={unit || 'units'} />
+
+      {action.kind === 'set_threshold' ? (
+        <Transition from={action.currentThreshold} to={action.threshold} unit={unit} />
+      ) : action.kind === 'set_stock' ? (
+        <Transition from={action.currentQuantity} to={action.targetQuantity} unit={unit} />
+      ) : (
+        <Transition from={action.currentQuantity} to={action.resultingQuantity} unit={unit} />
+      )}
+
+      {state.kind === 'applied' ? (
+        <p className="assistant-applied">
+          <Check aria-hidden size={16} strokeWidth={2.2} />
+          <Badge tone="success" withDot>
+            Applied
+          </Badge>
+          <Meta inline>{state.detail}</Meta>
+        </p>
+      ) : (
+        <Actions>
+          <Button
+            disabled={!chosenItemId}
+            loading={state.kind === 'applying'}
+            onClick={onConfirm}
+            tone="secondary"
+            type="button"
+          >
+            Confirm this change
+          </Button>
+        </Actions>
+      )}
+      {state.kind === 'error' ? (
+        // Scoped to its row: one change that will not write says nothing about
+        // the ones above it.
+        <div role="alert">
+          <Badge tone="danger" withDot>
+            Didn’t apply
+          </Badge>
+          <Meta>{state.message}</Meta>
+        </div>
+      ) : null}
+    </section>
   );
 }

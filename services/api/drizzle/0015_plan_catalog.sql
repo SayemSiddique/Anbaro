@@ -1,4 +1,4 @@
--- Session 16 plan catalog: free tier + monthly options for the public pricing
+-- Plan catalog: free tier + monthly options for the public pricing
 -- structure (research: Sortly's pricing resentment is the #1 competitor complaint;
 -- a generous free tier is the counter-position). Stripe remains the authority
 -- for paid subscription state; these rows are the catalog the app displays.

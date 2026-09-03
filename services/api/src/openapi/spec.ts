@@ -7,7 +7,7 @@ import {
   passwordResetConfirmSchema,
   passwordResetRequestSchema,
 } from '../routes/auth.js';
-import { stockProposalSchema } from '../routes/assistant.js';
+import { assistantOutcomesSchema, stockProposalSchema } from '../routes/assistant.js';
 import { categorySchema, itemSchema, stockEventSchema } from '../routes/catalog.js';
 import { startSchema } from '../routes/counts.js';
 import { initSchema } from '../routes/imports.js';
@@ -119,6 +119,13 @@ export const endpoints: EndpointSpec[] = [
     summary: 'Turn a natural-language message into a stock-change proposal (no write)',
     tags: ['assistant'],
     request: stockProposalSchema,
+  },
+  {
+    method: 'post',
+    path: '/api/v1/assistant/interactions',
+    summary: 'Record what the user did with an assistant proposal',
+    tags: ['assistant'],
+    request: assistantOutcomesSchema,
   },
 ];
 

@@ -7,14 +7,14 @@ import { Footer } from '../components/footer';
 /**
  * Public privacy policy served at `/privacy`.
  *
- * DRAFT — Session 2 pre-launch batch. Every value wrapped in [SQUARE BRACKETS]
+ * DRAFT — pre-launch. Every value wrapped in [SQUARE BRACKETS]
  * is a fact only the operator holds and MUST be filled in before this page is
  * published or a mobile build is submitted (the App Store and Play Console both
  * require a reachable, accurate privacy URL). Search this file for `[` to find
  * every blank. Nothing here should be treated as legal advice — have it
  * reviewed before relying on it.
  *
- * Coverage mandated by the launch plan (Session 4 step 4): account data,
+ * Coverage mandated by the launch plan: account data,
  * inventory data, camera/device usage, billing (dormant at launch), processor
  * (sub-processor) data, retention, deletion, and a support contact.
  */

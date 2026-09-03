@@ -1,4 +1,4 @@
--- Session 19 pricing: replace the Standard/Advanced two-tier catalog with a
+-- Pricing: replace the Standard/Advanced two-tier catalog with a
 -- single "Pro" plan billed at three intervals ($10/mo, $24.99/qtr, $89.99/yr)
 -- plus a generous Free tier. These rows mirror PRICING_INTERVALS / PLAN_COMPARISON
 -- in @anbaro/contracts, which drive the pricing page; the config.stripeLookupKey

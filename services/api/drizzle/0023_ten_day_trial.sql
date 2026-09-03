@@ -1,4 +1,4 @@
--- Session 20 pricing: shorten the signup trial from 30 days to 10 (Sam,
+-- Pricing: shorten the signup trial from 30 days to 10 (Sam,
 -- 2026-09-02, alongside turning Pro billing on rather than holding it as a
 -- fast-follow). Mirrors TRIAL_DAYS in @anbaro/contracts, which the pricing
 -- page reads for its copy. Re-declares app.auth_create_organization exactly

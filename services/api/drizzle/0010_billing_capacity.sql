@@ -1,4 +1,4 @@
--- Session 12 billing and capacity reconciliation. Stripe remains the authority
+-- Billing and capacity reconciliation. Stripe remains the authority
 -- for paid access: the only mutation path for subscription state and capacity
 -- is the narrowly scoped, signature-gated webhook reconciler below.
 
@@ -27,7 +27,7 @@ CREATE INDEX IF NOT EXISTS capacity_purchase_intents_checkout_session_idx
   ON capacity_purchase_intents (provider_checkout_session_id)
   WHERE provider_checkout_session_id IS NOT NULL;
 
--- Billing owner access is deliberately not delegable through Session 11 custom
+-- Billing owner access is deliberately not delegable through custom
 -- grants (the custom-grant allow-list excludes billing:manage).
 INSERT INTO permission_grant_items (organization_id, grant_set_id, resource, action)
 VALUES (NULL, '20000000-0000-4000-8000-000000000001', 'billing', 'manage')

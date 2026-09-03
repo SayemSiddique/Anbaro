@@ -2413,6 +2413,75 @@ a {
   }
 }
 
+/* ---------- Assistant proposal ---------- */
+
+/* One card per proposed change, stacked like a conversation rather than laid
+   out as a table: each is a self-contained "here is what I will do, confirm it"
+   unit, and one row failing says nothing about its neighbours. */
+.assistant-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.assistant-action {
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-md);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 14px 16px;
+}
+.assistant-action-head {
+  align-items: center;
+  display: flex;
+  gap: 8px;
+  justify-content: space-between;
+}
+.assistant-action-line {
+  align-items: baseline;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0;
+}
+/* Before → after. The arrow carries the meaning, so it is sized with the
+   numbers rather than floated beside them. */
+.assistant-transition {
+  align-items: center;
+  background: var(--surface-2);
+  border-radius: var(--radius-sm);
+  display: flex;
+  gap: 8px;
+  margin: 0;
+  padding: 8px 12px;
+  width: fit-content;
+}
+.assistant-transition svg {
+  color: var(--ink-faint);
+  flex: none;
+}
+.assistant-unit {
+  color: var(--ink-muted);
+  font: var(--type-compact);
+}
+.assistant-applied {
+  align-items: center;
+  color: var(--good);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0;
+}
+.assistant-draft {
+  border-top: 1px solid var(--hairline);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 14px;
+  padding-top: 14px;
+}
+
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,

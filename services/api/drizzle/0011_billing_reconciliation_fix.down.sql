@@ -1,1 +1,1 @@
--- Function definitions are restored by rolling back Session 12 as a whole.
+-- Function definitions are restored by rolling back 0010_billing_capacity as a whole.

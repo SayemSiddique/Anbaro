@@ -21,6 +21,26 @@ try {
       applied_at timestamptz NOT NULL DEFAULT now()
     )
   `);
+
+  // A migration's id IS its filename, so renaming a file makes an applied
+  // migration look unapplied and re-runs it against a database that already has
+  // it. The files once carried an internal "_session_NN_" segment; normalize any
+  // id still recorded under the old name before the comparison below. Idempotent,
+  // and skips a row whose new name is somehow already present rather than
+  // colliding on the primary key.
+  const renamed = await client.query(`
+    UPDATE stock_schema_migrations AS migration
+       SET id = regexp_replace(migration.id, '^([0-9]+)_session_[0-9]+_', '\\1_')
+     WHERE migration.id ~ '^[0-9]+_session_[0-9]+_'
+       AND NOT EXISTS (
+         SELECT 1 FROM stock_schema_migrations AS other
+          WHERE other.id = regexp_replace(migration.id, '^([0-9]+)_session_[0-9]+_', '\\1_')
+       )
+  `);
+  if (renamed.rowCount) {
+    console.log(`Normalized ${renamed.rowCount} migration id(s) to their current filenames`);
+  }
+
   const migrations = (await readdir(migrationsDirectory))
     .filter((file) => /^\d+_.+\.sql$/.test(file) && !file.endsWith('.down.sql'))
     .sort();
@@ -35,7 +55,7 @@ try {
       continue;
     }
 
-    if (id === '0000_session_02_database_foundation') {
+    if (id === '0000_database_foundation') {
       const schemaExists = await client.query(
         "SELECT to_regclass('public.organizations') AS organizations",
       );

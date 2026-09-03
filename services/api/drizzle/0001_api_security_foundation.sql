@@ -1,4 +1,4 @@
--- Session 03 API/security foundation. Apply using a database owner only.
+-- API/security foundation. Apply using a database owner only.
 -- Runtime authentication uses narrowly scoped SECURITY DEFINER functions; tenant
 -- reads still run as stock_app inside withVerifiedTenant after membership checks.
 

@@ -40,6 +40,8 @@ const api = {
   createPermissionGrantSet: vi.fn(),
   createStockEvent: vi.fn(),
   createStockProposal: vi.fn(),
+  initializeImport: vi.fn(),
+  uploadImport: vi.fn(),
   getActiveOrganization: vi.fn(),
   getActivity: vi.fn(),
   getBilling: vi.fn(),
@@ -691,15 +693,43 @@ describe('CatalogFeature', () => {
 });
 
 describe('AssistantFeature', () => {
+  const plainQuantity = {
+    packs: null,
+    unitsPerPack: null,
+    packUnit: null,
+    packSource: null,
+    total: 15,
+  };
   const movement = {
+    kind: 'move_stock' as const,
     eventType: 'loss' as const,
+    direction: 'decrease' as const,
+    quantity: plainQuantity,
     quantityDelta: -15,
+    currentQuantity: 20,
+    resultingQuantity: 5,
     itemQuery: 'limes',
     reason: 'spoiled',
     confidence: 'high' as const,
-    resolvedItem: { id: 'item-1', name: 'Limes' },
+    resolvedItem: {
+      id: 'item-1',
+      name: 'Limes',
+      unit: 'kg',
+      packSize: null,
+      packUnit: null,
+    },
     candidates: [],
   };
+  const proposalOf = (...actions: unknown[]) => ({
+    data: {
+      locationId: 'loc-1',
+      locationName: 'Downtown',
+      clarification: null,
+      catalogDraftCsv: null,
+      model: 'llama-3.1-8b-instant',
+      actions,
+    },
+  });
 
   it('offers no assistant at all to a role without access', () => {
     permissions = new Set();
@@ -717,35 +747,76 @@ describe('AssistantFeature', () => {
     expect(screen.getByRole('button', { name: /ask assistant/i })).toBeTruthy();
   });
 
-  it('renders the proposal through DataTable and confirms one movement', async () => {
+  it('shows before → after and confirms one movement', async () => {
     permissions = new Set(['assistant:use']);
     api.getLocations.mockResolvedValue({ data: [{ id: 'loc-1', name: 'Downtown' }] });
-    api.createStockProposal.mockResolvedValue({
-      data: {
-        locationId: 'loc-1',
-        locationName: 'Downtown',
-        clarification: null,
-        movements: [movement],
-      },
-    });
+    api.createStockProposal.mockResolvedValue(proposalOf(movement));
     api.createStockEvent.mockResolvedValue({ data: { resultingQuantity: '5.000' } });
     render(<AssistantFeature />);
     fireEvent.change(await screen.findByRole('textbox', { name: 'What changed?' }), {
       target: { value: 'we’re out of 15 limes downtown, they spoiled' },
     });
     fireEvent.click(screen.getByRole('button', { name: /ask assistant/i }));
-    const table = await screen.findByRole('table', { name: 'Proposed movements' });
-    // The quantity is its own numeric cell rather than prose inside a card.
-    expect(within(table).getByText('15')).toBeTruthy();
-    expect(within(table).getByText('Nothing written yet')).toBeTruthy();
-    fireEvent.click(within(table).getByRole('button', { name: 'Confirm' }));
-    await waitFor(() => expect(within(table).getByText('Applied')).toBeTruthy());
+    await screen.findByText('Review before anything is written');
+    // Confirming is not a leap of faith: the card states what the number becomes.
+    expect(screen.getByText('20')).toBeTruthy();
+    expect(screen.getByText('5')).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: 'Confirm this change' }));
+    await waitFor(() => expect(screen.getByText('Applied')).toBeTruthy());
     expect(api.createStockEvent).toHaveBeenCalledWith(
-      expect.objectContaining({ itemId: 'item-1', locationId: 'loc-1', source: 'assistant' }),
+      expect.objectContaining({
+        itemId: 'item-1',
+        locationId: 'loc-1',
+        source: 'assistant',
+        quantityDelta: -15,
+        // Ties this ledger row back to the sentence that produced it.
+        assistant: expect.objectContaining({ model: 'llama-3.1-8b-instant' }),
+      }),
     );
   });
 
-  it('scopes a failed movement to its own row', async () => {
+  it('shows the pack arithmetic instead of an unexplained total', async () => {
+    permissions = new Set(['assistant:use']);
+    api.getLocations.mockResolvedValue({ data: [{ id: 'loc-1', name: 'Downtown' }] });
+    api.createStockProposal.mockResolvedValue(
+      proposalOf({
+        ...movement,
+        eventType: 'adjustment',
+        direction: 'increase',
+        reason: null,
+        itemQuery: 'cokes',
+        quantity: {
+          packs: 5,
+          unitsPerPack: 24,
+          packUnit: 'case',
+          packSource: 'spoken',
+          total: 120,
+        },
+        quantityDelta: 120,
+        currentQuantity: 12,
+        resultingQuantity: 132,
+        resolvedItem: {
+          id: 'item-2',
+          name: 'Coca-Cola 330ml',
+          unit: 'each',
+          packSize: 24,
+          packUnit: 'case',
+        },
+      }),
+    );
+    render(<AssistantFeature />);
+    fireEvent.change(await screen.findByRole('textbox', { name: 'What changed?' }), {
+      target: { value: 'five packs of 24 cokes came in' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: /ask assistant/i }));
+    // A misheard "fifteen"/"fifty" has to be catchable before the write, so the
+    // multiplication is on screen rather than implied.
+    await waitFor(() =>
+      expect(screen.getByText(/5 cases × 24 =/)).toBeTruthy(),
+    );
+  });
+
+  it('routes a brand-new item to the import review rather than writing it', async () => {
     permissions = new Set(['assistant:use']);
     api.getLocations.mockResolvedValue({ data: [{ id: 'loc-1', name: 'Downtown' }] });
     api.createStockProposal.mockResolvedValue({
@@ -753,21 +824,58 @@ describe('AssistantFeature', () => {
         locationId: 'loc-1',
         locationName: 'Downtown',
         clarification: null,
-        movements: [movement, { ...movement, itemQuery: 'lemons' }],
+        model: 'llama-3.1-8b-instant',
+        catalogDraftCsv: 'name,unit\n"Forks","each"\n',
+        actions: [
+          {
+            kind: 'create_item',
+            name: 'Forks',
+            unit: 'each',
+            categoryName: 'Cutlery',
+            categoryType: 'equipment',
+            quantity: null,
+            duplicateOf: null,
+          },
+        ],
       },
     });
+    api.initializeImport.mockResolvedValue({
+      data: { id: 'batch-1', uploadToken: 'token', uploadUrl: '/upload' },
+    });
+    api.uploadImport.mockResolvedValue({ data: { id: 'batch-1', status: 'validating' } });
+    render(<AssistantFeature />);
+    fireEvent.change(await screen.findByRole('textbox', { name: 'What changed?' }), {
+      target: { value: 'we also stock forks' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: /ask assistant/i }));
+    await screen.findByText('Add a new item');
+    // A new item is never written straight through — no confirm button on it.
+    expect(screen.queryByRole('button', { name: 'Confirm this change' })).toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: /send new items to imports/i }));
+    await waitFor(() => expect(api.uploadImport).toHaveBeenCalled());
+    expect(api.createStockEvent).not.toHaveBeenCalled();
+  });
+
+  it('scopes a failed movement to its own row', async () => {
+    permissions = new Set(['assistant:use']);
+    api.getLocations.mockResolvedValue({ data: [{ id: 'loc-1', name: 'Downtown' }] });
+    api.createStockProposal.mockResolvedValue(
+      proposalOf(movement, { ...movement, itemQuery: 'lemons' }),
+    );
     api.createStockEvent.mockRejectedValue(new Error('that item is archived'));
     render(<AssistantFeature />);
     fireEvent.change(await screen.findByRole('textbox', { name: 'What changed?' }), {
       target: { value: 'limes and lemons spoiled' },
     });
     fireEvent.click(screen.getByRole('button', { name: /ask assistant/i }));
-    const table = await screen.findByRole('table', { name: 'Proposed movements' });
-    fireEvent.click(within(table).getAllByRole('button', { name: 'Confirm' })[0]!);
-    const alert = await within(table).findByRole('alert');
+    await screen.findByText('Review before anything is written');
+    fireEvent.click(screen.getAllByRole('button', { name: 'Confirm this change' })[0]!);
+    const alert = await screen.findByRole('alert');
     expect(alert.textContent).toContain('that item is archived');
-    // The second row is untouched and still offers its own confirm.
-    expect(within(table).getAllByText('Nothing written yet').length).toBe(1);
+    // Exactly one card failed. The other carries no error of its own, and both
+    // keep a confirm button so the failed one can be retried.
+    expect(screen.getAllByRole('alert').length).toBe(1);
+    expect(screen.getAllByRole('button', { name: 'Confirm this change' }).length).toBe(2);
   });
 });
 

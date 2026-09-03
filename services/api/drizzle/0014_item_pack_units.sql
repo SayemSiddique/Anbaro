@@ -1,4 +1,4 @@
--- Session 16 units of measure: optional per-item pack conversion.
+-- Units of measure: optional per-item pack conversion.
 -- items.unit stays the base (stocking) unit; pack_size/pack_unit describe a
 -- purchasing pack, e.g. pack_unit 'case' with pack_size 24 means 1 case = 24 base units.
 

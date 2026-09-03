@@ -1,4 +1,4 @@
--- Session 10 keeps stock projections server-owned while adding tenant-scoped
+-- Keeps stock projections server-owned while adding tenant-scoped
 -- supplier reference data, recipient notifications, and review-only reorder work.
 
 CREATE TABLE notifications (

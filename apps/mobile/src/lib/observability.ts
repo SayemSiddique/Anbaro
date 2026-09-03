@@ -7,7 +7,7 @@ import * as Sentry from '@sentry/react-native';
  * when unset. Called once at app boot from app/_layout.tsx.
  *
  * EXPO_PUBLIC_SENTRY_DSN is a public project identifier (not a secret) and is
- * bundled into the app. The DSN is attached in plan Session 8.
+ * bundled into the app. The DSN is attached once a Sentry project is provisioned.
  */
 let enabled = false;
 
